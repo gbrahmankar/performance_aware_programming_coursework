@@ -6,11 +6,16 @@
 #include <unordered_map>
 #include <vector>
 
-using Mnemonic = std::bitset<6>;
+using NibbleBitset = std::bitset<4>;
+using ByteBitset = std::bitset<8>;
+using WordBitset = std::bitset<16>;
+
+using StandardMnemonicBitset = std::bitset<6>;
+
 enum EInstruction
 {
     /* 
-    mov_layout : [100010[1b_d][1b_w]] [[2b_mod][3b_reg][3b_r/m]]
+    mov_layout : [100010][1b_d][1b_w]] [[2b_mod][3b_reg][3b_r/m]]
     */
     Mov,
     InstructionInvalid
@@ -19,8 +24,8 @@ enum EInstruction
 // [1b_d]
 enum EDBit : uint8_t
 {
-    RegSrcRMDest = 0,
-    RegDestRMSrc,
+    RegFieldSrcRMFieldDest = 0,
+    RegFieldDestRMFieldSrc,
 
     DBitInvalid
 };
@@ -37,16 +42,16 @@ enum EWBit : uint8_t
 // [2b_mod]
 enum EModField : uint8_t
 {
-    ModFieldZeroZero = 0,
-    ModFieldZeroOne,
-    ModFieldOneZero,
+    MemModeNoDisp = 0,
+    MemModeEightBitDisp,
+    MemModeSixteenBitDisp,
     RegisterMode,
 
     ModFieldInvalid
 };
 
 // [3b_reg], [3b_r/m]
-enum ERegFieldsByteOperation : uint8_t
+enum ERegisterEncodingByteOperation : uint8_t
 {
     al = 0,
     cl,
@@ -60,7 +65,7 @@ enum ERegFieldsByteOperation : uint8_t
     RegFieldsByteOperationInvalid
 };
 
-enum ERegFieldsWordOperation : uint8_t
+enum ERegisterEncodingWordOperation : uint8_t
 {
     ax = 0,
     cx ,
@@ -76,37 +81,44 @@ enum ERegFieldsWordOperation : uint8_t
 
 std::unordered_map<EModField, std::string> modFieldEnumToString =
 {
-    { EModField::ModFieldZeroZero, "mod00" },
-    { EModField::ModFieldZeroOne, "mod01" },
-    { EModField::ModFieldOneZero, "mod10" },
+    { EModField::MemModeNoDisp, "memory_mode_no_displacement_follows" },
+    { EModField::MemModeEightBitDisp, "memory_mode_8_bit_displacement_follows" },
+    { EModField::MemModeSixteenBitDisp, "memory_mode_16_bit_displacement_follows" },
     { EModField::RegisterMode, "register_mode" }
 };
 
-std::unordered_map<ERegFieldsByteOperation, std::string> byteRegEnumToString =
+std::unordered_map<EModField, std::string> modFieldEnumToStringDispacement =
 {
-    { ERegFieldsByteOperation::al, "al" },
-    { ERegFieldsByteOperation::cl, "cl" },
-    { ERegFieldsByteOperation::dl, "dl" },
-    { ERegFieldsByteOperation::bl, "bl" },
-    { ERegFieldsByteOperation::ah, "ah" },
-    { ERegFieldsByteOperation::ch, "ch" },
-    { ERegFieldsByteOperation::dh, "dh" },
-    { ERegFieldsByteOperation::bh, "bh" }
+    { EModField::MemModeNoDisp, "" },
+    { EModField::MemModeEightBitDisp, "8" },
+    { EModField::MemModeSixteenBitDisp, "16" }
 };
 
-std::unordered_map<ERegFieldsWordOperation, std::string> wordRegEnumToString =
+std::unordered_map<ERegisterEncodingByteOperation, std::string> byteRegisterEncodingToString =
 {
-    { ERegFieldsWordOperation::ax, "ax" },
-    { ERegFieldsWordOperation::cx, "cx" },
-    { ERegFieldsWordOperation::dx, "dx" },
-    { ERegFieldsWordOperation::bx, "bx" },
-    { ERegFieldsWordOperation::sp, "sp" },
-    { ERegFieldsWordOperation::bp, "bp" },
-    { ERegFieldsWordOperation::si, "si" },
-    { ERegFieldsWordOperation::di, "di" }
+    { ERegisterEncodingByteOperation::al, "al" },
+    { ERegisterEncodingByteOperation::cl, "cl" },
+    { ERegisterEncodingByteOperation::dl, "dl" },
+    { ERegisterEncodingByteOperation::bl, "bl" },
+    { ERegisterEncodingByteOperation::ah, "ah" },
+    { ERegisterEncodingByteOperation::ch, "ch" },
+    { ERegisterEncodingByteOperation::dh, "dh" },
+    { ERegisterEncodingByteOperation::bh, "bh" }
 };
 
-std::string& getStringFromModFieldEnum(EModField e)
+std::unordered_map<ERegisterEncodingWordOperation, std::string> wordRegisterEncodingToString =
+{
+    { ERegisterEncodingWordOperation::ax, "ax" },
+    { ERegisterEncodingWordOperation::cx, "cx" },
+    { ERegisterEncodingWordOperation::dx, "dx" },
+    { ERegisterEncodingWordOperation::bx, "bx" },
+    { ERegisterEncodingWordOperation::sp, "sp" },
+    { ERegisterEncodingWordOperation::bp, "bp" },
+    { ERegisterEncodingWordOperation::si, "si" },
+    { ERegisterEncodingWordOperation::di, "di" }
+};
+
+std::string& getModFieldEnumToString(EModField e)
 {
     if (modFieldEnumToString.count(e))
     {
@@ -118,11 +130,23 @@ std::string& getStringFromModFieldEnum(EModField e)
     }
 }
 
-std::string& getStringFromByteRegEnum(ERegFieldsByteOperation e)
+std::string& getDisplacementFromModFieldEnum(EModField e)
 {
-    if (byteRegEnumToString.count(e))
+    if (modFieldEnumToStringDispacement.count(e))
     {
-        return byteRegEnumToString[e];
+        return modFieldEnumToStringDispacement[e];
+    }
+    else
+    {
+        throw std::runtime_error("invalid mod_field enum passed !");
+    }
+}
+
+std::string& getRegisterNameFromByteOperationRegisterEncoding(ERegisterEncodingByteOperation e)
+{
+    if (byteRegisterEncodingToString.count(e))
+    {
+        return byteRegisterEncodingToString[e];
     }
     else
     {
@@ -130,15 +154,43 @@ std::string& getStringFromByteRegEnum(ERegFieldsByteOperation e)
     }
 }
 
-std::string& getStringFromWordRegEnum(ERegFieldsWordOperation e)
+std::string& getRegisterNameFromWordOperationRegisterEncoding(ERegisterEncodingWordOperation e)
 {
-    if (wordRegEnumToString.count(e))
+    if (wordRegisterEncodingToString.count(e))
     {
-        return wordRegEnumToString[e];
+        return wordRegisterEncodingToString[e];
     }
     else
     {
         throw std::runtime_error("invalid word_operation register enum passed !");
+    }
+}
+
+std::string getEffectiveAddressBaseEquationString(uint8_t registerOrMemoryFieldValue, EModField mod)
+{
+    switch(registerOrMemoryFieldValue)
+    {
+        case 0 :
+            return "bx + si";
+        case 1 :
+            return "bx + di";
+        case 2 :
+            return "bp + si";
+        case 3 :
+            return "bp + di";
+        case 4 :
+            return "si";
+        case 5 :
+            return "di";
+        case 6 :
+            if (mod == EModField::MemModeNoDisp)
+                return "";
+            else
+                return "bp";
+        case 7 :
+            return "bx";
+        default :
+            throw std::runtime_error("invalid mod_field enum passed !");
     }
 }
 
@@ -147,10 +199,9 @@ struct InstructionMetadata
     InstructionMetadata()
     {}
 
-    InstructionMetadata(EInstruction i, const std::string& is, uint8_t lab) :
+    InstructionMetadata(EInstruction i, const std::string& is) :
         instruction(i),
-        instructionString(is),
-        lookAheadBytes(lab)
+        instructionString(is)
     {}
 
     EInstruction instruction = EInstruction::Mov;
@@ -159,15 +210,11 @@ struct InstructionMetadata
     EDBit dBit = EDBit::DBitInvalid;
     EWBit wBit = EWBit::WBitInvalid;
     EModField modField = EModField::ModFieldInvalid;
-
-    // you already read one byte for the mnemonic.
-    // from the mnemonic, how many more bytes do we know, we need to look_ahead.
-    uint8_t lookAheadBytes = 0;
 };
 
 std::unordered_map<uint64_t, InstructionMetadata> mnemonicToInstructionMetadata =
 {
-    { Mnemonic("100010").to_ulong(), InstructionMetadata(EInstruction::Mov, "mov", 1) }
+    { StandardMnemonicBitset("100010").to_ulong(), InstructionMetadata(EInstruction::Mov, "mov") }
 };
 
 InstructionMetadata& getInstructionMetadataFromMnemonic(uint64_t m)
@@ -180,6 +227,105 @@ InstructionMetadata& getInstructionMetadataFromMnemonic(uint64_t m)
     {
         throw std::runtime_error("invalid mnemonic passed !");
     }
+}
+
+void decodeSecondInstructionByte(const ByteBitset& byteBitset, std::ifstream& file, InstructionMetadata& ongoingInstructionMetadata)
+{
+    // [2b_mod] : unused right now !
+    EModField mod = static_cast<EModField>((byteBitset >> 6).to_ulong() & 0b00000011);
+    switch(mod)
+    {
+        case (EModField::MemModeNoDisp) :
+        {
+            break;
+        }
+        case (EModField::MemModeEightBitDisp) :
+        {
+            break;
+        }
+        case (EModField::MemModeSixteenBitDisp) :
+        {
+            break;
+        }
+        case (EModField::RegisterMode) :
+        {
+            if (ongoingInstructionMetadata.wBit == EWBit::ByteOperation)
+            {
+                // [3b_reg]
+                ERegisterEncodingByteOperation reg = static_cast<ERegisterEncodingByteOperation>((byteBitset >> 3).to_ulong() & 0b00000111);
+                // [3b_r/m]
+                ERegisterEncodingByteOperation rm = static_cast<ERegisterEncodingByteOperation>(byteBitset.to_ulong() & 0b00000111);
+
+                if (ongoingInstructionMetadata.dBit == EDBit::RegFieldDestRMFieldSrc)
+                {
+                    std::cout << ongoingInstructionMetadata.instructionString << " " 
+                        << getRegisterNameFromByteOperationRegisterEncoding(reg) << ", " 
+                        << getRegisterNameFromByteOperationRegisterEncoding(rm) << '\n';
+                }
+                else
+                {
+                    std::cout << ongoingInstructionMetadata.instructionString << " " 
+                        << getRegisterNameFromByteOperationRegisterEncoding(rm) << ", " 
+                        << getRegisterNameFromByteOperationRegisterEncoding(reg) << '\n';
+                }
+            }
+            else
+            {
+                // [3b_reg]
+                ERegisterEncodingWordOperation reg = static_cast<ERegisterEncodingWordOperation>((byteBitset >> 3).to_ulong() & 0b00000111);
+                // [3b_r/m]
+                ERegisterEncodingWordOperation rm = static_cast<ERegisterEncodingWordOperation>(byteBitset.to_ulong() & 0b00000111);
+
+                if (ongoingInstructionMetadata.dBit == EDBit::RegFieldDestRMFieldSrc)
+                {
+                    std::cout << ongoingInstructionMetadata.instructionString << " " 
+                        << getRegisterNameFromWordOperationRegisterEncoding(reg) << ", " 
+                        << getRegisterNameFromWordOperationRegisterEncoding(rm) << '\n';
+                }
+                else
+                {
+                    std::cout << ongoingInstructionMetadata.instructionString << " " 
+                        << getRegisterNameFromWordOperationRegisterEncoding(rm) << ", " 
+                        << getRegisterNameFromWordOperationRegisterEncoding(reg) << '\n';
+                }
+            }
+
+            break;
+        }
+        default :
+        {
+            throw std::runtime_error("invalid mod !");
+        }
+    }
+}
+
+void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& file, InstructionMetadata& ongoingInstructionMetadata)
+{
+    uint64_t mnemonicInteger = (byteBitset >> 2).to_ulong();
+    ongoingInstructionMetadata = getInstructionMetadataFromMnemonic(mnemonicInteger);
+    if ((byteBitset.to_ulong() & 0b00000010) > 0)
+    {
+        ongoingInstructionMetadata.dBit = EDBit::RegFieldDestRMFieldSrc;
+    }
+    else
+    {
+        ongoingInstructionMetadata.dBit = EDBit::RegFieldSrcRMFieldDest;
+    }
+
+    if ((byteBitset.to_ulong() & 0b00000001) > 0)
+    {
+        ongoingInstructionMetadata.wBit = EWBit::WordOperation;
+    }
+    else
+    {
+        ongoingInstructionMetadata.wBit = EWBit::ByteOperation;
+    }
+
+    // needs second byte
+    char byte;
+    file.read(&byte, sizeof(byte));
+    ByteBitset secondByteBitset(byte);
+    decodeSecondInstructionByte(secondByteBitset, file, ongoingInstructionMetadata);
 }
 
 int main(int argc, char* argv[])
@@ -204,92 +350,15 @@ int main(int argc, char* argv[])
 
     while (true) 
     {
-        if (beginReadingNewInstruction)
+        char byte;
+
+        file.read(&byte, sizeof(byte));
+        ByteBitset firstByteBitset(byte);
+        if (file.gcount() == 0)
         {
-            char byte;
-            file.read(&byte, sizeof(byte));
-            std::bitset<8> byteBitset(byte);
-            if (file.gcount() == 0)
-            {
-                break;
-            }
-            
-            uint64_t byteInteger = (byteBitset >> 2).to_ulong();
-            ongoingInstructionMetadata = getInstructionMetadataFromMnemonic(byteInteger);
-            if ((byteBitset.to_ulong() & 0b00000010) > 0)
-            {
-                ongoingInstructionMetadata.dBit = EDBit::RegDestRMSrc;
-            }
-            else
-            {
-                ongoingInstructionMetadata.dBit = EDBit::RegSrcRMDest;
-            }
-
-            if ((byteBitset.to_ulong() & 0b00000001) > 0)
-            {
-                ongoingInstructionMetadata.wBit = EWBit::WordOperation;
-            }
-            else
-            {
-                ongoingInstructionMetadata.wBit = EWBit::ByteOperation;
-            }
-
-            beginReadingNewInstruction = false;
+            break;
         }
-        else
-        {
-            for (uint8_t bytesToRead = ongoingInstructionMetadata.lookAheadBytes; bytesToRead > 0; --bytesToRead)
-            {
-                char byte;
-                file.read(&byte, sizeof(byte));
-                std::bitset<8> byteBitset(byte);
-                
-                // [2b_mod] : unused right now !
-                EModField mod = static_cast<EModField>((byteBitset >> 6).to_ulong() & 0b00000011);
-                if (ongoingInstructionMetadata.wBit == EWBit::ByteOperation)
-                {
-                    // [3b_reg]
-                    ERegFieldsByteOperation reg = static_cast<ERegFieldsByteOperation>((byteBitset >> 3).to_ulong() & 0b00000111);
-                    // [3b_r/m]
-                    ERegFieldsByteOperation rm = static_cast<ERegFieldsByteOperation>(byteBitset.to_ulong() & 0b00000111);
-
-                    if (ongoingInstructionMetadata.dBit == EDBit::RegDestRMSrc)
-                    {
-                        std::cout << ongoingInstructionMetadata.instructionString << " " 
-                            << getStringFromByteRegEnum(reg) << ", " 
-                            << getStringFromByteRegEnum(rm) << '\n';
-                    }
-                    else
-                    {
-                        std::cout << ongoingInstructionMetadata.instructionString << " " 
-                            << getStringFromByteRegEnum(rm) << ", " 
-                            << getStringFromByteRegEnum(reg) << '\n';
-                    }
-                }
-                else
-                {
-                    // [3b_reg]
-                    ERegFieldsWordOperation reg = static_cast<ERegFieldsWordOperation>((byteBitset >> 3).to_ulong() & 0b00000111);
-                    // [3b_r/m]
-                    ERegFieldsWordOperation rm = static_cast<ERegFieldsWordOperation>(byteBitset.to_ulong() & 0b00000111);
-
-                    if (ongoingInstructionMetadata.dBit == EDBit::RegDestRMSrc)
-                    {
-                        std::cout << ongoingInstructionMetadata.instructionString << " " 
-                            << getStringFromWordRegEnum(reg) << ", " 
-                            << getStringFromWordRegEnum(rm) << '\n';
-                    }
-                    else
-                    {
-                        std::cout << ongoingInstructionMetadata.instructionString << " " 
-                            << getStringFromWordRegEnum(rm) << ", " 
-                            << getStringFromWordRegEnum(reg) << '\n';
-                    }
-                }
-            }
-
-            beginReadingNewInstruction = true;
-        }
+        decodeFirstInstructionByte(firstByteBitset, file, ongoingInstructionMetadata); 
     }
 
     return 0;    
