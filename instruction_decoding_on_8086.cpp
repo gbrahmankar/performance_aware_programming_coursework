@@ -10,7 +10,7 @@ using NibbleBitset = std::bitset<4>;
 using ByteBitset = std::bitset<8>;
 using WordBitset = std::bitset<16>;
 
-using StandardMnemonicBitset = std::bitset<6>;
+using MnemonicBitset = std::bitset<7>;
 
 enum EInstruction
 {
@@ -19,9 +19,17 @@ enum EInstruction
     */
     MovRegMemToFromReg,
     /* 
-    mov_immediate_register_layout : [100010][1b_w][3b_reg]] [8b_disp_low] [8b_disp_high]
+    mov_immediate_register_layout : [[1011][1b_w][3b_reg]] [8b_data_low] [8b_data_high]
     */
     MovImmToReg,
+    /* 
+    mov_memory_to_acc_layout : [[1010000][1b_w]] [8b_addr_low] [8b_addr_high]
+    */
+    MovMemToAcc,
+    /* 
+    mov_acc_to_memory_layout : [[1010001][1b_w]] [8b_addr_low] [8b_addr_high]
+    */
+    MovAccToMem,
     InstructionInvalid
 };
 
@@ -218,8 +226,10 @@ struct InstructionMetadata
 
 std::unordered_map<uint64_t, InstructionMetadata> mnemonicToInstructionMetadata =
 {
-    { StandardMnemonicBitset("100010").to_ulong(), InstructionMetadata(EInstruction::MovRegMemToFromReg, "mov") },
-    { StandardMnemonicBitset("1011").to_ulong(), InstructionMetadata(EInstruction::MovImmToReg, "mov") }
+    { MnemonicBitset("100010").to_ulong(), InstructionMetadata(EInstruction::MovRegMemToFromReg, "mov") },
+    { MnemonicBitset("1011").to_ulong(), InstructionMetadata(EInstruction::MovImmToReg, "mov") },
+    { MnemonicBitset("1010000").to_ulong(), InstructionMetadata(EInstruction::MovMemToAcc, "mov") },
+    { MnemonicBitset("1010001").to_ulong(), InstructionMetadata(EInstruction::MovAccToMem, "mov") }
 };
 
 InstructionMetadata& getInstructionMetadataFromMnemonic(ByteBitset bitSet)
@@ -558,13 +568,13 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
             // needs second byte
             char byte;
             file.read(&byte, sizeof(byte));
-            ByteBitset thirdByteBitset(byte);
+            ByteBitset secondByteBitset(byte);
 
             // needs third byte
             file.read(&byte, sizeof(byte));
-            ByteBitset fourthByteBitset(byte);
+            ByteBitset thirdByteBitset(byte);
 
-            WordBitset netDisplacementBitset((fourthByteBitset.to_ulong() << 8) | thirdByteBitset.to_ulong());
+            WordBitset netDisplacementBitset((thirdByteBitset.to_ulong() << 8) | secondByteBitset.to_ulong());
             immediateValue = std::to_string(netDisplacementBitset.to_ulong());
 
             // [3b_reg]
@@ -578,9 +588,9 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
             // needs second byte
             char byte;
             file.read(&byte, sizeof(byte));
-            ByteBitset thirdByteBitset(byte);
+            ByteBitset secondByteBitset(byte);
 
-            immediateValue = std::to_string(thirdByteBitset.to_ulong()); 
+            immediateValue = std::to_string(secondByteBitset.to_ulong()); 
 
             // [3b_reg]
             ERegisterEncodingByteOperation reg = static_cast<ERegisterEncodingByteOperation>(byteBitset.to_ulong() & 0b00000111);
@@ -590,6 +600,34 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
         std::cout << ongoingInstructionMetadata.instructionString << " " 
             << encodedRegister << ", " 
             << immediateValue << '\n';
+    }
+    else if (ongoingInstructionMetadata.instruction == EInstruction::MovMemToAcc || 
+            ongoingInstructionMetadata.instruction == EInstruction::MovAccToMem)
+    {
+        // needs second byte
+        char byte;
+        file.read(&byte, sizeof(byte));
+        ByteBitset secondByteBitset(byte);
+
+        // needs third byte
+        file.read(&byte, sizeof(byte));
+        ByteBitset thirdByteBitset(byte);
+
+        WordBitset effectiveAddressBitset((thirdByteBitset.to_ulong() << 8) | secondByteBitset.to_ulong());
+        std::string effectiveAddress = "[" + std::to_string(effectiveAddressBitset.to_ulong()) + "]";
+
+        if (ongoingInstructionMetadata.instruction == EInstruction::MovMemToAcc)
+        {
+            std::cout << ongoingInstructionMetadata.instructionString << " " 
+                << "ax" << ", " 
+                << effectiveAddress << '\n';
+        }
+        else
+        {
+            std::cout << ongoingInstructionMetadata.instructionString << " " 
+                << effectiveAddress << ", " 
+                << "ax" << '\n';
+        }
     }
 }
 
