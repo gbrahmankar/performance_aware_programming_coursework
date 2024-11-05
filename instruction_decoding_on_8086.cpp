@@ -160,27 +160,27 @@ std::string getEffectiveAddressBaseEquationString(uint8_t registerOrMemoryFieldV
 {
     switch(registerOrMemoryFieldValue)
     {
-        case 0 :
-            return "bx + si";
-        case 1 :
-            return "bx + di";
-        case 2 :
-            return "bp + si";
-        case 3 :
-            return "bp + di";
-        case 4 :
-            return "si";
-        case 5 :
-            return "di";
-        case 6 :
-            if (mod == EModField::MemModeNoDisp)
-                return "";
-            else
-                return "bp";
-        case 7 :
-            return "bx";
-        default :
-            throw std::runtime_error("invalid mod_field enum passed !");
+	case 0 :
+		return "bx + si";
+	case 1 :
+		return "bx + di";
+	case 2 :
+		return "bp + si";
+	case 3 :
+		return "bp + di";
+	case 4 :
+		return "si";
+	case 5 :
+		return "di";
+	case 6 :
+		if (mod == EModField::MemModeNoDisp)
+			return "";
+		else
+			return "bp";
+	case 7 :
+		return "bx";
+	default :
+		throw std::runtime_error("invalid mod_field enum passed !");
     }
 }
 
@@ -202,11 +202,11 @@ struct InstructionMetadata
     EWBit wBit = EWBit::WBitInvalid;
     EModField modField = EModField::ModFieldInvalid;
 
-    std::string directAddress;
     std::string effectiveAddress;
 
     // if the instruction has two registers, 0_src, 1_dst. else, based on instruction_format
     std::vector<uint8_t> registers;
+    std::vector<std::string> stringifiedRegisters;
 
     std::string immediateValue;
 };
@@ -220,8 +220,71 @@ std::unordered_map<uint64_t, InstructionMetadata> mnemonicToInstructionMetadata 
     { MnemonicBitset("1010001").to_ulong(), InstructionMetadata(EInstruction::MovAccToMem, "mov") }
 };
 
-void printInstruction(const InstructionMetadata& metadata)
+void printInstruction(InstructionMetadata& metadata)
 {
+    if (metadata.wBit == EWBit::WordOperation)
+	{
+        for (uint8_t reg : metadata.registers)
+        {
+            metadata.stringifiedRegisters.push_back(getRegNameFromThreeBitEncodingWordOp(static_cast<ERegThreeBitEncodingWordOp>(reg)));
+        }
+	}
+	else
+	{
+        for (uint8_t reg : metadata.registers)
+        {
+            metadata.stringifiedRegisters.push_back(getRegNameFromThreeBitEncodingByteOp(static_cast<ERegThreeBitEncodingByteOp>(reg)));
+        }
+	}
+
+    switch (metadata.instructionFormat)
+    {
+    case (EInstructionFormat::MemImm):
+    {
+        break;
+    }
+    case (EInstructionFormat::MemReg):
+    {
+        if (metadata.dBit == EDBit::RegFieldDestRMFieldSrc)
+        {
+            std::cout << metadata.instructionString << " " << metadata.stringifiedRegisters[0] << ", " << metadata.effectiveAddress << '\n';
+        }
+        else
+        {
+            std::cout << metadata.instructionString << " " << metadata.effectiveAddress << ", " << metadata.stringifiedRegisters[0] << '\n';
+        }
+
+        break;
+    }
+    case (EInstructionFormat::RegImm):
+    {
+        if (metadata.dBit == EDBit::RegFieldDestRMFieldSrc)
+        {
+            std::cout << metadata.instructionString << " " << metadata.stringifiedRegisters[0] << ", " << metadata.immediateValue << '\n';
+        }
+        else
+        {
+            std::cout << metadata.instructionString << " " << metadata.immediateValue << ", " << metadata.stringifiedRegisters[0] << '\n';
+        }
+
+        break;
+    }
+    case (EInstructionFormat::RegReg):
+    {
+        if (metadata.dBit == EDBit::RegFieldDestRMFieldSrc)
+        {
+            std::cout << metadata.instructionString << " " << metadata.stringifiedRegisters[0] << ", " << metadata.stringifiedRegisters[1] << '\n';
+        }
+        else
+        {
+            std::cout << metadata.instructionString << " " << metadata.stringifiedRegisters[1] << ", " << metadata.stringifiedRegisters[0] << '\n';
+        }
+
+        break;
+    }
+    default :
+        throw std::runtime_error("invalid instruction format !");
+    }
 }
 
 InstructionMetadata& getInstructionMetadataFromMnemonic(ByteBitset bitSet)
@@ -247,12 +310,19 @@ void decodeSecondInstructionByte(const ByteBitset& byteBitset, std::ifstream& fi
         EModField mod = static_cast<EModField>((byteBitset >> 6).to_ulong() & 0b00000011);
 
         // [3b_r/m]
-        uint64_t rmField = byteBitset.to_ulong() & 0b00000111;
+        uint8_t rmField = byteBitset.to_ulong() & 0b00000111;
 
-        if (EModField::MemModeNoDisp)
+		// [3b_reg]
+		uint8_t regField = (byteBitset >> 3).to_ulong() & 0b00000111;
+
+		ongoingInstructionMetadata.registers.push_back(regField);
+		ongoingInstructionMetadata.registers.push_back(rmField);
+
+        if (mod == EModField::MemModeNoDisp)
         {
-            std::string baseEquation = getEffectiveAddressBaseEquationString(rmField , mod);
+            ongoingInstructionMetadata.instructionFormat = EInstructionFormat::MemReg;
 
+            std::string baseEquation = getEffectiveAddressBaseEquationString(rmField , mod);
             if (baseEquation.empty())
             {
                 // needs third byte
@@ -264,92 +334,18 @@ void decodeSecondInstructionByte(const ByteBitset& byteBitset, std::ifstream& fi
                 file.read(&byte, sizeof(byte));
                 ByteBitset fourthByteBitset(byte);
 
-                WordBitset netDisplacementBitset((fourthByteBitset.to_ulong() << 8) | thirdByteBitset.to_ulong()); 
-                ongoingInstructionMetadata.effectiveAddress = "[" + std::to_string(netDisplacementBitset.to_ulong()) + "]";
-
-                ongoingInstructionMetadata.registers = ;
-
-                if (ongoingInstructionMetadata.wBit == EWBit::ByteOperation)
-                {
-                    // [3b_reg]
-                    ERegThreeBitEncodingByteOp reg = static_cast<ERegThreeBitEncodingByteOp>((byteBitset >> 3).to_ulong() & 0b00000111);
-
-                    if (ongoingInstructionMetadata.dBit == EDBit::RegFieldDestRMFieldSrc)
-                    {
-                        std::cout << ongoingInstructionMetadata.instructionString << " " 
-                            << getRegNameFromThreeBitEncodingByteOp(reg) << ", " 
-                            << directAddress << '\n';
-                    }
-                    else
-                    {
-                        std::cout << ongoingInstructionMetadata.instructionString << " " 
-                            << directAddress << ", " 
-                            << getRegNameFromThreeBitEncodingByteOp(reg) << '\n';
-                    }
-                }
-                else
-                {
-                    // [3b_reg]
-                    ERegThreeBitEncodingWordOp reg = static_cast<ERegThreeBitEncodingWordOp>((byteBitset >> 3).to_ulong() & 0b00000111);
-
-                    if (ongoingInstructionMetadata.dBit == EDBit::RegFieldDestRMFieldSrc)
-                    {
-                        std::cout << ongoingInstructionMetadata.instructionString << " " 
-                            << getRegNameFromThreeBitEncodingWordOp(reg) << ", " 
-                            << directAddress << '\n';
-                    }
-                    else
-                    {
-                        std::cout << ongoingInstructionMetadata.instructionString << " " 
-                            << directAddress << ", " 
-                            << getRegNameFromThreeBitEncodingWordOp(reg) << '\n';
-                    }
-                }
+                WordBitset directAddressBitset((fourthByteBitset.to_ulong() << 8) | thirdByteBitset.to_ulong()); 
+                ongoingInstructionMetadata.effectiveAddress = "[" + std::to_string(directAddressBitset.to_ulong()) + "]";
             }
             else
             {
-                std::string effectiveAddressEquation = "[" + baseEquation + "]";
-
-                if (ongoingInstructionMetadata.wBit == EWBit::ByteOperation)
-                {
-                    // [3b_reg]
-                    ERegThreeBitEncodingByteOp reg = static_cast<ERegThreeBitEncodingByteOp>((byteBitset >> 3).to_ulong() & 0b00000111);
-
-                    if (ongoingInstructionMetadata.dBit == EDBit::RegFieldDestRMFieldSrc)
-                    {
-                        std::cout << ongoingInstructionMetadata.instructionString << " " 
-                            << getRegNameFromThreeBitEncodingByteOp(reg) << ", " 
-                            << effectiveAddressEquation << '\n';
-                    }
-                    else
-                    {
-                        std::cout << ongoingInstructionMetadata.instructionString << " " 
-                            << effectiveAddressEquation << ", " 
-                            << getRegNameFromThreeBitEncodingByteOp(reg) << '\n';
-                    }
-                }
-                else
-                {
-                    // [3b_reg]
-                    ERegThreeBitEncodingWordOp reg = static_cast<ERegThreeBitEncodingWordOp>((byteBitset >> 3).to_ulong() & 0b00000111);
-
-                    if (ongoingInstructionMetadata.dBit == EDBit::RegFieldDestRMFieldSrc)
-                    {
-                        std::cout << ongoingInstructionMetadata.instructionString << " " 
-                            << getRegNameFromThreeBitEncodingWordOp(reg) << ", " 
-                            << effectiveAddressEquation << '\n';
-                    }
-                    else
-                    {
-                        std::cout << ongoingInstructionMetadata.instructionString << " " 
-                            << effectiveAddressEquation << ", " 
-                            << getRegNameFromThreeBitEncodingWordOp(reg) << '\n';
-                    }
-                }
+                ongoingInstructionMetadata.effectiveAddress = "[" + baseEquation + "]";
             }
         }
-        else if (EModField::MemModeEightBitDisp)
+        else if (mod == EModField::MemModeEightBitDisp)
         {
+            ongoingInstructionMetadata.instructionFormat = EInstructionFormat::MemReg;
+
             std::string baseEquation = getEffectiveAddressBaseEquationString(rmField , mod);
 
             // needs third byte
@@ -357,63 +353,26 @@ void decodeSecondInstructionByte(const ByteBitset& byteBitset, std::ifstream& fi
             file.read(&byte, sizeof(byte));
             ByteBitset thirdByteBitset(byte);
 
-			std::string effectiveAddressEquation;
             if ((thirdByteBitset.to_ulong() & 0b10000000) > 0)
             {
-				effectiveAddressEquation = "[" + baseEquation + " - " + std::to_string(-static_cast<int8_t>(thirdByteBitset.to_ulong())) + "]";
+				ongoingInstructionMetadata.effectiveAddress = "[" + baseEquation + " - " + std::to_string(-static_cast<int8_t>(thirdByteBitset.to_ulong())) + "]";
             }
             else
             {
                 if (thirdByteBitset.to_ulong() != 0)
                 {
-                    effectiveAddressEquation = "[" + baseEquation + " + " + std::to_string(thirdByteBitset.to_ulong()) + "]";
+                    ongoingInstructionMetadata.effectiveAddress = "[" + baseEquation + " + " + std::to_string(thirdByteBitset.to_ulong()) + "]";
                 }
                 else
                 {
-                    effectiveAddressEquation = "[" + baseEquation + "]";
+                    ongoingInstructionMetadata.effectiveAddress = "[" + baseEquation + "]";
                 }
             }
-
-            if (ongoingInstructionMetadata.wBit == EWBit::ByteOperation)
-            {
-                // [3b_reg]
-                ERegThreeBitEncodingByteOp reg = static_cast<ERegThreeBitEncodingByteOp>((byteBitset >> 3).to_ulong() & 0b00000111);
-
-                if (ongoingInstructionMetadata.dBit == EDBit::RegFieldDestRMFieldSrc)
-                {
-                    std::cout << ongoingInstructionMetadata.instructionString << " " 
-                        << getRegNameFromThreeBitEncodingByteOp(reg) << ", " 
-                        << effectiveAddressEquation << '\n';
-                }
-                else
-                {
-                    std::cout << ongoingInstructionMetadata.instructionString << " " 
-                        << effectiveAddressEquation << ", " 
-                        << getRegNameFromThreeBitEncodingByteOp(reg) << '\n';
-                }
-            }
-            else
-            {
-                // [3b_reg]
-                ERegThreeBitEncodingWordOp reg = static_cast<ERegThreeBitEncodingWordOp>((byteBitset >> 3).to_ulong() & 0b00000111);
-
-                if (ongoingInstructionMetadata.dBit == EDBit::RegFieldDestRMFieldSrc)
-                {
-                    std::cout << ongoingInstructionMetadata.instructionString << " " 
-                        << getRegNameFromThreeBitEncodingWordOp(reg) << ", " 
-                        << effectiveAddressEquation << '\n';
-                }
-                else
-                {
-                    std::cout << ongoingInstructionMetadata.instructionString << " " 
-                        << effectiveAddressEquation << ", " 
-                        << getRegNameFromThreeBitEncodingWordOp(reg) << '\n';
-                }
-            }
-
         }
-        else if (EModField::MemModeSixteenBitDisp)
+        else if (mod == EModField::MemModeSixteenBitDisp)
         {
+            ongoingInstructionMetadata.instructionFormat = EInstructionFormat::MemReg;
+
             std::string baseEquation = getEffectiveAddressBaseEquationString(rmField, mod);
 
             // needs third byte
@@ -426,103 +385,25 @@ void decodeSecondInstructionByte(const ByteBitset& byteBitset, std::ifstream& fi
             ByteBitset fourthByteBitset(byte);
 
             WordBitset netDisplacementBitset((fourthByteBitset.to_ulong() << 8) | thirdByteBitset.to_ulong()); 
-            std::string effectiveAddressEquation;
             if ((netDisplacementBitset.to_ulong() & 0b1000000000000000) > 0)
             {
-				effectiveAddressEquation = "[" + baseEquation + " - " + std::to_string(-static_cast<int16_t>(netDisplacementBitset.to_ulong())) + "]";
+				ongoingInstructionMetadata.effectiveAddress = "[" + baseEquation + " - " + std::to_string(-static_cast<int16_t>(netDisplacementBitset.to_ulong())) + "]";
             }
             else
             {
                 if (netDisplacementBitset.to_ulong() != 0)
                 {
-                    effectiveAddressEquation = "[" + baseEquation + " + " + std::to_string(netDisplacementBitset.to_ulong()) + "]";
+                    ongoingInstructionMetadata.effectiveAddress = "[" + baseEquation + " + " + std::to_string(netDisplacementBitset.to_ulong()) + "]";
                 }
                 else
                 {
-                    effectiveAddressEquation = "[" + baseEquation + "]";
+                    ongoingInstructionMetadata.effectiveAddress = "[" + baseEquation + "]";
                 }
             }
-
-            if (ongoingInstructionMetadata.wBit == EWBit::ByteOperation)
-            {
-                // [3b_reg]
-                ERegThreeBitEncodingByteOp reg = static_cast<ERegThreeBitEncodingByteOp>((byteBitset >> 3).to_ulong() & 0b00000111);
-
-                if (ongoingInstructionMetadata.dBit == EDBit::RegFieldDestRMFieldSrc)
-                {
-                    std::cout << ongoingInstructionMetadata.instructionString << " " 
-                        << getRegNameFromThreeBitEncodingByteOp(reg) << ", " 
-                        << effectiveAddressEquation << '\n';
-                }
-                else
-                {
-                    std::cout << ongoingInstructionMetadata.instructionString << " " 
-                        << effectiveAddressEquation << ", " 
-                        << getRegNameFromThreeBitEncodingByteOp(reg) << '\n';
-                }
-            }
-            else
-            {
-                // [3b_reg]
-                ERegThreeBitEncodingWordOp reg = static_cast<ERegThreeBitEncodingWordOp>((byteBitset >> 3).to_ulong() & 0b00000111);
-
-                if (ongoingInstructionMetadata.dBit == EDBit::RegFieldDestRMFieldSrc)
-                {
-                    std::cout << ongoingInstructionMetadata.instructionString << " " 
-                        << getRegNameFromThreeBitEncodingWordOp(reg) << ", " 
-                        << effectiveAddressEquation << '\n';
-                }
-                else
-                {
-                    std::cout << ongoingInstructionMetadata.instructionString << " " 
-                        << effectiveAddressEquation << ", " 
-                        << getRegNameFromThreeBitEncodingWordOp(reg) << '\n';
-                }
-            }
-
         }
-        else if (EModField::RegisterMode)
+        else if (mod == EModField::RegisterMode)
         {
-            if (ongoingInstructionMetadata.wBit == EWBit::ByteOperation)
-            {
-                // [3b_reg]
-                ERegThreeBitEncodingByteOp reg = static_cast<ERegThreeBitEncodingByteOp>((byteBitset >> 3).to_ulong() & 0b00000111);
-                // [3b_r/m]
-                ERegThreeBitEncodingByteOp rm = static_cast<ERegThreeBitEncodingByteOp>(byteBitset.to_ulong() & 0b00000111);
-
-                if (ongoingInstructionMetadata.dBit == EDBit::RegFieldDestRMFieldSrc)
-                {
-                    std::cout << ongoingInstructionMetadata.instructionString << " " 
-                        << getRegNameFromThreeBitEncodingByteOp(reg) << ", " 
-                        << getRegNameFromThreeBitEncodingByteOp(rm) << '\n';
-                }
-                else
-                {
-                    std::cout << ongoingInstructionMetadata.instructionString << " " 
-                        << getRegNameFromThreeBitEncodingByteOp(rm) << ", " 
-                        << getRegNameFromThreeBitEncodingByteOp(reg) << '\n';
-                }
-            }
-            else
-            {
-                // [3b_reg]
-                ERegThreeBitEncodingWordOp reg = static_cast<ERegThreeBitEncodingWordOp>((byteBitset >> 3).to_ulong() & 0b00000111);
-                // [3b_r/m]
-                ERegThreeBitEncodingWordOp rm = static_cast<ERegThreeBitEncodingWordOp>(byteBitset.to_ulong() & 0b00000111);
-
-                if (ongoingInstructionMetadata.dBit == EDBit::RegFieldDestRMFieldSrc)
-                {
-                    std::cout << ongoingInstructionMetadata.instructionString << " " 
-                        << getRegNameFromThreeBitEncodingWordOp(reg) << ", " 
-                        << getRegNameFromThreeBitEncodingWordOp(rm) << '\n';
-                }
-                else
-                {
-                    std::cout << ongoingInstructionMetadata.instructionString << " " 
-                        << getRegNameFromThreeBitEncodingWordOp(rm) << ", " 
-                        << getRegNameFromThreeBitEncodingWordOp(reg) << '\n';
-                }
-            }
+            ongoingInstructionMetadata.instructionFormat = EInstructionFormat::RegReg;
         }
     }
 }
@@ -561,6 +442,13 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
     {
         ongoingInstructionMetadata.instructionFormat = EInstructionFormat::RegImm;
 
+        // d_bit is implied. since, we HAVE to mov the immediate value into the register.
+		ongoingInstructionMetadata.dBit = EDBit::RegFieldDestRMFieldSrc;
+
+		// [3b_reg]
+		uint8_t reg = byteBitset.to_ulong() & 0b00000111;
+		ongoingInstructionMetadata.registers.push_back(reg);;
+
         if (((byteBitset >> 3).to_ulong() & 0b00000001) > 0)
         {
             ongoingInstructionMetadata.wBit = EWBit::WordOperation;
@@ -576,10 +464,6 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
 
             WordBitset immediateValueBitset((thirdByteBitset.to_ulong() << 8) | secondByteBitset.to_ulong());
             ongoingInstructionMetadata.immediateValue = std::to_string(immediateValueBitset.to_ulong());
-
-            // [3b_reg]
-            ERegThreeBitEncodingWordOp reg = static_cast<ERegThreeBitEncodingWordOp>(byteBitset.to_ulong() & 0b00000111);
-            ongoingInstructionMetadata.destRegister = static_cast<uint8_t>(reg);
         }
         else
         {
@@ -591,15 +475,14 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
             ByteBitset secondByteBitset(byte);
 
             ongoingInstructionMetadata.immediateValue = std::to_string(secondByteBitset.to_ulong()); 
-
-            // [3b_reg]
-            ERegThreeBitEncodingByteOp reg = static_cast<ERegThreeBitEncodingByteOp>(byteBitset.to_ulong() & 0b00000111);
-            ongoingInstructionMetadata.destRegister = static_cast<uint8_t>(reg);
         }
     }
     else if (ongoingInstructionMetadata.instruction == EInstruction::MovMemToAcc || 
             ongoingInstructionMetadata.instruction == EInstruction::MovAccToMem)
     {
+        ongoingInstructionMetadata.instructionFormat = EInstructionFormat::MemReg;
+
+        // d_bit bit is implied since mov_mem_to_acc and mov_acc_to_mem are two separate mnemonics !
         if (ongoingInstructionMetadata.instruction == EInstruction::MovMemToAcc)
         {
             ongoingInstructionMetadata.dBit = EDBit::RegFieldDestRMFieldSrc;
@@ -609,7 +492,9 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
             ongoingInstructionMetadata.dBit = EDBit::RegFieldSrcRMFieldDest;
         }
 
-        ongoingInstructionMetadata.instructionFormat = EInstructionFormat::RegMem;
+        // w_bit is implied since it HAS to be ax !
+		ongoingInstructionMetadata.wBit = EWBit::WordOperation;
+
         ongoingInstructionMetadata.registers.push_back(static_cast<uint8_t>(ERegThreeBitEncodingWordOp::ax));
 
         // needs second byte
@@ -624,6 +509,8 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
         WordBitset effectiveAddressBitset((thirdByteBitset.to_ulong() << 8) | secondByteBitset.to_ulong());
         ongoingInstructionMetadata.effectiveAddress = "[" + std::to_string(effectiveAddressBitset.to_ulong()) + "]";
     }
+
+	printInstruction(ongoingInstructionMetadata);
 }
 
 int main(int argc, char* argv[])
