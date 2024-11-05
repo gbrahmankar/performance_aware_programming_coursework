@@ -39,6 +39,17 @@ enum EInstruction
     InstructionInvalid
 };
 
+enum EInstructionFormat
+{
+    RegReg,
+    MemReg,
+
+    RegImm,
+    MemImm,
+
+    InstructionFormatInvalid
+};
+
 // [1b_d]
 enum EDBit : uint8_t
 {
@@ -184,11 +195,20 @@ struct InstructionMetadata
     {}
 
     EInstruction instruction = EInstruction::InstructionInvalid;
+    EInstructionFormat instructionFormat = EInstructionFormat::InstructionFormatInvalid;
     std::string instructionString;
 
     EDBit dBit = EDBit::DBitInvalid;
     EWBit wBit = EWBit::WBitInvalid;
     EModField modField = EModField::ModFieldInvalid;
+
+    std::string directAddress;
+    std::string effectiveAddress;
+
+    // if the instruction has two registers, 0_src, 1_dst. else, based on instruction_format
+    std::vector<uint8_t> registers;
+
+    std::string immediateValue;
 };
 
 std::unordered_map<uint64_t, InstructionMetadata> mnemonicToInstructionMetadata =
@@ -199,6 +219,10 @@ std::unordered_map<uint64_t, InstructionMetadata> mnemonicToInstructionMetadata 
     { MnemonicBitset("1010000").to_ulong(), InstructionMetadata(EInstruction::MovMemToAcc, "mov") },
     { MnemonicBitset("1010001").to_ulong(), InstructionMetadata(EInstruction::MovAccToMem, "mov") }
 };
+
+void printInstruction(const InstructionMetadata& metadata)
+{
+}
 
 InstructionMetadata& getInstructionMetadataFromMnemonic(ByteBitset bitSet)
 {
@@ -217,17 +241,18 @@ InstructionMetadata& getInstructionMetadataFromMnemonic(ByteBitset bitSet)
 
 void decodeSecondInstructionByte(const ByteBitset& byteBitset, std::ifstream& file, InstructionMetadata& ongoingInstructionMetadata)
 {
-    // [2b_mod] : unused right now !
-    EModField mod = static_cast<EModField>((byteBitset >> 6).to_ulong() & 0b00000011);
-
-    // [3b_r/m]
-    uint64_t rmField = byteBitset.to_ulong() & 0b00000111;
-    std::string baseEquation = getEffectiveAddressBaseEquationString(rmField , mod);
-
-    switch(mod)
+    if (ongoingInstructionMetadata.instruction == EInstruction::MovRegMemToFromReg)
     {
-        case (EModField::MemModeNoDisp) :
+        // [2b_mod]
+        EModField mod = static_cast<EModField>((byteBitset >> 6).to_ulong() & 0b00000011);
+
+        // [3b_r/m]
+        uint64_t rmField = byteBitset.to_ulong() & 0b00000111;
+
+        if (EModField::MemModeNoDisp)
         {
+            std::string baseEquation = getEffectiveAddressBaseEquationString(rmField , mod);
+
             if (baseEquation.empty())
             {
                 // needs third byte
@@ -240,7 +265,9 @@ void decodeSecondInstructionByte(const ByteBitset& byteBitset, std::ifstream& fi
                 ByteBitset fourthByteBitset(byte);
 
                 WordBitset netDisplacementBitset((fourthByteBitset.to_ulong() << 8) | thirdByteBitset.to_ulong()); 
-                std::string directAddress = "[" + std::to_string(netDisplacementBitset.to_ulong()) + "]";
+                ongoingInstructionMetadata.effectiveAddress = "[" + std::to_string(netDisplacementBitset.to_ulong()) + "]";
+
+                ongoingInstructionMetadata.registers = ;
 
                 if (ongoingInstructionMetadata.wBit == EWBit::ByteOperation)
                 {
@@ -320,10 +347,11 @@ void decodeSecondInstructionByte(const ByteBitset& byteBitset, std::ifstream& fi
                     }
                 }
             }
-            break;
         }
-        case (EModField::MemModeEightBitDisp) :
+        else if (EModField::MemModeEightBitDisp)
         {
+            std::string baseEquation = getEffectiveAddressBaseEquationString(rmField , mod);
+
             // needs third byte
             char byte;
             file.read(&byte, sizeof(byte));
@@ -383,12 +411,9 @@ void decodeSecondInstructionByte(const ByteBitset& byteBitset, std::ifstream& fi
                 }
             }
 
-            break;
         }
-        case (EModField::MemModeSixteenBitDisp) :
+        else if (EModField::MemModeSixteenBitDisp)
         {
-            // [3b_r/m]
-            uint64_t rmField = byteBitset.to_ulong() & 0b00000111;
             std::string baseEquation = getEffectiveAddressBaseEquationString(rmField, mod);
 
             // needs third byte
@@ -455,9 +480,8 @@ void decodeSecondInstructionByte(const ByteBitset& byteBitset, std::ifstream& fi
                 }
             }
 
-            break;
         }
-        case (EModField::RegisterMode) :
+        else if (EModField::RegisterMode)
         {
             if (ongoingInstructionMetadata.wBit == EWBit::ByteOperation)
             {
@@ -499,12 +523,6 @@ void decodeSecondInstructionByte(const ByteBitset& byteBitset, std::ifstream& fi
                         << getRegNameFromThreeBitEncodingWordOp(reg) << '\n';
                 }
             }
-
-            break;
-        }
-        default :
-        {
-            throw std::runtime_error("invalid mod !");
         }
     }
 }
@@ -512,6 +530,7 @@ void decodeSecondInstructionByte(const ByteBitset& byteBitset, std::ifstream& fi
 void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& file, InstructionMetadata& ongoingInstructionMetadata)
 {
     ongoingInstructionMetadata = getInstructionMetadataFromMnemonic(byteBitset);
+
     if (ongoingInstructionMetadata.instruction == EInstruction::MovRegMemToFromReg)
     {
         if ((byteBitset.to_ulong() & 0b00000010) > 0)
@@ -540,8 +559,7 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
     }
     else if (ongoingInstructionMetadata.instruction == EInstruction::MovImmToReg)
     {
-        std::string encodedRegister;
-        std::string immediateValue;
+        ongoingInstructionMetadata.instructionFormat = EInstructionFormat::RegImm;
 
         if (((byteBitset >> 3).to_ulong() & 0b00000001) > 0)
         {
@@ -556,12 +574,12 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
             file.read(&byte, sizeof(byte));
             ByteBitset thirdByteBitset(byte);
 
-            WordBitset netDisplacementBitset((thirdByteBitset.to_ulong() << 8) | secondByteBitset.to_ulong());
-            immediateValue = std::to_string(netDisplacementBitset.to_ulong());
+            WordBitset immediateValueBitset((thirdByteBitset.to_ulong() << 8) | secondByteBitset.to_ulong());
+            ongoingInstructionMetadata.immediateValue = std::to_string(immediateValueBitset.to_ulong());
 
             // [3b_reg]
             ERegThreeBitEncodingWordOp reg = static_cast<ERegThreeBitEncodingWordOp>(byteBitset.to_ulong() & 0b00000111);
-            encodedRegister = getRegNameFromThreeBitEncodingWordOp(reg);
+            ongoingInstructionMetadata.destRegister = static_cast<uint8_t>(reg);
         }
         else
         {
@@ -572,20 +590,28 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
             file.read(&byte, sizeof(byte));
             ByteBitset secondByteBitset(byte);
 
-            immediateValue = std::to_string(secondByteBitset.to_ulong()); 
+            ongoingInstructionMetadata.immediateValue = std::to_string(secondByteBitset.to_ulong()); 
 
             // [3b_reg]
             ERegThreeBitEncodingByteOp reg = static_cast<ERegThreeBitEncodingByteOp>(byteBitset.to_ulong() & 0b00000111);
-            encodedRegister = getRegNameFromThreeBitEncodingByteOp(reg);
+            ongoingInstructionMetadata.destRegister = static_cast<uint8_t>(reg);
         }
-
-        std::cout << ongoingInstructionMetadata.instructionString << " " 
-            << encodedRegister << ", " 
-            << immediateValue << '\n';
     }
     else if (ongoingInstructionMetadata.instruction == EInstruction::MovMemToAcc || 
             ongoingInstructionMetadata.instruction == EInstruction::MovAccToMem)
     {
+        if (ongoingInstructionMetadata.instruction == EInstruction::MovMemToAcc)
+        {
+            ongoingInstructionMetadata.dBit = EDBit::RegFieldDestRMFieldSrc;
+        }
+        else
+        {
+            ongoingInstructionMetadata.dBit = EDBit::RegFieldSrcRMFieldDest;
+        }
+
+        ongoingInstructionMetadata.instructionFormat = EInstructionFormat::RegMem;
+        ongoingInstructionMetadata.registers.push_back(static_cast<uint8_t>(ERegThreeBitEncodingWordOp::ax));
+
         // needs second byte
         char byte;
         file.read(&byte, sizeof(byte));
@@ -596,20 +622,7 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
         ByteBitset thirdByteBitset(byte);
 
         WordBitset effectiveAddressBitset((thirdByteBitset.to_ulong() << 8) | secondByteBitset.to_ulong());
-        std::string effectiveAddress = "[" + std::to_string(effectiveAddressBitset.to_ulong()) + "]";
-
-        if (ongoingInstructionMetadata.instruction == EInstruction::MovMemToAcc)
-        {
-            std::cout << ongoingInstructionMetadata.instructionString << " " 
-                << "ax" << ", " 
-                << effectiveAddress << '\n';
-        }
-        else
-        {
-            std::cout << ongoingInstructionMetadata.instructionString << " " 
-                << effectiveAddress << ", " 
-                << "ax" << '\n';
-        }
+        ongoingInstructionMetadata.effectiveAddress = "[" + std::to_string(effectiveAddressBitset.to_ulong()) + "]";
     }
 }
 
