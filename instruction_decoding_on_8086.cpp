@@ -358,13 +358,20 @@ void constructEffectiveAddressFromMode(std::ifstream& file, InstructionMetadata&
 		ByteBitset firstByteBitset(byte);
 
         ByteBitset effectiveAddressBitset(firstByteBitset);
-        if ((effectiveAddressBitset.to_ulong() & 0b10000000) > 0)
+        if (effectiveAddressBitset.to_ulong() != 0)
         {
-            metadata.effectiveAddress += " - " + std::to_string(-static_cast<int8_t>(effectiveAddressBitset.to_ulong())) + "]";
+            if ((effectiveAddressBitset.to_ulong() & 0b10000000) > 0)
+            {
+                metadata.effectiveAddress += " - " + std::to_string(-static_cast<int8_t>(effectiveAddressBitset.to_ulong())) + "]";
+            }
+            else
+            {
+                metadata.effectiveAddress += " + " + std::to_string(effectiveAddressBitset.to_ulong()) + "]";
+            }
         }
         else
         {
-            metadata.effectiveAddress += " + " + std::to_string(effectiveAddressBitset.to_ulong()) + "]";
+		    metadata.effectiveAddress += "]";
         }
     }
     else if (disp == EBitsDisplacement::SixteenBitDisp)
@@ -375,14 +382,28 @@ void constructEffectiveAddressFromMode(std::ifstream& file, InstructionMetadata&
         file.read(&byte, sizeof(byte));
 		ByteBitset secondByteBitset(byte);
 
-		ByteBitset effectiveAddressBitset((secondByteBitset.to_ulong() << 8) | firstByteBitset.to_ulong()); 
-        if ((effectiveAddressBitset.to_ulong() & 0b1000000000000000) > 0)
+		WordBitset effectiveAddressBitset((secondByteBitset.to_ulong() << 8) | firstByteBitset.to_ulong()); 
+        if (effectiveAddressBitset.to_ulong() != 0)
         {
-            metadata.effectiveAddress += " - " + std::to_string(-static_cast<int16_t>(effectiveAddressBitset.to_ulong())) + "]";
+            if (baseEquation.empty()) // direct_address case
+            {
+                metadata.effectiveAddress += std::to_string(effectiveAddressBitset.to_ulong()) + "]";
+            }
+            else
+            {
+                if ((effectiveAddressBitset.to_ulong() & 0x8000) > 0)
+                {
+                    metadata.effectiveAddress += " - " + std::to_string(-static_cast<int16_t>(effectiveAddressBitset.to_ulong())) + "]";
+                }
+                else
+                {
+                    metadata.effectiveAddress += " + " + std::to_string(effectiveAddressBitset.to_ulong()) + "]";
+                }
+            }
         }
         else
         {
-            metadata.effectiveAddress += " + " + std::to_string(effectiveAddressBitset.to_ulong()) + "]";
+		    metadata.effectiveAddress += "]";
         }
     }
     else
