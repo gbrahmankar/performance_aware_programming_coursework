@@ -81,7 +81,8 @@ enum EModField : uint8_t
 
 enum EBitsDisplacement : uint8_t
 {
-    EightBitDisp = 0,
+    NoDisp = 0,
+    EightBitDisp,
     SixteenBitDisp,
 
     DispInvalid
@@ -351,11 +352,11 @@ void constructEffectiveAddressFromMode(std::ifstream& file, InstructionMetadata&
     }
 
     char byte;
-	file.read(&byte, sizeof(byte));
-	ByteBitset firstByteBitset(byte);
-
     if (disp == EBitsDisplacement::EightBitDisp)
     {
+		file.read(&byte, sizeof(byte));
+		ByteBitset firstByteBitset(byte);
+
         ByteBitset effectiveAddressBitset(firstByteBitset);
         if ((effectiveAddressBitset.to_ulong() & 0b10000000) > 0)
         {
@@ -366,8 +367,11 @@ void constructEffectiveAddressFromMode(std::ifstream& file, InstructionMetadata&
             metadata.effectiveAddress += " + " + std::to_string(effectiveAddressBitset.to_ulong()) + "]";
         }
     }
-    else
+    else if (disp == EBitsDisplacement::SixteenBitDisp)
     {
+		file.read(&byte, sizeof(byte));
+		ByteBitset firstByteBitset(byte);
+
         file.read(&byte, sizeof(byte));
 		ByteBitset secondByteBitset(byte);
 
@@ -380,6 +384,10 @@ void constructEffectiveAddressFromMode(std::ifstream& file, InstructionMetadata&
         {
             metadata.effectiveAddress += " + " + std::to_string(effectiveAddressBitset.to_ulong()) + "]";
         }
+    }
+    else
+    {
+		metadata.effectiveAddress += "]";
     }
 }
 
@@ -418,7 +426,14 @@ void decodeSecondInstructionByte(const ByteBitset& byteBitset, std::ifstream& fi
         {
             ongoingInstructionMetadata.instructionFormat = EInstructionFormat::MemReg;
 
-            constructEffectiveAddressFromMode(file, ongoingInstructionMetadata, EBitsDisplacement::SixteenBitDisp);
+            if (ongoingInstructionMetadata.rmField != 6) // 0b110 -> direct_address
+            {
+                constructEffectiveAddressFromMode(file, ongoingInstructionMetadata, EBitsDisplacement::NoDisp);
+            }
+            else
+            {
+                constructEffectiveAddressFromMode(file, ongoingInstructionMetadata, EBitsDisplacement::SixteenBitDisp);
+            }
 
             if (ongoingInstructionMetadata.instruction == EInstruction::MovImmToRM)
             {
@@ -517,6 +532,9 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
 
         // w_bit is implied since it HAS to be ax !
 		ongoingInstructionMetadata.wBit = EWBit::WordOperation;
+
+        ongoingInstructionMetadata.rmField = 6; // 0b110 -> direct_address is implied
+        ongoingInstructionMetadata.modField = EModField::MemModeNoDisp; // 0b110 -> direct_address is implied
 
         ongoingInstructionMetadata.registers.push_back(static_cast<uint8_t>(ERegThreeBitEncodingWordOp::ax));
 
