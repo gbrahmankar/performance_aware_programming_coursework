@@ -458,8 +458,6 @@ void decodeSecondInstructionByte(const ByteBitset& byteBitset, std::ifstream& fi
 	{
 	case (EModField::MemModeNoDisp) :
 	{
-		ongoingInstructionMetadata.instructionFormat = EInstructionFormat::MemReg;
-
 		if (ongoingInstructionMetadata.rmField != 6) // 0b110 -> direct_address
 		{
 			constructEffectiveAddressFromMode(file, ongoingInstructionMetadata, EBitsDisplacement::NoDisp);
@@ -473,29 +471,20 @@ void decodeSecondInstructionByte(const ByteBitset& byteBitset, std::ifstream& fi
 	}
 	case (EModField::MemModeEightBitDisp) :
 	{
-		ongoingInstructionMetadata.instructionFormat = EInstructionFormat::MemReg;
 		constructEffectiveAddressFromMode(file, ongoingInstructionMetadata, EBitsDisplacement::EightBitDisp);
 		break;
 	}
 	case (EModField::MemModeSixteenBitDisp) :
 	{
-		ongoingInstructionMetadata.instructionFormat = EInstructionFormat::MemReg;
 		constructEffectiveAddressFromMode(file, ongoingInstructionMetadata, EBitsDisplacement::SixteenBitDisp);
 		break;
 	}
 	case (EModField::RegisterMode) :
 	{
-		ongoingInstructionMetadata.instructionFormat = EInstructionFormat::RegReg;
-		return;
+        break;
 	}
 	default :
 		return;
-	}
-
-    if (ongoingInstructionMetadata.instruction == EInstruction::MovImmToRM)
-	{
-		ongoingInstructionMetadata.instructionFormat = EInstructionFormat::MemImm;
-		constructImmediateValueFromOperationWidth(file, ongoingInstructionMetadata, ongoingInstructionMetadata.wBit);
 	}
 }
 
@@ -506,7 +495,10 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
     switch (ongoingInstructionMetadata.instruction)
     {
 	case (EInstruction::MovRegMemToFromReg) :
+	case (EInstruction::AddRegMemWithRegToEither) :
 	{
+		ongoingInstructionMetadata.instructionFormat = EInstructionFormat::MemReg;
+
 		if ((byteBitset.to_ulong() & 0b00000010) > 0)
 		{
 			ongoingInstructionMetadata.dBit = EDBit::RegFieldDestRMFieldSrc;
@@ -595,6 +587,8 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
 		file.read(&byte, sizeof(byte));
 		ByteBitset secondByteBitset(byte);
 		decodeSecondInstructionByte(secondByteBitset, file, ongoingInstructionMetadata);
+
+		constructImmediateValueFromOperationWidth(file, ongoingInstructionMetadata, ongoingInstructionMetadata.wBit);
 
 		break;
 	}
