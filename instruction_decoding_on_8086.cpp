@@ -39,6 +39,14 @@ enum EInstruction
     add_reg_mem_with_reg_to_either : [000000][1b_d][1b_w]] [[2b_mod][3b_reg][3b_r/m]] [8b_disp_low] [8b_disp_high]
     */
     AddRegMemWithRegToEither,
+    /*
+    add_imm_to_acc : [0001010][1b_w]] [8b_data_low] [8b_data_high]
+    */
+    AddImmToAcc,
+    /*
+    add_imm_to_rm : [100000][1b_s][1b_w]] [[2b_mod][000][3b_r/m]] [8b_disp_low] [8b_disp_high] [8b_data_low] [8b_data_high]
+    */
+    AddImmToRM,
 
     InstructionInvalid
 };
@@ -70,6 +78,15 @@ enum EWBit : uint8_t
     WordOperation,
 
     WBitInvalid
+};
+
+// [1b_s]
+enum ESBit : uint8_t
+{
+    SixteenBitImmValue = 0,
+    EightBitImmValue,
+
+    SBitInvalid
 };
 
 // [2b_mod]
@@ -213,6 +230,7 @@ struct InstructionMetadata
 
     EDBit dBit = EDBit::DBitInvalid;
     EWBit wBit = EWBit::WBitInvalid;
+    ESBit sBit = ESBit::SBitInvalid;
     EModField modField = EModField::ModFieldInvalid;
     uint8_t regField = UINT8_MAX;
     uint8_t rmField = UINT8_MAX;
@@ -234,7 +252,9 @@ std::unordered_map<uint64_t, InstructionMetadata> mnemonicToInstructionMetadata 
     { MnemonicBitset("1010000").to_ulong(), InstructionMetadata(EInstruction::MovMemToAcc, "mov") },
     { MnemonicBitset("1010001").to_ulong(), InstructionMetadata(EInstruction::MovAccToMem, "mov") },
 
-    { MnemonicBitset("000000").to_ulong(), InstructionMetadata(EInstruction::AddRegMemWithRegToEither, "add") }
+    { MnemonicBitset("000000").to_ulong(), InstructionMetadata(EInstruction::AddRegMemWithRegToEither, "add") },
+    { MnemonicBitset("100000").to_ulong(), InstructionMetadata(EInstruction::AddImmToRM, "add") },
+    { MnemonicBitset("0001010").to_ulong(), InstructionMetadata(EInstruction::AddImmToAcc, "add") }
 };
 
 void printInstruction(InstructionMetadata& metadata)
@@ -427,7 +447,7 @@ void constructEffectiveAddressFromMode(std::ifstream& file, InstructionMetadata&
 
 InstructionMetadata& getInstructionMetadataFromMnemonic(ByteBitset bitSet)
 {
-    while (bitSet.to_ulong() > 0)
+    while (bitSet.to_ulong() >= 0)
     {
         if (mnemonicToInstructionMetadata.count(bitSet.to_ulong()))
         {
@@ -567,6 +587,39 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
 
 		break;
 	}
+    case (EInstruction::AddImmToAcc) :
+	{
+		ongoingInstructionMetadata.instructionFormat = EInstructionFormat::RegImm;
+
+		// d_bit bit is implied since mov_mem_to_acc and mov_acc_to_mem are two separate mnemonics !
+		ongoingInstructionMetadata.dBit = EDBit::RegFieldDestRMFieldSrc;
+
+        if ((byteBitset.to_ulong() & 0b00000001) > 0)
+		{
+			ongoingInstructionMetadata.wBit = EWBit::WordOperation;
+		    ongoingInstructionMetadata.registers.push_back(static_cast<uint8_t>(ERegThreeBitEncodingWordOp::ax));
+		}
+		else
+		{
+			ongoingInstructionMetadata.wBit = EWBit::ByteOperation;
+		    ongoingInstructionMetadata.registers.push_back(static_cast<uint8_t>(ERegThreeBitEncodingByteOp::al));
+		}
+
+		constructImmediateValueFromOperationWidth(file, ongoingInstructionMetadata, ongoingInstructionMetadata.wBit);
+
+		break;
+	}
+	case (EInstruction::AddImmToRM) :
+    {
+        if (((byteBitset >> 1).to_ulong() & 0b00000001) > 0)
+		{
+			ongoingInstructionMetadata.sBit = ESBit::EightBitImmValue;
+		}
+		else
+		{
+			ongoingInstructionMetadata.sBit = ESBit::SixteenBitImmValue;
+		}
+    }
 	case (EInstruction::MovImmToRM) :
 	{
 		ongoingInstructionMetadata.instructionFormat = EInstructionFormat::MemImm;
