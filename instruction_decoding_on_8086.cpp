@@ -65,6 +65,10 @@ enum EInstruction
     cmp_imm_with_acc : [0010110][1b_w]] [8b_data_low] [8b_data_high]
     */
     CmpImmWithAcc,
+    /*
+    jump_if_not_zero : [01110101] [8b_ip_increments]
+    */
+    JmpIfNotZero,
 
     InstructionInvalid
 };
@@ -76,6 +80,8 @@ enum EInstructionFormat
 
     RegImm,
     MemImm,
+
+    Imm,
 
     InstructionFormatInvalid
 };
@@ -279,7 +285,9 @@ std::unordered_map<uint64_t, InstructionMetadata> mnemonicToInstructionMetadata 
     { MnemonicBitset("0010110").to_ulong(), InstructionMetadata(EInstruction::SubImmFromAcc, "sub") },
 
     { MnemonicBitset("001110").to_ulong(), InstructionMetadata(EInstruction::CmpRegMemAndReg, "cmp") },
-    { MnemonicBitset("0011110").to_ulong(), InstructionMetadata(EInstruction::CmpImmWithAcc, "cmp") }
+    { MnemonicBitset("0011110").to_ulong(), InstructionMetadata(EInstruction::CmpImmWithAcc, "cmp") },
+
+    { MnemonicBitset("01110101").to_ulong(), InstructionMetadata(EInstruction::JmpIfNotZero, "jnz") }
 };
 
 void printInstruction(InstructionMetadata& metadata)
@@ -301,6 +309,11 @@ void printInstruction(InstructionMetadata& metadata)
 
     switch (metadata.instructionFormat)
     {
+    case (EInstructionFormat::Imm):
+    {
+        std::cout << metadata.instructionString << " " << metadata.immediateValue << '\n';
+        break;
+    }
     case (EInstructionFormat::MemImm):
     {
 		if (metadata.wBit == EWBit::WordOperation)
@@ -543,6 +556,12 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
 
     switch (ongoingInstructionMetadata.instruction)
     {
+    case (EInstruction::JmpIfNotZero) :
+    {
+        ongoingInstructionMetadata.instructionFormat = EInstructionFormat::Imm;
+		constructImmediateValueFromOperationWidth(file, ongoingInstructionMetadata, EWBit::ByteOperation);
+        break;
+    }
 	case (EInstruction::MovRegMemToFromReg) :
 	case (EInstruction::AddRegMemWithRegToEither) :
 	case (EInstruction::SubRegMemWithRegToEither) :
