@@ -58,13 +58,13 @@ enum EInstruction
     */
     SubImmFromAcc,
     /*
-    cmp_reg_mem_with_reg_to_either : [001010][1b_d][1b_w]] [[2b_mod][3b_reg][3b_r/m]] [8b_disp_low] [8b_disp_high]
+    cmp_reg_mem_with_reg : [001010][1b_d][1b_w]] [[2b_mod][3b_reg][3b_r/m]] [8b_disp_low] [8b_disp_high]
     */
-    CmpRegMemWithRegToEither,
+    CmpRegMemAndReg,
     /*
-    cmp_imm_from_acc : [0010110][1b_w]] [8b_data_low] [8b_data_high]
+    cmp_imm_with_acc : [0010110][1b_w]] [8b_data_low] [8b_data_high]
     */
-    CmpImmFromAcc,
+    CmpImmWithAcc,
 
     InstructionInvalid
 };
@@ -278,8 +278,8 @@ std::unordered_map<uint64_t, InstructionMetadata> mnemonicToInstructionMetadata 
     { MnemonicBitset("001010").to_ulong(), InstructionMetadata(EInstruction::SubRegMemWithRegToEither, "sub") },
     { MnemonicBitset("0010110").to_ulong(), InstructionMetadata(EInstruction::SubImmFromAcc, "sub") },
 
-    { MnemonicBitset("001110").to_ulong(), InstructionMetadata(EInstruction::CmpRegMemWithRegToEither, "cmp") },
-    { MnemonicBitset("0011110").to_ulong(), InstructionMetadata(EInstruction::CmpImmFromAcc, "cmp") }
+    { MnemonicBitset("001110").to_ulong(), InstructionMetadata(EInstruction::CmpRegMemAndReg, "cmp") },
+    { MnemonicBitset("0011110").to_ulong(), InstructionMetadata(EInstruction::CmpImmWithAcc, "cmp") }
 };
 
 void printInstruction(InstructionMetadata& metadata)
@@ -546,7 +546,7 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
 	case (EInstruction::MovRegMemToFromReg) :
 	case (EInstruction::AddRegMemWithRegToEither) :
 	case (EInstruction::SubRegMemWithRegToEither) :
-	case (EInstruction::CmpRegMemWithRegToEither) :
+	case (EInstruction::CmpRegMemAndReg) :
 	{
 		if ((byteBitset.to_ulong() & 0b00000010) > 0)
 		{
@@ -652,7 +652,7 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
 	}
     case (EInstruction::AddImmToAcc) :
     case (EInstruction::SubImmFromAcc) :
-    case (EInstruction::CmpImmFromAcc) :
+    case (EInstruction::CmpImmWithAcc) :
 	{
 		ongoingInstructionMetadata.instructionFormat = EInstructionFormat::RegImm;
 
