@@ -370,6 +370,10 @@ void printInstruction(InstructionMetadata& metadata)
     }
 }
 
+void simulateInstruction(const InstructionMetadata& metadata)
+{
+}
+
 void constructImmediateValueFromOperationWidth(std::ifstream& file, InstructionMetadata& ongoingInstructionMetadata, EWBit w)
 {
     if (w == EWBit::WordOperation)
@@ -550,9 +554,9 @@ void decodeSecondInstructionByte(const ByteBitset& byteBitset, std::ifstream& fi
 	}
 }
 
-void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& file)
+void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& file, InstructionMetadata& ongoingInstructionMetadata)
 {
-    InstructionMetadata ongoingInstructionMetadata = getInstructionMetadataFromMnemonic(byteBitset);
+    ongoingInstructionMetadata = getInstructionMetadataFromMnemonic(byteBitset);
 
     switch (ongoingInstructionMetadata.instruction)
     {
@@ -759,8 +763,6 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
 	default :
 		return;
     }
-
-	printInstruction(ongoingInstructionMetadata);
 }
 
 int main(int argc, char* argv[])
@@ -778,8 +780,8 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    InstructionMetadata ongoingInstructionMetadata;
     std::cout << "bits 16" << '\n';
-
     while (true) 
     {
         char byte;
@@ -790,7 +792,10 @@ int main(int argc, char* argv[])
         {
             break;
         }
-        decodeFirstInstructionByte(firstByteBitset, file); 
+        decodeFirstInstructionByte(firstByteBitset, file, ongoingInstructionMetadata); 
+
+        printInstruction(ongoingInstructionMetadata);
+        simulateInstruction(ongoingInstructionMetadata);
     }
 
     return 0;    
