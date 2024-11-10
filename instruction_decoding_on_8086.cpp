@@ -45,8 +45,26 @@ enum EInstruction
     AddImmToAcc,
     /*
     add_imm_to_rm : [100000][1b_s][1b_w]] [[2b_mod][000][3b_r/m]] [8b_disp_low] [8b_disp_high] [8b_data_low] [8b_data_high]
+    sub_imm_from_rm : [100000][1b_s][1b_w]] [[2b_mod][101][3b_r/m]] [8b_disp_low] [8b_disp_high] [8b_data_low] [8b_data_high]
+    cmp_imm_from_rm : [100000][1b_s][1b_w]] [[2b_mod][111][3b_r/m]] [8b_disp_low] [8b_disp_high] [8b_data_low] [8b_data_high]
     */
-    AddImmToRM,
+    AddSubCmpImmToRM,
+    /*
+    sub_reg_mem_with_reg_to_either : [001010][1b_d][1b_w]] [[2b_mod][3b_reg][3b_r/m]] [8b_disp_low] [8b_disp_high]
+    */
+    SubRegMemWithRegToEither,
+    /*
+    sub_imm_from_acc : [0010110][1b_w]] [8b_data_low] [8b_data_high]
+    */
+    SubImmFromAcc,
+    /*
+    cmp_reg_mem_with_reg_to_either : [001010][1b_d][1b_w]] [[2b_mod][3b_reg][3b_r/m]] [8b_disp_low] [8b_disp_high]
+    */
+    CmpRegMemWithRegToEither,
+    /*
+    cmp_imm_from_acc : [0010110][1b_w]] [8b_data_low] [8b_data_high]
+    */
+    CmpImmFromAcc,
 
     InstructionInvalid
 };
@@ -254,8 +272,14 @@ std::unordered_map<uint64_t, InstructionMetadata> mnemonicToInstructionMetadata 
     { MnemonicBitset("1010001").to_ulong(), InstructionMetadata(EInstruction::MovAccToMem, "mov") },
 
     { MnemonicBitset("000000").to_ulong(), InstructionMetadata(EInstruction::AddRegMemWithRegToEither, "add") },
-    { MnemonicBitset("100000").to_ulong(), InstructionMetadata(EInstruction::AddImmToRM, "add") },
-    { MnemonicBitset("0000010").to_ulong(), InstructionMetadata(EInstruction::AddImmToAcc, "add") }
+    { MnemonicBitset("100000").to_ulong(), InstructionMetadata(EInstruction::AddSubCmpImmToRM, "add") },
+    { MnemonicBitset("0000010").to_ulong(), InstructionMetadata(EInstruction::AddImmToAcc, "add") },
+
+    { MnemonicBitset("001010").to_ulong(), InstructionMetadata(EInstruction::SubRegMemWithRegToEither, "sub") },
+    { MnemonicBitset("0010110").to_ulong(), InstructionMetadata(EInstruction::SubImmFromAcc, "sub") },
+
+    { MnemonicBitset("001110").to_ulong(), InstructionMetadata(EInstruction::CmpRegMemWithRegToEither, "cmp") },
+    { MnemonicBitset("0011110").to_ulong(), InstructionMetadata(EInstruction::CmpImmFromAcc, "cmp") }
 };
 
 void printInstruction(InstructionMetadata& metadata)
@@ -521,6 +545,8 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
     {
 	case (EInstruction::MovRegMemToFromReg) :
 	case (EInstruction::AddRegMemWithRegToEither) :
+	case (EInstruction::SubRegMemWithRegToEither) :
+	case (EInstruction::CmpRegMemWithRegToEither) :
 	{
 		if ((byteBitset.to_ulong() & 0b00000010) > 0)
 		{
@@ -625,6 +651,8 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
 		break;
 	}
     case (EInstruction::AddImmToAcc) :
+    case (EInstruction::SubImmFromAcc) :
+    case (EInstruction::CmpImmFromAcc) :
 	{
 		ongoingInstructionMetadata.instructionFormat = EInstructionFormat::RegImm;
 
@@ -646,13 +674,34 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
 
 		break;
 	}
-	case (EInstruction::AddImmToRM) :
+	case (EInstruction::AddSubCmpImmToRM) :
     {
         // needs second byte
 		char byte;
 		file.read(&byte, sizeof(byte));
 		ByteBitset secondByteBitset(byte);
 		decodeSecondInstructionByte(secondByteBitset, file, ongoingInstructionMetadata);
+
+        switch(ongoingInstructionMetadata.regField)
+        {
+        case (0) :
+        {
+            ongoingInstructionMetadata.instructionString = "add";
+            break;
+        }
+        case (5) :
+        {
+            ongoingInstructionMetadata.instructionString = "sub";
+            break;
+        }
+        case (7) :
+        {
+            ongoingInstructionMetadata.instructionString = "cmp";
+            break;
+        }
+        default:
+            break;
+        }
 
         if (ongoingInstructionMetadata.modField != EModField::RegisterMode)
         {
