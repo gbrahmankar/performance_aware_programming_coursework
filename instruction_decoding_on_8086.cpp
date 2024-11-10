@@ -40,7 +40,7 @@ enum EInstruction
     */
     AddRegMemWithRegToEither,
     /*
-    add_imm_to_acc : [0001010][1b_w]] [8b_data_low] [8b_data_high]
+    add_imm_to_acc : [0000010][1b_w]] [8b_data_low] [8b_data_high]
     */
     AddImmToAcc,
     /*
@@ -226,11 +226,12 @@ struct InstructionMetadata
 
     EInstruction instruction = EInstruction::InstructionInvalid;
     EInstructionFormat instructionFormat = EInstructionFormat::InstructionFormatInvalid;
-    std::string instructionString;
+    std::string instructionString = "";
 
     EDBit dBit = EDBit::DBitInvalid;
     EWBit wBit = EWBit::WBitInvalid;
     ESBit sBit = ESBit::SBitInvalid;
+
     EModField modField = EModField::ModFieldInvalid;
     uint8_t regField = UINT8_MAX;
     uint8_t rmField = UINT8_MAX;
@@ -254,7 +255,7 @@ std::unordered_map<uint64_t, InstructionMetadata> mnemonicToInstructionMetadata 
 
     { MnemonicBitset("000000").to_ulong(), InstructionMetadata(EInstruction::AddRegMemWithRegToEither, "add") },
     { MnemonicBitset("100000").to_ulong(), InstructionMetadata(EInstruction::AddImmToRM, "add") },
-    { MnemonicBitset("0001010").to_ulong(), InstructionMetadata(EInstruction::AddImmToAcc, "add") }
+    { MnemonicBitset("0000010").to_ulong(), InstructionMetadata(EInstruction::AddImmToAcc, "add") }
 };
 
 void printInstruction(InstructionMetadata& metadata)
@@ -309,7 +310,7 @@ void printInstruction(InstructionMetadata& metadata)
         }
         else
         {
-            std::cout << metadata.instructionString << " " << metadata.immediateValue << ", " << metadata.stringifiedRegisters[0] << '\n';
+            std::cout << metadata.instructionString << " " << metadata.stringifiedRegisters[1] << ", " << metadata.immediateValue << '\n';
         }
 
         break;
@@ -336,8 +337,6 @@ void constructImmediateValueFromOperationWidth(std::ifstream& file, InstructionM
 {
     if (w == EWBit::WordOperation)
 	{
-		ongoingInstructionMetadata.wBit = EWBit::WordOperation;
-
 		char byte;
 		file.read(&byte, sizeof(byte));
 		ByteBitset firstByteBitset(byte);
@@ -350,8 +349,6 @@ void constructImmediateValueFromOperationWidth(std::ifstream& file, InstructionM
 	}
 	else
 	{
-		ongoingInstructionMetadata.wBit = EWBit::ByteOperation;
-
 		char byte;
 		file.read(&byte, sizeof(byte));
 		ByteBitset firstByteBitset(byte);
@@ -478,6 +475,8 @@ void decodeSecondInstructionByte(const ByteBitset& byteBitset, std::ifstream& fi
 	{
 	case (EModField::MemModeNoDisp) :
 	{
+        ongoingInstructionMetadata.modField = EModField::MemModeNoDisp;
+
 		if (ongoingInstructionMetadata.rmField != 6) // 0b110 -> direct_address
 		{
 			constructEffectiveAddressFromMode(file, ongoingInstructionMetadata, EBitsDisplacement::NoDisp);
@@ -491,16 +490,22 @@ void decodeSecondInstructionByte(const ByteBitset& byteBitset, std::ifstream& fi
 	}
 	case (EModField::MemModeEightBitDisp) :
 	{
+        ongoingInstructionMetadata.modField = EModField::MemModeEightBitDisp;
+
 		constructEffectiveAddressFromMode(file, ongoingInstructionMetadata, EBitsDisplacement::EightBitDisp);
 		break;
 	}
 	case (EModField::MemModeSixteenBitDisp) :
 	{
+        ongoingInstructionMetadata.modField = EModField::MemModeSixteenBitDisp;
+
 		constructEffectiveAddressFromMode(file, ongoingInstructionMetadata, EBitsDisplacement::SixteenBitDisp);
 		break;
 	}
 	case (EModField::RegisterMode) :
 	{
+        ongoingInstructionMetadata.modField = EModField::RegisterMode;
+
         break;
 	}
 	default :
@@ -508,17 +513,15 @@ void decodeSecondInstructionByte(const ByteBitset& byteBitset, std::ifstream& fi
 	}
 }
 
-void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& file, InstructionMetadata& ongoingInstructionMetadata)
+void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& file)
 {
-    ongoingInstructionMetadata = getInstructionMetadataFromMnemonic(byteBitset);
+    InstructionMetadata ongoingInstructionMetadata = getInstructionMetadataFromMnemonic(byteBitset);
 
     switch (ongoingInstructionMetadata.instruction)
     {
 	case (EInstruction::MovRegMemToFromReg) :
 	case (EInstruction::AddRegMemWithRegToEither) :
 	{
-		ongoingInstructionMetadata.instructionFormat = EInstructionFormat::MemReg;
-
 		if ((byteBitset.to_ulong() & 0b00000010) > 0)
 		{
 			ongoingInstructionMetadata.dBit = EDBit::RegFieldDestRMFieldSrc;
@@ -542,6 +545,15 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
 		file.read(&byte, sizeof(byte));
 		ByteBitset secondByteBitset(byte);
 		decodeSecondInstructionByte(secondByteBitset, file, ongoingInstructionMetadata);
+
+        if (ongoingInstructionMetadata.modField == EModField::RegisterMode)
+        {
+            ongoingInstructionMetadata.instructionFormat = EInstructionFormat::RegReg;
+        }
+        else
+        {
+            ongoingInstructionMetadata.instructionFormat = EInstructionFormat::MemReg;
+        }
 
 		break;
 	}
@@ -587,40 +599,7 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
 
 		break;
 	}
-    case (EInstruction::AddImmToAcc) :
-	{
-		ongoingInstructionMetadata.instructionFormat = EInstructionFormat::RegImm;
-
-		// d_bit bit is implied since mov_mem_to_acc and mov_acc_to_mem are two separate mnemonics !
-		ongoingInstructionMetadata.dBit = EDBit::RegFieldDestRMFieldSrc;
-
-        if ((byteBitset.to_ulong() & 0b00000001) > 0)
-		{
-			ongoingInstructionMetadata.wBit = EWBit::WordOperation;
-		    ongoingInstructionMetadata.registers.push_back(static_cast<uint8_t>(ERegThreeBitEncodingWordOp::ax));
-		}
-		else
-		{
-			ongoingInstructionMetadata.wBit = EWBit::ByteOperation;
-		    ongoingInstructionMetadata.registers.push_back(static_cast<uint8_t>(ERegThreeBitEncodingByteOp::al));
-		}
-
-		constructImmediateValueFromOperationWidth(file, ongoingInstructionMetadata, ongoingInstructionMetadata.wBit);
-
-		break;
-	}
-	case (EInstruction::AddImmToRM) :
-    {
-        if (((byteBitset >> 1).to_ulong() & 0b00000001) > 0)
-		{
-			ongoingInstructionMetadata.sBit = ESBit::EightBitImmValue;
-		}
-		else
-		{
-			ongoingInstructionMetadata.sBit = ESBit::SixteenBitImmValue;
-		}
-    }
-	case (EInstruction::MovImmToRM) :
+    case (EInstruction::MovImmToRM) :
 	{
 		ongoingInstructionMetadata.instructionFormat = EInstructionFormat::MemImm;
 
@@ -645,6 +624,70 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
 
 		break;
 	}
+    case (EInstruction::AddImmToAcc) :
+	{
+		ongoingInstructionMetadata.instructionFormat = EInstructionFormat::RegImm;
+
+		// d_bit bit is implied since mov_mem_to_acc and mov_acc_to_mem are two separate mnemonics !
+		ongoingInstructionMetadata.dBit = EDBit::RegFieldDestRMFieldSrc;
+
+        if ((byteBitset.to_ulong() & 0b00000001) > 0)
+		{
+			ongoingInstructionMetadata.wBit = EWBit::WordOperation;
+		    ongoingInstructionMetadata.registers.push_back(static_cast<uint8_t>(ERegThreeBitEncodingWordOp::ax));
+		}
+		else
+		{
+			ongoingInstructionMetadata.wBit = EWBit::ByteOperation;
+		    ongoingInstructionMetadata.registers.push_back(static_cast<uint8_t>(ERegThreeBitEncodingByteOp::al));
+		}
+
+		constructImmediateValueFromOperationWidth(file, ongoingInstructionMetadata, ongoingInstructionMetadata.wBit);
+
+		break;
+	}
+	case (EInstruction::AddImmToRM) :
+    {
+        // needs second byte
+		char byte;
+		file.read(&byte, sizeof(byte));
+		ByteBitset secondByteBitset(byte);
+		decodeSecondInstructionByte(secondByteBitset, file, ongoingInstructionMetadata);
+
+        if (ongoingInstructionMetadata.modField != EModField::RegisterMode)
+        {
+            ongoingInstructionMetadata.instructionFormat = EInstructionFormat::MemImm;
+        }
+        else
+        {
+		    ongoingInstructionMetadata.instructionFormat = EInstructionFormat::RegImm;
+        }
+
+        if ((byteBitset.to_ulong() & 0b00000001) > 0)
+		{
+			ongoingInstructionMetadata.wBit = EWBit::WordOperation;
+
+            if (((byteBitset >> 1).to_ulong() & 0b00000001) > 0)
+            {
+                ongoingInstructionMetadata.sBit = ESBit::EightBitImmValue;
+                constructImmediateValueFromOperationWidth(file, ongoingInstructionMetadata, EWBit::ByteOperation);
+            }
+            else
+            {
+                ongoingInstructionMetadata.sBit = ESBit::SixteenBitImmValue;
+                constructImmediateValueFromOperationWidth(file, ongoingInstructionMetadata, EWBit::WordOperation);
+            }
+		}
+		else
+		{
+			ongoingInstructionMetadata.wBit = EWBit::ByteOperation;
+
+			ongoingInstructionMetadata.sBit = ESBit::EightBitImmValue;
+            constructImmediateValueFromOperationWidth(file, ongoingInstructionMetadata, EWBit::ByteOperation);
+		}
+
+        break;
+    }	
 	default :
 		return;
     }
@@ -669,9 +712,6 @@ int main(int argc, char* argv[])
 
     std::cout << "bits 16" << '\n';
 
-    bool beginReadingNewInstruction = true;
-    InstructionMetadata ongoingInstructionMetadata;
-
     while (true) 
     {
         char byte;
@@ -682,7 +722,7 @@ int main(int argc, char* argv[])
         {
             break;
         }
-        decodeFirstInstructionByte(firstByteBitset, file, ongoingInstructionMetadata); 
+        decodeFirstInstructionByte(firstByteBitset, file); 
     }
 
     return 0;    
