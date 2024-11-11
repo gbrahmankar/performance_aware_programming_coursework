@@ -1,11 +1,15 @@
 #include <bitset>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <stdint.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#define STREAM_BYTE(X) "0x" << std::hex << std::setw(2) << std::setfill('0') << unsigned(X)
+#define STREAM_WORD(X) "0x" << std::hex << std::setw(4) << std::setfill('0') << X
 
 using NibbleBitset = std::bitset<4>;
 using ByteBitset = std::bitset<8>;
@@ -269,6 +273,59 @@ struct InstructionMetadata
     std::string immediateValue;
 };
 
+struct RegisterFile
+{
+    struct RegisterEntry
+    {
+        uint16_t prevValue;
+        uint16_t value;
+        bool isDirty;
+    };
+
+    RegisterFile(uint16_t initialValue)
+    {
+        file.resize(8);
+
+        for (RegisterEntry& r : file)
+        {
+            r.prevValue = initialValue;
+            r.value = initialValue;
+            r.isDirty = false;
+        }
+    }
+
+    void set(uint8_t r, uint8_t value)
+    {
+    }
+
+	void set(uint8_t r, uint16_t value)
+	{
+        file[r].prevValue = file[r].value;
+        file[r].value = value;
+        file[r].isDirty = true;
+    }
+
+    std::stringstream getDirtyRegFileStream()
+    {
+        std::stringstream s;
+        for (uint8_t index = 0; index < file.size(); ++index)
+        {
+            RegisterEntry& r = file[index];
+            if (r.isDirty)
+            {
+                s << getRegNameFromThreeBitEncodingWordOp(static_cast<ERegThreeBitEncodingWordOp>(index)) << "=" 
+                    << STREAM_WORD(r.prevValue) << "-->" << STREAM_WORD(r.value) << "; ";
+                r.isDirty = false;
+            }
+        }
+
+        return s;
+    }
+
+    std::vector<RegisterEntry> file;
+};
+RegisterFile registers(0x0000);
+
 std::unordered_map<uint64_t, InstructionMetadata> mnemonicToInstructionMetadata =
 {
     { MnemonicBitset("100010").to_ulong(), InstructionMetadata(EInstruction::MovRegMemToFromReg, "mov") },
@@ -290,7 +347,7 @@ std::unordered_map<uint64_t, InstructionMetadata> mnemonicToInstructionMetadata 
     { MnemonicBitset("01110101").to_ulong(), InstructionMetadata(EInstruction::JmpIfNotZero, "jnz") }
 };
 
-void printInstruction(InstructionMetadata& metadata)
+std::stringstream getDisassStream(InstructionMetadata& metadata, bool finishWithNewline = true)
 {
     if (metadata.wBit == EWBit::WordOperation)
 	{
@@ -307,34 +364,44 @@ void printInstruction(InstructionMetadata& metadata)
         }
 	}
 
+    std::stringstream s;
+
+    std::string finishWithChar = "\n";
+    if (!finishWithNewline)
+    {
+        finishWithChar = "; ";
+    }
+
     switch (metadata.instructionFormat)
     {
     case (EInstructionFormat::Imm):
     {
-        std::cout << metadata.instructionString << " " << metadata.immediateValue << '\n';
+        s << metadata.instructionString << " " << metadata.immediateValue << finishWithChar;
+
         break;
     }
     case (EInstructionFormat::MemImm):
     {
 		if (metadata.wBit == EWBit::WordOperation)
 		{
-            std::cout << metadata.instructionString << " " << metadata.effectiveAddress << ", word " << metadata.immediateValue << '\n';
+            s << metadata.instructionString << " " << metadata.effectiveAddress << ", word " << metadata.immediateValue << finishWithChar;
 		}
 		else
 		{
-            std::cout << metadata.instructionString << " " << metadata.effectiveAddress << ", byte " << metadata.immediateValue << '\n';
+            s << metadata.instructionString << " " << metadata.effectiveAddress << ", byte " << metadata.immediateValue << finishWithChar;
 		}
+
         break;
     }
     case (EInstructionFormat::MemReg):
     {
         if (metadata.dBit == EDBit::RegFieldDestRMFieldSrc)
         {
-            std::cout << metadata.instructionString << " " << metadata.stringifiedRegisters[0] << ", " << metadata.effectiveAddress << '\n';
+            s << metadata.instructionString << " " << metadata.stringifiedRegisters[0] << ", " << metadata.effectiveAddress << finishWithChar;
         }
         else
         {
-            std::cout << metadata.instructionString << " " << metadata.effectiveAddress << ", " << metadata.stringifiedRegisters[0] << '\n';
+            s << metadata.instructionString << " " << metadata.effectiveAddress << ", " << metadata.stringifiedRegisters[0] << finishWithChar;
         }
 
         break;
@@ -343,11 +410,11 @@ void printInstruction(InstructionMetadata& metadata)
     {
         if (metadata.dBit == EDBit::RegFieldDestRMFieldSrc)
         {
-            std::cout << metadata.instructionString << " " << metadata.stringifiedRegisters[0] << ", " << metadata.immediateValue << '\n';
+            s << metadata.instructionString << " " << metadata.stringifiedRegisters[0] << ", " << metadata.immediateValue << finishWithChar;
         }
         else
         {
-            std::cout << metadata.instructionString << " " << metadata.stringifiedRegisters[1] << ", " << metadata.immediateValue << '\n';
+            s << metadata.instructionString << " " << metadata.stringifiedRegisters[1] << ", " << metadata.immediateValue << finishWithChar;
         }
 
         break;
@@ -356,11 +423,11 @@ void printInstruction(InstructionMetadata& metadata)
     {
         if (metadata.dBit == EDBit::RegFieldDestRMFieldSrc)
         {
-            std::cout << metadata.instructionString << " " << metadata.stringifiedRegisters[0] << ", " << metadata.stringifiedRegisters[1] << '\n';
+            s << metadata.instructionString << " " << metadata.stringifiedRegisters[0] << ", " << metadata.stringifiedRegisters[1] << finishWithChar;
         }
         else
         {
-            std::cout << metadata.instructionString << " " << metadata.stringifiedRegisters[1] << ", " << metadata.stringifiedRegisters[0] << '\n';
+            s << metadata.instructionString << " " << metadata.stringifiedRegisters[1] << ", " << metadata.stringifiedRegisters[0] << finishWithChar;
         }
 
         break;
@@ -368,10 +435,30 @@ void printInstruction(InstructionMetadata& metadata)
     default :
         throw std::runtime_error("invalid instruction format !");
     }
+
+    return s;
 }
 
 void simulateInstruction(const InstructionMetadata& metadata)
 {
+   switch (metadata.instruction)
+   {
+   case (EInstruction::MovImmToReg) :
+   {
+       if (metadata.wBit == EWBit::WordOperation)
+       {
+           registers.set(metadata.registers[0], static_cast<uint16_t>(std::stoul(metadata.immediateValue)));
+       }
+       else
+       {
+           registers.set(metadata.registers[0], static_cast<uint8_t>(std::stoul(metadata.immediateValue)));
+       }
+
+       break;
+   }
+   default:
+       return;
+   }
 }
 
 void constructImmediateValueFromOperationWidth(std::ifstream& file, InstructionMetadata& ongoingInstructionMetadata, EWBit w)
@@ -617,7 +704,8 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
 		uint8_t reg = byteBitset.to_ulong() & 0b00000111;
 		ongoingInstructionMetadata.registers.push_back(reg);;
 
-		constructImmediateValueFromOperationWidth(file, ongoingInstructionMetadata, static_cast<EWBit>((byteBitset >> 3).to_ulong() & 0b00000001));
+        ongoingInstructionMetadata.wBit = static_cast<EWBit>((byteBitset >> 3).to_ulong() & 0b00000001);
+		constructImmediateValueFromOperationWidth(file, ongoingInstructionMetadata, ongoingInstructionMetadata.wBit);
 
 		break;
 	}
@@ -794,8 +882,15 @@ int main(int argc, char* argv[])
         }
         decodeFirstInstructionByte(firstByteBitset, file, ongoingInstructionMetadata); 
 
-        printInstruction(ongoingInstructionMetadata);
-        simulateInstruction(ongoingInstructionMetadata);
+        if (argc >= 3 && std::string(argv[2]) == "simulate")
+        {
+            simulateInstruction(ongoingInstructionMetadata);
+            std::cout << getDisassStream(ongoingInstructionMetadata, false).str() << registers.getDirtyRegFileStream().str() << '\n';
+        }
+        else
+        {
+            std::cout << getDisassStream(ongoingInstructionMetadata, true).str();
+        }
     }
 
     return 0;    
