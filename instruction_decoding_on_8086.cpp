@@ -149,6 +149,7 @@ enum ERegThreeBitEncodingByteOp : uint8_t
     dh,
     bh,
 
+    RegFieldsByteOperationCount,
     RegFieldsByteOperationInvalid
 };
 
@@ -163,6 +164,11 @@ enum ERegThreeBitEncodingWordOp : uint8_t
     si,
     di,
 
+    ss,
+    es,
+    ds,
+
+    RegFieldsWordOperationCount,
     RegFieldsWordOperationInvalid
 };
 
@@ -187,7 +193,10 @@ std::unordered_map<ERegThreeBitEncodingWordOp, std::string> wordRegisterEncoding
     { ERegThreeBitEncodingWordOp::sp, "sp" },
     { ERegThreeBitEncodingWordOp::bp, "bp" },
     { ERegThreeBitEncodingWordOp::si, "si" },
-    { ERegThreeBitEncodingWordOp::di, "di" }
+    { ERegThreeBitEncodingWordOp::di, "di" },
+    { ERegThreeBitEncodingWordOp::ss, "ss" },
+    { ERegThreeBitEncodingWordOp::es, "es" },
+    { ERegThreeBitEncodingWordOp::ds, "ds" },
 };
 
 std::string& getRegNameFromThreeBitEncodingByteOp(ERegThreeBitEncodingByteOp e)
@@ -284,7 +293,7 @@ struct RegisterFile
 
     RegisterFile(uint16_t initialValue)
     {
-        file.resize(8);
+        file.resize(ERegThreeBitEncodingWordOp::RegFieldsWordOperationCount);
 
         for (RegisterEntry& r : file)
         {
