@@ -305,17 +305,25 @@ struct RegisterFile
         file[r].isDirty = true;
     }
 
-    std::stringstream getDirtyRegFileStream()
+    std::stringstream getRegisterFileStream(bool dirtyOnly = false)
     {
         std::stringstream s;
         for (uint8_t index = 0; index < file.size(); ++index)
         {
             RegisterEntry& r = file[index];
-            if (r.isDirty)
+            if (dirtyOnly)
             {
-                s << getRegNameFromThreeBitEncodingWordOp(static_cast<ERegThreeBitEncodingWordOp>(index)) << "=" 
-                    << STREAM_WORD(r.prevValue) << "-->" << STREAM_WORD(r.value) << "; ";
-                r.isDirty = false;
+                if (r.isDirty)
+                {
+                    s << getRegNameFromThreeBitEncodingWordOp(static_cast<ERegThreeBitEncodingWordOp>(index)) << "="
+                        << STREAM_WORD(r.prevValue) << "->" << STREAM_WORD(r.value) << "; ";
+                    r.isDirty = false;
+                }
+            }
+            else
+            {
+                s << '\t' << getRegNameFromThreeBitEncodingWordOp(static_cast<ERegThreeBitEncodingWordOp>(index)) << "="
+                    << STREAM_WORD(r.value) << '\n';
             }
         }
 
@@ -369,7 +377,7 @@ std::stringstream getDisassStream(InstructionMetadata& metadata, bool finishWith
     std::string finishWithChar = "\n";
     if (!finishWithNewline)
     {
-        finishWithChar = "; ";
+        finishWithChar = " ; ";
     }
 
     switch (metadata.instructionFormat)
@@ -885,13 +893,16 @@ int main(int argc, char* argv[])
         if (argc >= 3 && std::string(argv[2]) == "simulate")
         {
             simulateInstruction(ongoingInstructionMetadata);
-            std::cout << getDisassStream(ongoingInstructionMetadata, false).str() << registers.getDirtyRegFileStream().str() << '\n';
+            std::cout << getDisassStream(ongoingInstructionMetadata, false).str() << registers.getRegisterFileStream(true).str() << '\n';
         }
         else
         {
             std::cout << getDisassStream(ongoingInstructionMetadata, true).str();
         }
     }
+
+    std::cout << "Final registers:" << '\n';
+    std::cout << registers.getRegisterFileStream(false).str();
 
     return 0;    
 }
