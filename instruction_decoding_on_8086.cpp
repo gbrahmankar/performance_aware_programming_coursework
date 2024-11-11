@@ -303,6 +303,11 @@ struct RegisterFile
         }
     }
 
+    uint16_t get(ERegThreeBitEncodingByteOp r)
+    {
+        return file[(uint8_t)r].value;
+    }
+
     uint16_t get(ERegThreeBitEncodingWordOp r)
     {
         return file[(uint8_t)r].value;
@@ -310,6 +315,21 @@ struct RegisterFile
 
     void set(ERegThreeBitEncodingByteOp r, uint8_t value)
     {
+        uint8_t fileIndex = (uint8_t)r % 4;
+
+		file[fileIndex].prevValue = file[fileIndex].value;
+        if ((uint8_t)r >= 1) // ah, bh, ch, dh
+        {
+            file[fileIndex].value &= 0x00ff;
+            file[fileIndex].value |= (WordBitset(value).to_ulong() << 8);
+        }
+        else // al, bl, cl, dl
+        {
+            file[fileIndex].value &= 0xff00;
+            file[fileIndex].value |= WordBitset(value).to_ulong();
+        }
+
+        file[fileIndex].isDirty = true;
     }
 
 	void set(ERegThreeBitEncodingWordOp r, uint16_t value)
@@ -487,6 +507,12 @@ void simulateInstruction(const InstructionMetadata& metadata)
                if (metadata.wBit == EWBit::WordOperation)
                {
                    uint16_t value = registers.get(static_cast<ERegThreeBitEncodingWordOp>(metadata.registers[1]));
+                   registers.set(static_cast<ERegThreeBitEncodingWordOp>(metadata.registers[0]), value);
+               }
+               else
+               {
+                   // start here 
+                   uint8_t value = registers.get(static_cast<ERegThreeBitEncodingByteOp>(metadata.registers[1]));
                    registers.set(static_cast<ERegThreeBitEncodingWordOp>(metadata.registers[0]), value);
                }
            }
