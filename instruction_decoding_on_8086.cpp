@@ -294,15 +294,20 @@ struct RegisterFile
         }
     }
 
-    void set(uint8_t r, uint8_t value)
+    uint16_t get(ERegThreeBitEncodingWordOp r)
+    {
+        return file[(uint8_t)r].value;
+    }
+
+    void set(ERegThreeBitEncodingByteOp r, uint8_t value)
     {
     }
 
-	void set(uint8_t r, uint16_t value)
+	void set(ERegThreeBitEncodingWordOp r, uint16_t value)
 	{
-        file[r].prevValue = file[r].value;
-        file[r].value = value;
-        file[r].isDirty = true;
+        file[(uint8_t)r].prevValue = file[(uint8_t)r].value;
+        file[(uint8_t)r].value = value;
+        file[(uint8_t)r].isDirty = true;
     }
 
     std::stringstream getRegisterFileStream(bool dirtyOnly = false)
@@ -455,11 +460,35 @@ void simulateInstruction(const InstructionMetadata& metadata)
    {
        if (metadata.wBit == EWBit::WordOperation)
        {
-           registers.set(metadata.registers[0], static_cast<uint16_t>(std::stoul(metadata.immediateValue)));
+           registers.set(static_cast<ERegThreeBitEncodingWordOp>(metadata.registers[0]), static_cast<uint16_t>(std::stoul(metadata.immediateValue)));
        }
        else
        {
-           registers.set(metadata.registers[0], static_cast<uint8_t>(std::stoul(metadata.immediateValue)));
+           registers.set(static_cast<ERegThreeBitEncodingByteOp>(metadata.registers[0]), static_cast<uint8_t>(std::stoul(metadata.immediateValue)));
+       }
+
+       break;
+   }
+   case (EInstruction::MovRegMemToFromReg) :
+   {
+       if (metadata.instructionFormat == EInstructionFormat::RegReg)
+       {
+           if (metadata.dBit == EDBit::RegFieldDestRMFieldSrc)
+           {
+               if (metadata.wBit == EWBit::WordOperation)
+               {
+                   uint16_t value = registers.get(static_cast<ERegThreeBitEncodingWordOp>(metadata.registers[1]));
+                   registers.set(static_cast<ERegThreeBitEncodingWordOp>(metadata.registers[0]), value);
+               }
+           }
+           else
+           {
+               if (metadata.wBit == EWBit::WordOperation)
+               {
+                   uint16_t value = registers.get(static_cast<ERegThreeBitEncodingWordOp>(metadata.registers[0]));
+                   registers.set(static_cast<ERegThreeBitEncodingWordOp>(metadata.registers[1]), value);
+               }
+           }
        }
 
        break;
