@@ -15,7 +15,7 @@ using NibbleBitset = std::bitset<4>;
 using ByteBitset = std::bitset<8>;
 using WordBitset = std::bitset<16>;
 
-using MnemonicBitset = std::bitset<7>;
+using MnemonicBitset = std::bitset<8>;
 
 enum EInstruction
 {
@@ -39,6 +39,14 @@ enum EInstruction
     mov_immediate_rm : [[1100011][1b_w]] [[2b_mod]000[3b_rm]] [8b_disp_low] [8b_disp_high] [8b_data_low] [8b_data_high]
     */
     MovImmToRM,
+    /* 
+    mov_regmem_to_segment_reg : [10001110] [[2b_mod][0][2b_seg_reg][3b_r/m]] [8b_disp_low] [8b_disp_high]
+    */
+    MovRegMemToSegReg,
+    /* 
+    mov_segment_reg_to_regmem : [10001100] [[2b_mod][0][2b_seg_reg][3b_r/m]] [8b_disp_low] [8b_disp_high]
+    */
+    MovSegRegToRegMem,
     /*
     add_reg_mem_with_reg_to_either : [000000][1b_d][1b_w]] [[2b_mod][3b_reg][3b_r/m]] [8b_disp_low] [8b_disp_high]
     */
@@ -62,11 +70,11 @@ enum EInstruction
     */
     SubImmFromAcc,
     /*
-    cmp_reg_mem_with_reg : [001010][1b_d][1b_w]] [[2b_mod][3b_reg][3b_r/m]] [8b_disp_low] [8b_disp_high]
+    cmp_reg_mem_with_reg : [001110][1b_d][1b_w]] [[2b_mod][3b_reg][3b_r/m]] [8b_disp_low] [8b_disp_high]
     */
     CmpRegMemAndReg,
     /*
-    cmp_imm_with_acc : [0010110][1b_w]] [8b_data_low] [8b_data_high]
+    cmp_imm_with_acc : [0011110][1b_w]] [8b_data_low] [8b_data_high]
     */
     CmpImmWithAcc,
     /*
@@ -81,6 +89,9 @@ enum EInstructionFormat
 {
     RegReg,
     MemReg,
+
+    SegRegReg,
+    SegMemReg,
 
     RegImm,
     MemImm,
@@ -153,6 +164,13 @@ enum ERegThreeBitEncodingByteOp : uint8_t
     RegFieldsByteOperationInvalid
 };
 
+enum EGeneralPurposeRegisterAccess
+{
+    HighByteAccess,
+    LowByteAccess,
+    GeneralPurposeRegisterAccessInvalid
+};
+
 enum ERegThreeBitEncodingWordOp : uint8_t
 {
     ax = 0,
@@ -164,12 +182,31 @@ enum ERegThreeBitEncodingWordOp : uint8_t
     si,
     di,
 
-    ss,
-    es,
-    ds,
-
     RegFieldsWordOperationCount,
     RegFieldsWordOperationInvalid
+};
+
+enum ESegmentRegisterEncoding : uint8_t
+{
+    es = 0,
+    cs,
+    ss,
+    ds,
+
+    SegmentRegisterCount,
+    SegmentRegisterInvalid
+};
+
+std::unordered_map<ERegThreeBitEncodingByteOp, EGeneralPurposeRegisterAccess> generalPurposeRegisterAccess =
+{
+    { ERegThreeBitEncodingByteOp::al, EGeneralPurposeRegisterAccess::LowByteAccess },
+    { ERegThreeBitEncodingByteOp::cl, EGeneralPurposeRegisterAccess::LowByteAccess },
+    { ERegThreeBitEncodingByteOp::dl, EGeneralPurposeRegisterAccess::LowByteAccess },
+    { ERegThreeBitEncodingByteOp::bl, EGeneralPurposeRegisterAccess::LowByteAccess },
+    { ERegThreeBitEncodingByteOp::ah, EGeneralPurposeRegisterAccess::HighByteAccess },
+    { ERegThreeBitEncodingByteOp::ch, EGeneralPurposeRegisterAccess::HighByteAccess },
+    { ERegThreeBitEncodingByteOp::dh, EGeneralPurposeRegisterAccess::HighByteAccess },
+    { ERegThreeBitEncodingByteOp::bh, EGeneralPurposeRegisterAccess::HighByteAccess }
 };
 
 std::unordered_map<ERegThreeBitEncodingByteOp, std::string> byteRegisterEncodingToString =
@@ -193,11 +230,28 @@ std::unordered_map<ERegThreeBitEncodingWordOp, std::string> wordRegisterEncoding
     { ERegThreeBitEncodingWordOp::sp, "sp" },
     { ERegThreeBitEncodingWordOp::bp, "bp" },
     { ERegThreeBitEncodingWordOp::si, "si" },
-    { ERegThreeBitEncodingWordOp::di, "di" },
-    { ERegThreeBitEncodingWordOp::ss, "ss" },
-    { ERegThreeBitEncodingWordOp::es, "es" },
-    { ERegThreeBitEncodingWordOp::ds, "ds" },
+    { ERegThreeBitEncodingWordOp::di, "di" }
 };
+
+std::unordered_map<ESegmentRegisterEncoding, std::string> segmentRegisterEncodingToString =
+{
+    { ESegmentRegisterEncoding::es, "es" },
+    { ESegmentRegisterEncoding::cs, "cs" },
+    { ESegmentRegisterEncoding::ss, "ss" },
+    { ESegmentRegisterEncoding::ds, "ds" }
+};
+
+EGeneralPurposeRegisterAccess getGeneralPurposeRegisterAccess(ERegThreeBitEncodingByteOp e)
+{
+    if (generalPurposeRegisterAccess.count(e))
+    {
+        return generalPurposeRegisterAccess[e];
+    }
+    else
+    {
+        throw std::runtime_error("invalid general_purpose register access !");
+    }
+}
 
 std::string& getRegNameFromThreeBitEncodingByteOp(ERegThreeBitEncodingByteOp e)
 {
@@ -219,7 +273,19 @@ std::string& getRegNameFromThreeBitEncodingWordOp(ERegThreeBitEncodingWordOp e)
     }
     else
     {
-        throw std::runtime_error("invalid word_operation register enum passed !");
+        throw std::runtime_error("invalid byte_operation register enum passed !");
+    }
+}
+
+std::string& getSegmentRegisterEncoding(ESegmentRegisterEncoding e)
+{
+    if (segmentRegisterEncodingToString.count(e))
+    {
+        return segmentRegisterEncodingToString[e];
+    }
+    else
+    {
+        throw std::runtime_error("invalid segment_register enum passed !");
     }
 }
 
@@ -256,11 +322,13 @@ struct InstructionMetadata
     InstructionMetadata()
     {}
 
-    InstructionMetadata(EInstruction i, const std::string& is) :
+    InstructionMetadata(EInstruction i, const std::string& is, int8_t ms) :
         instruction(i),
-        instructionString(is)
+        instructionString(is),
+        mnemonicSize(ms)
     {}
 
+    int8_t mnemonicSize = 0;
     EInstruction instruction = EInstruction::InstructionInvalid;
     EInstructionFormat instructionFormat = EInstructionFormat::InstructionFormatInvalid;
     std::string instructionString = "";
@@ -303,9 +371,18 @@ struct RegisterFile
         }
     }
 
-    uint16_t get(ERegThreeBitEncodingByteOp r)
+    uint8_t get(ERegThreeBitEncodingByteOp r)
     {
-        return file[(uint8_t)r].value;
+        uint8_t fileIndex = (uint8_t)r % 4;
+
+        if (getGeneralPurposeRegisterAccess(r) == EGeneralPurposeRegisterAccess::LowByteAccess)
+        {
+            return static_cast<uint8_t>(file[fileIndex].value & 0x00ff);
+        }
+        else
+        {
+            return static_cast<uint8_t>((file[fileIndex].value >> 8) & 0x00ff);
+        }
     }
 
     uint16_t get(ERegThreeBitEncodingWordOp r)
@@ -318,7 +395,7 @@ struct RegisterFile
         uint8_t fileIndex = (uint8_t)r % 4;
 
 		file[fileIndex].prevValue = file[fileIndex].value;
-        if ((uint8_t)r >= 1) // ah, bh, ch, dh
+        if (getGeneralPurposeRegisterAccess(r) == EGeneralPurposeRegisterAccess::HighByteAccess) // ah, bh, ch, dh
         {
             file[fileIndex].value &= 0x00ff;
             file[fileIndex].value |= (WordBitset(value).to_ulong() << 8);
@@ -326,7 +403,7 @@ struct RegisterFile
         else // al, bl, cl, dl
         {
             file[fileIndex].value &= 0xff00;
-            file[fileIndex].value |= WordBitset(value).to_ulong();
+            file[fileIndex].value |= value;
         }
 
         file[fileIndex].isDirty = true;
@@ -337,6 +414,13 @@ struct RegisterFile
         file[(uint8_t)r].prevValue = file[(uint8_t)r].value;
         file[(uint8_t)r].value = value;
         file[(uint8_t)r].isDirty = true;
+    }
+
+    void set(ESegmentRegisterEncoding r, uint16_t value)
+	{
+        segFile[(uint8_t)r].prevValue = file[(uint8_t)r].value;
+        segFile[(uint8_t)r].value = value;
+        segFile[(uint8_t)r].isDirty = true;
     }
 
     std::stringstream getRegisterFileStream(bool dirtyOnly = false)
@@ -364,29 +448,56 @@ struct RegisterFile
         return s;
     }
 
+    std::stringstream getSegmentRegisterFileStream(bool dirtyOnly = false)
+    {
+        std::stringstream s;
+        for (uint8_t index = 0; index < segFile.size(); ++index)
+        {
+            RegisterEntry& r = file[index];
+            if (dirtyOnly)
+            {
+                if (r.isDirty)
+                {
+                    s << getSegmentRegisterEncoding(static_cast<ESegmentRegisterEncoding>(index)) << "="
+                        << STREAM_WORD(r.prevValue) << "->" << STREAM_WORD(r.value) << "; ";
+                    r.isDirty = false;
+                }
+            }
+            else
+            {
+                s << '\t' << getSegmentRegisterEncoding(static_cast<ESegmentRegisterEncoding>(index)) << "="
+                    << STREAM_WORD(r.value) << '\n';
+            }
+        }
+
+        return s;
+    }
+
     std::vector<RegisterEntry> file;
 };
 RegisterFile registers(0x0000);
 
 std::unordered_map<uint64_t, InstructionMetadata> mnemonicToInstructionMetadata =
 {
-    { MnemonicBitset("100010").to_ulong(), InstructionMetadata(EInstruction::MovRegMemToFromReg, "mov") },
-    { MnemonicBitset("1011").to_ulong(), InstructionMetadata(EInstruction::MovImmToReg, "mov") },
-    { MnemonicBitset("1100011").to_ulong(), InstructionMetadata(EInstruction::MovImmToRM, "mov") },
-    { MnemonicBitset("1010000").to_ulong(), InstructionMetadata(EInstruction::MovMemToAcc, "mov") },
-    { MnemonicBitset("1010001").to_ulong(), InstructionMetadata(EInstruction::MovAccToMem, "mov") },
+    { MnemonicBitset("100010").to_ulong(), InstructionMetadata(EInstruction::MovRegMemToFromReg, "mov", 6) },
+    { MnemonicBitset("1011").to_ulong(), InstructionMetadata(EInstruction::MovImmToReg, "mov", 4) },
+    { MnemonicBitset("1100011").to_ulong(), InstructionMetadata(EInstruction::MovImmToRM, "mov", 7) },
+    { MnemonicBitset("1010000").to_ulong(), InstructionMetadata(EInstruction::MovMemToAcc, "mov", 7) },
+    { MnemonicBitset("1010001").to_ulong(), InstructionMetadata(EInstruction::MovAccToMem, "mov", 7) },
+    { MnemonicBitset("10001110").to_ulong(), InstructionMetadata(EInstruction::MovRegMemToSegReg, "mov", 8) },
+    { MnemonicBitset("10001100").to_ulong(), InstructionMetadata(EInstruction::MovSegRegToRegMem, "mov", 8) },
 
-    { MnemonicBitset("000000").to_ulong(), InstructionMetadata(EInstruction::AddRegMemWithRegToEither, "add") },
-    { MnemonicBitset("100000").to_ulong(), InstructionMetadata(EInstruction::AddSubCmpImmToRM, "add") },
-    { MnemonicBitset("0000010").to_ulong(), InstructionMetadata(EInstruction::AddImmToAcc, "add") },
+    { MnemonicBitset("000000").to_ulong(), InstructionMetadata(EInstruction::AddRegMemWithRegToEither, "add", 6) },
+    { MnemonicBitset("100000").to_ulong(), InstructionMetadata(EInstruction::AddSubCmpImmToRM, "add", 6) },
+    { MnemonicBitset("0000010").to_ulong(), InstructionMetadata(EInstruction::AddImmToAcc, "add", 7) },
 
-    { MnemonicBitset("001010").to_ulong(), InstructionMetadata(EInstruction::SubRegMemWithRegToEither, "sub") },
-    { MnemonicBitset("0010110").to_ulong(), InstructionMetadata(EInstruction::SubImmFromAcc, "sub") },
+    { MnemonicBitset("001010").to_ulong(), InstructionMetadata(EInstruction::SubRegMemWithRegToEither, "sub", 6) },
+    { MnemonicBitset("0010110").to_ulong(), InstructionMetadata(EInstruction::SubImmFromAcc, "sub", 7) },
 
-    { MnemonicBitset("001110").to_ulong(), InstructionMetadata(EInstruction::CmpRegMemAndReg, "cmp") },
-    { MnemonicBitset("0011110").to_ulong(), InstructionMetadata(EInstruction::CmpImmWithAcc, "cmp") },
+    { MnemonicBitset("001110").to_ulong(), InstructionMetadata(EInstruction::CmpRegMemAndReg, "cmp", 6) },
+    { MnemonicBitset("0011110").to_ulong(), InstructionMetadata(EInstruction::CmpImmWithAcc, "cmp", 7) },
 
-    { MnemonicBitset("01110101").to_ulong(), InstructionMetadata(EInstruction::JmpIfNotZero, "jnz") }
+    { MnemonicBitset("01110101").to_ulong(), InstructionMetadata(EInstruction::JmpIfNotZero, "jnz", 8) }
 };
 
 std::stringstream getDisassStream(InstructionMetadata& metadata, bool finishWithNewline = true)
@@ -418,7 +529,7 @@ std::stringstream getDisassStream(InstructionMetadata& metadata, bool finishWith
     {
     case (EInstructionFormat::Imm):
     {
-        s << metadata.instructionString << " " << metadata.immediateValue << finishWithChar;
+        s << metadata.instructionString << " " << STREAM_WORD(std::stoul(metadata.immediateValue)) << finishWithChar;
 
         break;
     }
@@ -426,11 +537,11 @@ std::stringstream getDisassStream(InstructionMetadata& metadata, bool finishWith
     {
 		if (metadata.wBit == EWBit::WordOperation)
 		{
-            s << metadata.instructionString << " " << metadata.effectiveAddress << ", word " << metadata.immediateValue << finishWithChar;
+            s << metadata.instructionString << " " << metadata.effectiveAddress << ", word " << STREAM_WORD(std::stoul(metadata.immediateValue)) << finishWithChar;
 		}
 		else
 		{
-            s << metadata.instructionString << " " << metadata.effectiveAddress << ", byte " << metadata.immediateValue << finishWithChar;
+            s << metadata.instructionString << " " << metadata.effectiveAddress << ", byte " << STREAM_WORD(std::stoul(metadata.immediateValue)) << finishWithChar;
 		}
 
         break;
@@ -452,11 +563,11 @@ std::stringstream getDisassStream(InstructionMetadata& metadata, bool finishWith
     {
         if (metadata.dBit == EDBit::RegFieldDestRMFieldSrc)
         {
-            s << metadata.instructionString << " " << metadata.stringifiedRegisters[0] << ", " << metadata.immediateValue << finishWithChar;
+            s << metadata.instructionString << " " << metadata.stringifiedRegisters[0] << ", " << STREAM_WORD(std::stoul(metadata.immediateValue)) << finishWithChar;
         }
         else
         {
-            s << metadata.instructionString << " " << metadata.stringifiedRegisters[1] << ", " << metadata.immediateValue << finishWithChar;
+            s << metadata.instructionString << " " << metadata.stringifiedRegisters[1] << ", " << STREAM_WORD(std::stoul(metadata.immediateValue)) << finishWithChar;
         }
 
         break;
@@ -470,6 +581,15 @@ std::stringstream getDisassStream(InstructionMetadata& metadata, bool finishWith
         else
         {
             s << metadata.instructionString << " " << metadata.stringifiedRegisters[1] << ", " << metadata.stringifiedRegisters[0] << finishWithChar;
+        }
+
+        break;
+    }
+    case (EInstructionFormat::SegRegReg):
+    {
+        if (metadata.dBit == EDBit::RegFieldDestRMFieldSrc)
+        {
+            s << metadata.instructionString << " " << getSegmentRegisterEncoding(static_cast<ESegmentRegisterEncoding>(metadata.regField)) << ", " << metadata.stringifiedRegisters[1] << finishWithChar;
         }
 
         break;
@@ -511,9 +631,8 @@ void simulateInstruction(const InstructionMetadata& metadata)
                }
                else
                {
-                   // start here 
                    uint8_t value = registers.get(static_cast<ERegThreeBitEncodingByteOp>(metadata.registers[1]));
-                   registers.set(static_cast<ERegThreeBitEncodingWordOp>(metadata.registers[0]), value);
+                   registers.set(static_cast<ERegThreeBitEncodingByteOp>(metadata.registers[0]), value);
                }
            }
            else
@@ -523,6 +642,29 @@ void simulateInstruction(const InstructionMetadata& metadata)
                    uint16_t value = registers.get(static_cast<ERegThreeBitEncodingWordOp>(metadata.registers[0]));
                    registers.set(static_cast<ERegThreeBitEncodingWordOp>(metadata.registers[1]), value);
                }
+               else
+               {
+                   uint8_t value = registers.get(static_cast<ERegThreeBitEncodingByteOp>(metadata.registers[0]));
+                   registers.set(static_cast<ERegThreeBitEncodingByteOp>(metadata.registers[1]), value);
+               }
+           }
+       }
+
+       break;
+   }
+   case (EInstruction::MovRegMemToFromReg) :
+   {
+       if (metadata.instructionFormat == EInstructionFormat::SegRegReg)
+       {
+           if (metadata.dBit == EDBit::RegFieldDestRMFieldSrc) // writing to seg_register(regField)
+           {
+               uint16_t value = registers.get(static_cast<ERegThreeBitEncodingWordOp>(metadata.registers[1]));
+               registers.set(static_cast<ESegmentRegisterEncoding>(metadata.registers[0]), value);
+           }
+           else // writing from seg_register(regField)
+           {
+               uint16_t value = registers.get(static_cast<ESegmentRegisterEncoding>(metadata.registers[0]));
+               registers.set(static_cast<ERegThreeBitEncodingWordOp>(metadata.registers[1]), value);
            }
        }
 
@@ -644,14 +786,17 @@ void constructEffectiveAddressFromMode(std::ifstream& file, InstructionMetadata&
 
 InstructionMetadata& getInstructionMetadataFromMnemonic(ByteBitset bitSet)
 {
+    int8_t testMnemonicLength = 8;
     while (bitSet.to_ulong() >= 0)
     {
-        if (mnemonicToInstructionMetadata.count(bitSet.to_ulong()))
+        if (mnemonicToInstructionMetadata.count(bitSet.to_ulong()) &&
+            testMnemonicLength == mnemonicToInstructionMetadata[bitSet.to_ulong()].mnemonicSize)
         {
             return mnemonicToInstructionMetadata[bitSet.to_ulong()];
         }
 
         bitSet >>= 1;
+        testMnemonicLength -= 1;
     }
 
     throw std::runtime_error("invalid mnemonic passed !");
@@ -715,6 +860,8 @@ void decodeSecondInstructionByte(const ByteBitset& byteBitset, std::ifstream& fi
 
 void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& file, InstructionMetadata& ongoingInstructionMetadata)
 {
+    std::cout << "first_byte=" << byteBitset << '\n';
+
     ongoingInstructionMetadata = getInstructionMetadataFromMnemonic(byteBitset);
 
     switch (ongoingInstructionMetadata.instruction)
@@ -830,6 +977,34 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
 		decodeSecondInstructionByte(secondByteBitset, file, ongoingInstructionMetadata);
 
 		constructImmediateValueFromOperationWidth(file, ongoingInstructionMetadata, ongoingInstructionMetadata.wBit);
+
+		break;
+	}
+    case (EInstruction::MovSegRegToRegMem) :
+    {
+        // d_bit is implied
+		ongoingInstructionMetadata.dBit = EDBit::RegFieldSrcRMFieldDest;
+    }
+    case (EInstruction::MovRegMemToSegReg) :
+	{
+		ongoingInstructionMetadata.instructionFormat = EInstructionFormat::SegMemReg;
+
+        // d_bit is implied
+		ongoingInstructionMetadata.dBit = EDBit::RegFieldDestRMFieldSrc;
+
+        // w_bit is implied
+        ongoingInstructionMetadata.wBit = EWBit::WordOperation;
+
+		// needs second byte
+		char byte;
+		file.read(&byte, sizeof(byte));
+		ByteBitset secondByteBitset(byte);
+		decodeSecondInstructionByte(secondByteBitset, file, ongoingInstructionMetadata);
+
+        if (ongoingInstructionMetadata.modField == EModField::RegisterMode)
+        {
+		    ongoingInstructionMetadata.instructionFormat = EInstructionFormat::SegRegReg;
+        }
 
 		break;
 	}
