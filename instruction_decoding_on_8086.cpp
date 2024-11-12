@@ -683,6 +683,156 @@ void simulateInstruction(const InstructionMetadata& metadata)
 
        break;
    }
+   case (EInstruction::AddRegMemWithRegToEither) :
+   case (EInstruction::SubRegMemWithRegToEither) :
+   case (EInstruction::CmpRegMemAndReg) :
+   {
+       if (metadata.instructionFormat == EInstructionFormat::RegReg)
+       {
+           if (metadata.dBit == EDBit::RegFieldDestRMFieldSrc)
+           {
+               if (metadata.wBit == EWBit::WordOperation)
+               {
+                   ERegThreeBitEncodingWordOp leftHandOperandRegisterEncoding = static_cast<ERegThreeBitEncodingWordOp>(metadata.registers[0]);
+                   uint16_t leftHandOperand  = registers.get(leftHandOperandRegisterEncoding);
+                   uint16_t rightHandOperand = registers.get(static_cast<ERegThreeBitEncodingWordOp>(metadata.registers[1]));
+                   uint16_t result = 0;
+				   if (metadata.instructionString == "add")
+				   {
+					   result = leftHandOperand + rightHandOperand;
+				   }
+				   else if (metadata.instructionString == "sub")
+				   {
+					   result = leftHandOperand - rightHandOperand;
+				   }
+				   else if (metadata.instructionString == "cmp")
+				   {
+					   break;
+				   }
+
+                   registers.set(leftHandOperandRegisterEncoding, result);
+               }
+               else
+               {
+				   ERegThreeBitEncodingByteOp leftHandOperandRegisterEncoding = static_cast<ERegThreeBitEncodingByteOp>(metadata.registers[0]);
+				   uint8_t leftHandOperand  = registers.get(leftHandOperandRegisterEncoding);
+                   uint8_t rightHandOperand = registers.get(static_cast<ERegThreeBitEncodingByteOp>(metadata.registers[1]));
+                   uint8_t result = 0;
+				   if (metadata.instructionString == "add")
+				   {
+					   result = leftHandOperand + rightHandOperand;
+				   }
+				   else if (metadata.instructionString == "sub")
+				   {
+					   result = leftHandOperand - rightHandOperand;
+				   }
+				   else if (metadata.instructionString == "cmp")
+				   {
+					   break;
+				   }
+
+				   registers.set(leftHandOperandRegisterEncoding, result);
+               }
+           }
+           else
+           {
+               if (metadata.wBit == EWBit::WordOperation)
+               {
+                   ERegThreeBitEncodingWordOp leftHandOperandRegisterEncoding = static_cast<ERegThreeBitEncodingWordOp>(metadata.registers[1]);
+                   uint16_t leftHandOperand  = registers.get(leftHandOperandRegisterEncoding);
+                   uint16_t rightHandOperand = registers.get(static_cast<ERegThreeBitEncodingWordOp>(metadata.registers[0]));
+                   uint16_t result = 0;
+				   if (metadata.instructionString == "add")
+				   {
+					   result = leftHandOperand + rightHandOperand;
+				   }
+				   else if (metadata.instructionString == "sub")
+				   {
+					   result = leftHandOperand - rightHandOperand;
+				   }
+				   else if (metadata.instructionString == "cmp")
+				   {
+					   break;
+				   }
+
+                   registers.set(leftHandOperandRegisterEncoding, result);
+               }
+               else
+               {
+                   ERegThreeBitEncodingByteOp leftHandOperandRegisterEncoding = static_cast<ERegThreeBitEncodingByteOp>(metadata.registers[1]);
+				   uint8_t leftHandOperand  = registers.get(leftHandOperandRegisterEncoding);
+                   uint8_t rightHandOperand = registers.get(static_cast<ERegThreeBitEncodingByteOp>(metadata.registers[0]));
+                   uint8_t result = 0;
+				   if (metadata.instructionString == "add")
+				   {
+					   result = leftHandOperand + rightHandOperand;
+				   }
+				   else if (metadata.instructionString == "sub")
+				   {
+					   result = leftHandOperand - rightHandOperand;
+				   }
+				   else if (metadata.instructionString == "cmp")
+				   {
+					   break;
+				   }
+
+				   registers.set(leftHandOperandRegisterEncoding, result);
+               }
+           }
+       }
+
+       break;
+   }
+   case (EInstruction::AddSubCmpImmToRM) :
+   {
+       if (metadata.instructionFormat == EInstructionFormat::RegImm)
+       {
+		   if (metadata.wBit == EWBit::WordOperation)
+		   {
+			   ERegThreeBitEncodingWordOp leftHandOperandRegisterEncoding = static_cast<ERegThreeBitEncodingWordOp>(metadata.registers[1]);
+			   uint16_t leftHandOperand  = registers.get(leftHandOperandRegisterEncoding);
+			   uint16_t rightHandOperand = std::stoul(metadata.immediateValue);
+               uint16_t result = 0;
+               if (metadata.instructionString == "add")
+               {
+                   result = leftHandOperand + rightHandOperand;
+               }
+               else if (metadata.instructionString == "sub")
+               {
+                   result = leftHandOperand - rightHandOperand;
+               }
+               else if (metadata.instructionString == "cmp")
+               {
+                   break;
+               }
+
+			   registers.set(leftHandOperandRegisterEncoding, result);
+		   }
+		   else
+		   {
+			   ERegThreeBitEncodingByteOp leftHandOperandRegisterEncoding = static_cast<ERegThreeBitEncodingByteOp>(metadata.registers[1]);
+			   uint8_t leftHandOperand  = registers.get(leftHandOperandRegisterEncoding);
+			   uint8_t rightHandOperand = std::stoul(metadata.immediateValue);
+               uint8_t result = 0;
+               if (metadata.instructionString == "add")
+               {
+                   result = leftHandOperand + rightHandOperand;
+               }
+               else if (metadata.instructionString == "sub")
+               {
+                   result = leftHandOperand - rightHandOperand;
+               }
+               else if (metadata.instructionString == "cmp")
+               {
+                   break;
+               }
+
+               registers.set(leftHandOperandRegisterEncoding, result);
+		   }
+       }
+
+       break;
+   }
    default:
        return;
    }
