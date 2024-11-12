@@ -362,8 +362,16 @@ struct RegisterFile
     RegisterFile(uint16_t initialValue)
     {
         file.resize(ERegThreeBitEncodingWordOp::RegFieldsWordOperationCount);
+        segFile.resize(ESegmentRegisterEncoding::SegmentRegisterCount);
 
         for (RegisterEntry& r : file)
+        {
+            r.prevValue = initialValue;
+            r.value = initialValue;
+            r.isDirty = false;
+        }
+
+        for (RegisterEntry& r : segFile)
         {
             r.prevValue = initialValue;
             r.value = initialValue;
@@ -388,6 +396,11 @@ struct RegisterFile
     uint16_t get(ERegThreeBitEncodingWordOp r)
     {
         return file[(uint8_t)r].value;
+    }
+
+    uint16_t get(ESegmentRegisterEncoding r)
+    {
+        return segFile[(uint8_t)r].value;
     }
 
     void set(ERegThreeBitEncodingByteOp r, uint8_t value)
@@ -418,12 +431,12 @@ struct RegisterFile
 
     void set(ESegmentRegisterEncoding r, uint16_t value)
 	{
-        segFile[(uint8_t)r].prevValue = file[(uint8_t)r].value;
+        segFile[(uint8_t)r].prevValue = segFile[(uint8_t)r].value;
         segFile[(uint8_t)r].value = value;
         segFile[(uint8_t)r].isDirty = true;
     }
 
-    std::stringstream getRegisterFileStream(bool dirtyOnly = false)
+    std::stringstream getAllRegisterFileStream(bool dirtyOnly = false)
     {
         std::stringstream s;
         for (uint8_t index = 0; index < file.size(); ++index)
@@ -445,15 +458,9 @@ struct RegisterFile
             }
         }
 
-        return s;
-    }
-
-    std::stringstream getSegmentRegisterFileStream(bool dirtyOnly = false)
-    {
-        std::stringstream s;
         for (uint8_t index = 0; index < segFile.size(); ++index)
         {
-            RegisterEntry& r = file[index];
+            RegisterEntry& r = segFile[index];
             if (dirtyOnly)
             {
                 if (r.isDirty)
@@ -474,6 +481,7 @@ struct RegisterFile
     }
 
     std::vector<RegisterEntry> file;
+    std::vector<RegisterEntry> segFile;
 };
 RegisterFile registers(0x0000);
 
@@ -591,6 +599,10 @@ std::stringstream getDisassStream(InstructionMetadata& metadata, bool finishWith
         {
             s << metadata.instructionString << " " << getSegmentRegisterEncoding(static_cast<ESegmentRegisterEncoding>(metadata.regField)) << ", " << metadata.stringifiedRegisters[1] << finishWithChar;
         }
+        else
+        {
+            s << metadata.instructionString << " " << metadata.stringifiedRegisters[1] << ", " << getSegmentRegisterEncoding(static_cast<ESegmentRegisterEncoding>(metadata.regField)) << finishWithChar;
+        }
 
         break;
     }
@@ -652,19 +664,20 @@ void simulateInstruction(const InstructionMetadata& metadata)
 
        break;
    }
-   case (EInstruction::MovRegMemToFromReg) :
+   case (EInstruction::MovSegRegToRegMem) :
+   case (EInstruction::MovRegMemToSegReg) :
    {
        if (metadata.instructionFormat == EInstructionFormat::SegRegReg)
        {
            if (metadata.dBit == EDBit::RegFieldDestRMFieldSrc) // writing to seg_register(regField)
            {
-               uint16_t value = registers.get(static_cast<ERegThreeBitEncodingWordOp>(metadata.registers[1]));
-               registers.set(static_cast<ESegmentRegisterEncoding>(metadata.registers[0]), value);
+               uint16_t value = registers.get(static_cast<ERegThreeBitEncodingWordOp>(metadata.rmField));
+               registers.set(static_cast<ESegmentRegisterEncoding>(metadata.regField), value);
            }
            else // writing from seg_register(regField)
            {
-               uint16_t value = registers.get(static_cast<ESegmentRegisterEncoding>(metadata.registers[0]));
-               registers.set(static_cast<ERegThreeBitEncodingWordOp>(metadata.registers[1]), value);
+               uint16_t value = registers.get(static_cast<ESegmentRegisterEncoding>(metadata.regField));
+               registers.set(static_cast<ERegThreeBitEncodingWordOp>(metadata.rmField), value);
            }
        }
 
@@ -860,8 +873,6 @@ void decodeSecondInstructionByte(const ByteBitset& byteBitset, std::ifstream& fi
 
 void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& file, InstructionMetadata& ongoingInstructionMetadata)
 {
-    std::cout << "first_byte=" << byteBitset << '\n';
-
     ongoingInstructionMetadata = getInstructionMetadataFromMnemonic(byteBitset);
 
     switch (ongoingInstructionMetadata.instruction)
@@ -981,16 +992,19 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
 		break;
 	}
     case (EInstruction::MovSegRegToRegMem) :
-    {
-        // d_bit is implied
-		ongoingInstructionMetadata.dBit = EDBit::RegFieldSrcRMFieldDest;
-    }
     case (EInstruction::MovRegMemToSegReg) :
 	{
 		ongoingInstructionMetadata.instructionFormat = EInstructionFormat::SegMemReg;
 
         // d_bit is implied
-		ongoingInstructionMetadata.dBit = EDBit::RegFieldDestRMFieldSrc;
+        if (ongoingInstructionMetadata.instruction == EInstruction::MovRegMemToSegReg)
+        {
+            ongoingInstructionMetadata.dBit = EDBit::RegFieldDestRMFieldSrc;
+        }
+        else
+        {
+		    ongoingInstructionMetadata.dBit = EDBit::RegFieldSrcRMFieldDest;
+        }
 
         // w_bit is implied
         ongoingInstructionMetadata.wBit = EWBit::WordOperation;
@@ -1132,7 +1146,7 @@ int main(int argc, char* argv[])
         if (argc >= 3 && std::string(argv[2]) == "simulate")
         {
             simulateInstruction(ongoingInstructionMetadata);
-            std::cout << getDisassStream(ongoingInstructionMetadata, false).str() << registers.getRegisterFileStream(true).str() << '\n';
+            std::cout << getDisassStream(ongoingInstructionMetadata, false).str() << registers.getAllRegisterFileStream(true).str() << '\n';
         }
         else
         {
@@ -1141,7 +1155,7 @@ int main(int argc, char* argv[])
     }
 
     std::cout << "Final registers:" << '\n';
-    std::cout << registers.getRegisterFileStream(false).str();
+    std::cout << registers.getAllRegisterFileStream(false).str();
 
     return 0;    
 }
