@@ -20,7 +20,7 @@ using MnemonicBitset = std::bitset<8>;
 enum EInstruction
 {
     /* 
-    mov_regmem_to_from_reg_layout : [100010][1b_d][1b_w]] [[2b_mod][3b_reg][3b_r/m]] [8b_disp_low] [8b_disp_high]
+    mov_regmem_to_from_reg_layout : [[100010][1b_d][1b_w]] [[2b_mod][3b_reg][3b_r/m]] [8b_disp_low] [8b_disp_high]
     */
     MovRegMemToFromReg,
     /* 
@@ -48,33 +48,33 @@ enum EInstruction
     */
     MovSegRegToRegMem,
     /*
-    add_reg_mem_with_reg_to_either : [000000][1b_d][1b_w]] [[2b_mod][3b_reg][3b_r/m]] [8b_disp_low] [8b_disp_high]
+    add_reg_mem_with_reg_to_either : [[000000][1b_d][1b_w]] [[2b_mod][3b_reg][3b_r/m]] [8b_disp_low] [8b_disp_high]
     */
     AddRegMemWithRegToEither,
     /*
-    add_imm_to_acc : [0000010][1b_w]] [8b_data_low] [8b_data_high]
+    add_imm_to_acc : [[0000010][1b_w]] [8b_data_low] [8b_data_high]
     */
     AddImmToAcc,
     /*
-    add_imm_to_rm : [100000][1b_s][1b_w]] [[2b_mod][000][3b_r/m]] [8b_disp_low] [8b_disp_high] [8b_data_low] [8b_data_high]
-    sub_imm_from_rm : [100000][1b_s][1b_w]] [[2b_mod][101][3b_r/m]] [8b_disp_low] [8b_disp_high] [8b_data_low] [8b_data_high]
-    cmp_imm_from_rm : [100000][1b_s][1b_w]] [[2b_mod][111][3b_r/m]] [8b_disp_low] [8b_disp_high] [8b_data_low] [8b_data_high]
+    add_imm_to_rm : [[100000][1b_s][1b_w]] [[2b_mod][000][3b_r/m]] [8b_disp_low] [8b_disp_high] [8b_data_low] [8b_data_high]
+    sub_imm_from_rm : [[100000][1b_s][1b_w]] [[2b_mod][101][3b_r/m]] [8b_disp_low] [8b_disp_high] [8b_data_low] [8b_data_high]
+    cmp_imm_from_rm : [[100000][1b_s][1b_w]] [[2b_mod][111][3b_r/m]] [8b_disp_low] [8b_disp_high] [8b_data_low] [8b_data_high]
     */
     AddSubCmpImmToRM,
     /*
-    sub_reg_mem_with_reg_to_either : [001010][1b_d][1b_w]] [[2b_mod][3b_reg][3b_r/m]] [8b_disp_low] [8b_disp_high]
+    sub_reg_mem_with_reg_to_either : [[001010][1b_d][1b_w]] [[2b_mod][3b_reg][3b_r/m]] [8b_disp_low] [8b_disp_high]
     */
     SubRegMemWithRegToEither,
     /*
-    sub_imm_from_acc : [0010110][1b_w]] [8b_data_low] [8b_data_high]
+    sub_imm_from_acc : [[0010110][1b_w]] [8b_data_low] [8b_data_high]
     */
     SubImmFromAcc,
     /*
-    cmp_reg_mem_with_reg : [001110][1b_d][1b_w]] [[2b_mod][3b_reg][3b_r/m]] [8b_disp_low] [8b_disp_high]
+    cmp_reg_mem_with_reg : [[001110][1b_d][1b_w]] [[2b_mod][3b_reg][3b_r/m]] [8b_disp_low] [8b_disp_high]
     */
     CmpRegMemAndReg,
     /*
-    cmp_imm_with_acc : [0011110][1b_w]] [8b_data_low] [8b_data_high]
+    cmp_imm_with_acc : [[0011110][1b_w]] [8b_data_low] [8b_data_high]
     */
     CmpImmWithAcc,
     /*
@@ -789,21 +789,40 @@ void simulateInstruction(const InstructionMetadata& metadata)
        {
 		   if (metadata.wBit == EWBit::WordOperation)
 		   {
-			   ERegThreeBitEncodingWordOp leftHandOperandRegisterEncoding = static_cast<ERegThreeBitEncodingWordOp>(metadata.registers[1]);
-			   uint16_t leftHandOperand  = registers.get(leftHandOperandRegisterEncoding);
-			   uint16_t rightHandOperand = std::stoul(metadata.immediateValue);
-               uint16_t result = 0;
-               if (metadata.instructionString == "add")
+               ERegThreeBitEncodingWordOp leftHandOperandRegisterEncoding = static_cast<ERegThreeBitEncodingWordOp>(metadata.registers[1]);
+			   int16_t leftHandOperand  = registers.get(leftHandOperandRegisterEncoding);
+			   int16_t result = 0;
+               if (metadata.sBit == ESBit::EightBitImmValue)
                {
-                   result = leftHandOperand + rightHandOperand;
+                   int8_t rightHandOperand = static_cast<int8_t>(std::stoul(metadata.immediateValue));
+                   if (metadata.instructionString == "add")
+				   {
+					   result = leftHandOperand + rightHandOperand;
+				   }
+				   else if (metadata.instructionString == "sub")
+				   {
+					   result = leftHandOperand - rightHandOperand;
+				   }
+				   else if (metadata.instructionString == "cmp")
+				   {
+					   break;
+				   }
                }
-               else if (metadata.instructionString == "sub")
+               else
                {
-                   result = leftHandOperand - rightHandOperand;
-               }
-               else if (metadata.instructionString == "cmp")
-               {
-                   break;
+                   int16_t rightHandOperand = static_cast<int16_t>(std::stoul(metadata.immediateValue));
+                   if (metadata.instructionString == "add")
+				   {
+					   result = leftHandOperand + rightHandOperand;
+				   }
+				   else if (metadata.instructionString == "sub")
+				   {
+					   result = leftHandOperand - rightHandOperand;
+				   }
+				   else if (metadata.instructionString == "cmp")
+				   {
+					   break;
+				   }
                }
 
 			   registers.set(leftHandOperandRegisterEncoding, result);
