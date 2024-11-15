@@ -101,6 +101,13 @@ enum EInstructionFormat
     InstructionFormatInvalid
 };
 
+enum EFlag
+{
+    Zero = (1 << 0),
+    Carry = (1 << 1),
+    Signed = (1 << 2)
+};
+
 // [1b_d]
 enum EDBit : uint8_t
 {
@@ -377,6 +384,10 @@ struct RegisterFile
             r.value = initialValue;
             r.isDirty = false;
         }
+
+        setFlag(EFlag::Carry, false);
+        setFlag(EFlag::Signed, false);
+        setFlag(EFlag::Zero, false);
     }
 
     uint8_t get(ERegThreeBitEncodingByteOp r)
@@ -436,6 +447,83 @@ struct RegisterFile
         segFile[(uint8_t)r].isDirty = true;
     }
 
+    bool getFlag(EFlag f) 
+    { 
+        return (((flags & f) > 0) ? 1 : 0); 
+    }
+
+    void setFlag(EFlag f, bool v) 
+    { 
+        ((v) ? flags |= f : flags &= ~f); 
+    }
+
+    void setFlags(uint16_t result)
+    {
+        if (result == 0)
+        {
+            setFlag(EFlag::Zero, true);
+        }
+        else
+        {
+            setFlag(EFlag::Zero, false);
+        }
+
+        if ((result & 0x8000) > 0)
+        {
+            setFlag(EFlag::Signed, true);
+        }
+        else
+        {
+            setFlag(EFlag::Signed, false);
+        }
+    }
+
+    void setFlags(uint8_t result)
+    {
+        if (result == 0)
+        {
+            setFlag(EFlag::Zero, true);
+        }
+        else
+        {
+            setFlag(EFlag::Zero, false);
+        }
+
+        if ((result & 0x80) > 0)
+        {
+            setFlag(EFlag::Signed, true);
+        }
+        else
+        {
+            setFlag(EFlag::Signed, false);
+        }
+    }
+
+    std::stringstream getFlagsStream()
+    {
+        std::stringstream s;
+        s << "set_flags : ";
+
+        if (getFlag(EFlag::Zero))
+        {
+            s << "Z";
+        }
+
+        if (getFlag(EFlag::Carry))
+        {
+            s << "C";
+        }
+
+        if (getFlag(EFlag::Signed))
+        {
+            s << "S";
+        }
+
+        s << '\n';
+
+        return s;
+    }
+
     std::stringstream getAllRegisterFileStream(bool dirtyOnly = false)
     {
         std::stringstream s;
@@ -482,6 +570,8 @@ struct RegisterFile
 
     std::vector<RegisterEntry> file;
     std::vector<RegisterEntry> segFile;
+
+    uint8_t flags;
 };
 RegisterFile registers(0x0000);
 
@@ -549,7 +639,7 @@ std::stringstream getDisassStream(InstructionMetadata& metadata, bool finishWith
 		}
 		else
 		{
-            s << metadata.instructionString << " " << metadata.effectiveAddress << ", byte " << STREAM_WORD(std::stoul(metadata.immediateValue)) << finishWithChar;
+            s << metadata.instructionString << " " << metadata.effectiveAddress << ", byte " << STREAM_BYTE(std::stoul(metadata.immediateValue)) << finishWithChar;
 		}
 
         break;
@@ -708,8 +798,9 @@ void simulateInstruction(const InstructionMetadata& metadata)
 				   else if (metadata.instructionString == "cmp")
 				   {
 					   break;
-				   }
+                   }
 
+                   registers.setFlags(result); 
                    registers.set(leftHandOperandRegisterEncoding, result);
                }
                else
@@ -731,6 +822,7 @@ void simulateInstruction(const InstructionMetadata& metadata)
 					   break;
 				   }
 
+                   registers.setFlags(result); 
 				   registers.set(leftHandOperandRegisterEncoding, result);
                }
            }
@@ -755,6 +847,7 @@ void simulateInstruction(const InstructionMetadata& metadata)
 					   break;
 				   }
 
+                   registers.setFlags(result); 
                    registers.set(leftHandOperandRegisterEncoding, result);
                }
                else
@@ -776,6 +869,7 @@ void simulateInstruction(const InstructionMetadata& metadata)
 					   break;
 				   }
 
+                   registers.setFlags(result); 
 				   registers.set(leftHandOperandRegisterEncoding, result);
                }
            }
@@ -825,6 +919,7 @@ void simulateInstruction(const InstructionMetadata& metadata)
 				   }
                }
 
+               registers.setFlags((uint16_t)result); 
 			   registers.set(leftHandOperandRegisterEncoding, result);
 		   }
 		   else
@@ -846,6 +941,7 @@ void simulateInstruction(const InstructionMetadata& metadata)
                    break;
                }
 
+               registers.setFlags(result); 
                registers.set(leftHandOperandRegisterEncoding, result);
 		   }
        }
@@ -1315,7 +1411,9 @@ int main(int argc, char* argv[])
         if (argc >= 3 && std::string(argv[2]) == "simulate")
         {
             simulateInstruction(ongoingInstructionMetadata);
-            std::cout << getDisassStream(ongoingInstructionMetadata, false).str() << registers.getAllRegisterFileStream(true).str() << '\n';
+            std::cout << getDisassStream(ongoingInstructionMetadata, false).str() 
+                << registers.getAllRegisterFileStream(true).str() 
+                << registers.getFlagsStream().str() << '\n';
         }
         else
         {
