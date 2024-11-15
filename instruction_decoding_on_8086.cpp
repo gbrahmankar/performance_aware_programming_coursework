@@ -502,7 +502,7 @@ struct RegisterFile
     std::stringstream getFlagsStream()
     {
         std::stringstream s;
-        s << "flags : ";
+        s << "flags : [";
 
         if (getFlag(EFlag::Zero))
         {
@@ -518,6 +518,7 @@ struct RegisterFile
         {
             s << "S";
         }
+        s << "]";
 
         return s;
     }
