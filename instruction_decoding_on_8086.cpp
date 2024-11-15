@@ -502,7 +502,7 @@ struct RegisterFile
     std::stringstream getFlagsStream()
     {
         std::stringstream s;
-        s << "set_flags : ";
+        s << "flags : ";
 
         if (getFlag(EFlag::Zero))
         {
@@ -518,8 +518,6 @@ struct RegisterFile
         {
             s << "S";
         }
-
-        s << '\n';
 
         return s;
     }
@@ -797,6 +795,7 @@ void simulateInstruction(const InstructionMetadata& metadata)
 				   }
 				   else if (metadata.instructionString == "cmp")
 				   {
+                       registers.setFlags(result); 
 					   break;
                    }
 
@@ -819,6 +818,7 @@ void simulateInstruction(const InstructionMetadata& metadata)
 				   }
 				   else if (metadata.instructionString == "cmp")
 				   {
+                       registers.setFlags(result); 
 					   break;
 				   }
 
@@ -844,6 +844,7 @@ void simulateInstruction(const InstructionMetadata& metadata)
 				   }
 				   else if (metadata.instructionString == "cmp")
 				   {
+                       registers.setFlags(result); 
 					   break;
 				   }
 
@@ -866,6 +867,7 @@ void simulateInstruction(const InstructionMetadata& metadata)
 				   }
 				   else if (metadata.instructionString == "cmp")
 				   {
+                       registers.setFlags(result); 
 					   break;
 				   }
 
@@ -899,6 +901,7 @@ void simulateInstruction(const InstructionMetadata& metadata)
 				   }
 				   else if (metadata.instructionString == "cmp")
 				   {
+                       registers.setFlags((uint16_t)result); 
 					   break;
 				   }
                }
@@ -915,6 +918,7 @@ void simulateInstruction(const InstructionMetadata& metadata)
 				   }
 				   else if (metadata.instructionString == "cmp")
 				   {
+                       registers.setFlags((uint16_t)result); 
 					   break;
 				   }
                }
@@ -938,6 +942,7 @@ void simulateInstruction(const InstructionMetadata& metadata)
                }
                else if (metadata.instructionString == "cmp")
                {
+                   registers.setFlags(result); 
                    break;
                }
 
