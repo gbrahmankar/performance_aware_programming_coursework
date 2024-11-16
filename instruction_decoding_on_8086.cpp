@@ -1168,7 +1168,9 @@ void decodeSecondInstructionByte(const ByteBitset& byteBitset, std::ifstream& fi
 
 void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& file, InstructionMetadata& ongoingInstructionMetadata)
 {
+    std::streampos cachedIp = ongoingInstructionMetadata.ip;
     ongoingInstructionMetadata = getInstructionMetadataFromMnemonic(byteBitset);
+    ongoingInstructionMetadata.ip = cachedIp;
 
     switch (ongoingInstructionMetadata.instruction)
     {
@@ -1417,7 +1419,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    std::ifstream file(argv[1]);
+    std::ifstream file(argv[1], std::ios::binary);
     if (!file.is_open()) 
     {
         std::cerr << "failed to open the file. file_name=" << argv[1] << '\n';
@@ -1434,7 +1436,6 @@ int main(int argc, char* argv[])
             break;
         }
 
-        std::cout << firstByteBitset << " ip=" << ongoingInstructionMetadata.ip << '\n';
         decodeFirstInstructionByte(firstByteBitset, file, ongoingInstructionMetadata); 
 
         if (argc >= 3 && std::string(argv[2]) == "simulate")
