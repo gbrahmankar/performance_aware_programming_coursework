@@ -353,6 +353,7 @@ struct InstructionMetadata
     // if the instruction has two registers, 0_src, 1_dst. else, based on instruction_format
     std::vector<uint8_t> registers;
     std::vector<std::string> stringifiedRegisters;
+    std::streampos ip = std::streampos(0);
 
     std::string immediateValue;
 };
@@ -959,25 +960,48 @@ void simulateInstruction(const InstructionMetadata& metadata)
    }
 }
 
+bool getBitsetFromInstructionByteStream(std::ifstream& file, InstructionMetadata& metadata, ByteBitset& byteBitset)
+{
+    file.seekg(metadata.ip);
+    if (file.fail()) 
+    {
+        return false;
+    }
+
+    char byte;
+    file.read(&byte, sizeof(byte));
+    if (file.fail()) 
+    {
+        return false;
+    }
+
+    if (file.gcount() == 0)
+    {
+        return false;
+    }
+    metadata.ip += 1;
+
+    byteBitset = ByteBitset(byte);
+    return true;
+}
+
 void constructImmediateValueFromOperationWidth(std::ifstream& file, InstructionMetadata& ongoingInstructionMetadata, EWBit w)
 {
     if (w == EWBit::WordOperation)
 	{
-		char byte;
-		file.read(&byte, sizeof(byte));
-		ByteBitset firstByteBitset(byte);
+		ByteBitset firstByteBitset;
+        getBitsetFromInstructionByteStream(file, ongoingInstructionMetadata, firstByteBitset);
 
-		file.read(&byte, sizeof(byte));
-		ByteBitset secondByteBitset(byte);
+		ByteBitset secondByteBitset;
+        getBitsetFromInstructionByteStream(file, ongoingInstructionMetadata, secondByteBitset);
 
 		WordBitset immediateValueBitset((secondByteBitset.to_ulong() << 8) | firstByteBitset.to_ulong());
 		ongoingInstructionMetadata.immediateValue = std::to_string(immediateValueBitset.to_ulong());
 	}
 	else
 	{
-		char byte;
-		file.read(&byte, sizeof(byte));
-		ByteBitset firstByteBitset(byte);
+		ByteBitset firstByteBitset;
+        getBitsetFromInstructionByteStream(file, ongoingInstructionMetadata, firstByteBitset);
 
 		ongoingInstructionMetadata.immediateValue = std::to_string(firstByteBitset.to_ulong()); 
 	}
@@ -1003,8 +1027,8 @@ void constructEffectiveAddressFromMode(std::ifstream& file, InstructionMetadata&
     char byte;
     if (disp == EBitsDisplacement::EightBitDisp)
     {
-		file.read(&byte, sizeof(byte));
-		ByteBitset firstByteBitset(byte);
+		ByteBitset firstByteBitset;
+        getBitsetFromInstructionByteStream(file, metadata, firstByteBitset);
 
         ByteBitset effectiveAddressBitset(firstByteBitset);
         if (effectiveAddressBitset.to_ulong() != 0)
@@ -1032,11 +1056,11 @@ void constructEffectiveAddressFromMode(std::ifstream& file, InstructionMetadata&
     }
     else if (disp == EBitsDisplacement::SixteenBitDisp)
     {
-		file.read(&byte, sizeof(byte));
-		ByteBitset firstByteBitset(byte);
+		ByteBitset firstByteBitset;
+        getBitsetFromInstructionByteStream(file, metadata, firstByteBitset);
 
-        file.read(&byte, sizeof(byte));
-		ByteBitset secondByteBitset(byte);
+		ByteBitset secondByteBitset;
+        getBitsetFromInstructionByteStream(file, metadata, secondByteBitset);
 
 		WordBitset effectiveAddressBitset((secondByteBitset.to_ulong() << 8) | firstByteBitset.to_ulong()); 
         if (effectiveAddressBitset.to_ulong() != 0)
@@ -1178,9 +1202,9 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
 		}
 
 		// needs second byte
-		char byte;
-		file.read(&byte, sizeof(byte));
-		ByteBitset secondByteBitset(byte);
+		ByteBitset secondByteBitset;
+        getBitsetFromInstructionByteStream(file, ongoingInstructionMetadata, secondByteBitset);
+
 		decodeSecondInstructionByte(secondByteBitset, file, ongoingInstructionMetadata);
 
         if (ongoingInstructionMetadata.modField == EModField::RegisterMode)
@@ -1253,9 +1277,9 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
 		}
 
 		// needs second byte
-		char byte;
-		file.read(&byte, sizeof(byte));
-		ByteBitset secondByteBitset(byte);
+		ByteBitset secondByteBitset;
+        getBitsetFromInstructionByteStream(file, ongoingInstructionMetadata, secondByteBitset);
+
 		decodeSecondInstructionByte(secondByteBitset, file, ongoingInstructionMetadata);
 
 		constructImmediateValueFromOperationWidth(file, ongoingInstructionMetadata, ongoingInstructionMetadata.wBit);
@@ -1281,9 +1305,9 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
         ongoingInstructionMetadata.wBit = EWBit::WordOperation;
 
 		// needs second byte
-		char byte;
-		file.read(&byte, sizeof(byte));
-		ByteBitset secondByteBitset(byte);
+		ByteBitset secondByteBitset;
+        getBitsetFromInstructionByteStream(file, ongoingInstructionMetadata, secondByteBitset);
+
 		decodeSecondInstructionByte(secondByteBitset, file, ongoingInstructionMetadata);
 
         if (ongoingInstructionMetadata.modField == EModField::RegisterMode)
@@ -1320,9 +1344,9 @@ void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& fil
 	case (EInstruction::AddSubCmpImmToRM) :
     {
         // needs second byte
-		char byte;
-		file.read(&byte, sizeof(byte));
-		ByteBitset secondByteBitset(byte);
+		ByteBitset secondByteBitset;
+        getBitsetFromInstructionByteStream(file, ongoingInstructionMetadata, secondByteBitset);
+
 		decodeSecondInstructionByte(secondByteBitset, file, ongoingInstructionMetadata);
 
         switch(ongoingInstructionMetadata.regField)
@@ -1404,14 +1428,13 @@ int main(int argc, char* argv[])
     std::cout << "bits 16" << '\n';
     while (true) 
     {
-        char byte;
-
-        file.read(&byte, sizeof(byte));
-        ByteBitset firstByteBitset(byte);
-        if (file.gcount() == 0)
+        ByteBitset firstByteBitset;
+        if (!getBitsetFromInstructionByteStream(file, ongoingInstructionMetadata, firstByteBitset))
         {
             break;
         }
+
+        std::cout << firstByteBitset << " ip=" << ongoingInstructionMetadata.ip << '\n';
         decodeFirstInstructionByte(firstByteBitset, file, ongoingInstructionMetadata); 
 
         if (argc >= 3 && std::string(argv[2]) == "simulate")
