@@ -353,7 +353,6 @@ struct InstructionMetadata
     // if the instruction has two registers, 0_src, 1_dst. else, based on instruction_format
     std::vector<uint8_t> registers;
     std::vector<std::string> stringifiedRegisters;
-    std::streampos ip = std::streampos(0);
 
     std::string immediateValue;
 };
@@ -364,6 +363,13 @@ struct RegisterFile
     {
         uint16_t prevValue;
         uint16_t value;
+        bool isDirty;
+    };
+
+    struct IpRegisterEntry
+    {
+        std::streampos beforeFetchingInstructionBytes;
+        std::streampos beforeStartingInstructionExecution;
         bool isDirty;
     };
 
@@ -385,6 +391,9 @@ struct RegisterFile
             r.value = initialValue;
             r.isDirty = false;
         }
+
+        ip.beforeFetchingInstructionBytes = std::streampos(0);
+        ip.beforeStartingInstructionExecution = std::streampos(0);
 
         setFlag(EFlag::Carry, false);
         setFlag(EFlag::Signed, false);
@@ -448,6 +457,33 @@ struct RegisterFile
         segFile[(uint8_t)r].isDirty = true;
     }
 
+    std::streampos getIp()
+    {
+        return ip.beforeStartingInstructionExecution;
+    }
+
+    void setIp(std::streampos value, bool isFirstByteOfInstruction = false)
+    {
+        if (isFirstByteOfInstruction)
+        {
+            ip.beforeFetchingInstructionBytes = ip.beforeStartingInstructionExecution;
+        }
+        ip.beforeStartingInstructionExecution = value;
+
+        ip.isDirty = true;
+    }
+
+    void modifyIp(int16_t value, bool isFirstByteOfInstruction = false)
+    {
+        if (isFirstByteOfInstruction)
+        {
+            ip.beforeFetchingInstructionBytes = ip.beforeStartingInstructionExecution;
+        }
+        ip.beforeStartingInstructionExecution += value;
+
+        ip.isDirty = true;
+    }
+
     bool getFlag(EFlag f) 
     { 
         return (((flags & f) > 0) ? 1 : 0); 
@@ -503,7 +539,7 @@ struct RegisterFile
     std::stringstream getFlagsStream()
     {
         std::stringstream s;
-        s << "flags : [";
+        s << "flags=[";
 
         if (getFlag(EFlag::Zero))
         {
@@ -565,11 +601,28 @@ struct RegisterFile
             }
         }
 
+        // ip
+        if (dirtyOnly)
+        {
+            if (ip.isDirty)
+            {
+                s << "ip=" << STREAM_WORD(ip.beforeFetchingInstructionBytes) << "->" << STREAM_WORD(ip.beforeStartingInstructionExecution) << "; ";
+                ip.isDirty = false;
+            }
+        }
+        else
+        {
+            s << '\n';
+            s << '\t' << "ip=" << STREAM_WORD(ip.beforeStartingInstructionExecution) << '\n';
+        }
+
         return s;
     }
 
+private:
     std::vector<RegisterEntry> file;
     std::vector<RegisterEntry> segFile;
+    IpRegisterEntry ip;
 
     uint8_t flags;
 };
@@ -703,7 +756,7 @@ std::stringstream getDisassStream(InstructionMetadata& metadata, bool finishWith
     return s;
 }
 
-void simulateInstruction(const InstructionMetadata& metadata)
+void simulateInstruction(InstructionMetadata& metadata)
 {
    switch (metadata.instruction)
    {
@@ -955,14 +1008,25 @@ void simulateInstruction(const InstructionMetadata& metadata)
 
        break;
    }
+   case (EInstruction::JmpIfNotZero) :
+   {
+       if (!registers.getFlag(EFlag::Zero))
+       {
+           std::cout << "imm_val=" << metadata.immediateValue << '\n';
+           registers.modifyIp(static_cast<int8_t>(std::stoi(metadata.immediateValue)));
+       }
+
+       break;
+   }
    default:
        return;
    }
 }
 
-bool getBitsetFromInstructionByteStream(std::ifstream& file, InstructionMetadata& metadata, ByteBitset& byteBitset)
+bool getBitsetFromInstructionByteStream(std::ifstream& file, InstructionMetadata& metadata, 
+        ByteBitset& byteBitset, bool isFirstByteOfInstruction = false)
 {
-    file.seekg(metadata.ip);
+    file.seekg(registers.getIp());
     if (file.fail()) 
     {
         return false;
@@ -979,7 +1043,7 @@ bool getBitsetFromInstructionByteStream(std::ifstream& file, InstructionMetadata
     {
         return false;
     }
-    metadata.ip += 1;
+    registers.modifyIp(1, isFirstByteOfInstruction);
 
     byteBitset = ByteBitset(byte);
     return true;
@@ -1168,9 +1232,7 @@ void decodeSecondInstructionByte(const ByteBitset& byteBitset, std::ifstream& fi
 
 void decodeFirstInstructionByte(const ByteBitset& byteBitset, std::ifstream& file, InstructionMetadata& ongoingInstructionMetadata)
 {
-    std::streampos cachedIp = ongoingInstructionMetadata.ip;
     ongoingInstructionMetadata = getInstructionMetadataFromMnemonic(byteBitset);
-    ongoingInstructionMetadata.ip = cachedIp;
 
     switch (ongoingInstructionMetadata.instruction)
     {
@@ -1431,7 +1493,7 @@ int main(int argc, char* argv[])
     while (true) 
     {
         ByteBitset firstByteBitset;
-        if (!getBitsetFromInstructionByteStream(file, ongoingInstructionMetadata, firstByteBitset))
+        if (!getBitsetFromInstructionByteStream(file, ongoingInstructionMetadata, firstByteBitset, true))
         {
             break;
         }
