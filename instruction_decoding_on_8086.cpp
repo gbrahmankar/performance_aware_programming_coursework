@@ -366,6 +366,9 @@ struct RegisterFile
         bool isDirty;
     };
 
+    // ip : cpu is already pointing to the instruction it wants to fetch, decode and execute. after fetching and decoding, it
+    // increments ip by the number of bytes it decoded "before" executing the instruction. as a consequence, ip is already pointing 
+    // to the next instruction while executing the current one.
     struct IpRegisterEntry
     {
         std::streampos beforeFetchingInstructionBytes;
