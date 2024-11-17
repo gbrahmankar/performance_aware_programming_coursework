@@ -17,6 +17,12 @@ using WordBitset = std::bitset<16>;
 
 using MnemonicBitset = std::bitset<8>;
 
+constexpr std::size_t BYTE = 1;
+constexpr std::size_t KILOBYTE = 1024 * BYTE;
+constexpr std::size_t MEGABYTE = 1024 * KILOBYTE;
+constexpr std::size_t GIGABYTE = 1024 * MEGABYTE;
+constexpr std::size_t TERABYTE = 1024 * GIGABYTE;
+
 enum EInstruction
 {
     /* 
@@ -349,6 +355,7 @@ struct InstructionMetadata
     uint8_t rmField = UINT8_MAX;
 
     std::string effectiveAddress;
+    uint16_t effectiveAddressValue;
 
     // if the instruction has two registers, 0_src, 1_dst. else, based on instruction_format
     std::vector<uint8_t> registers;
@@ -631,6 +638,59 @@ private:
 };
 RegisterFile registers(0x0000);
 
+struct Memory
+{
+    struct Slot
+    {
+        uint8_t value;
+    };
+
+    Memory()
+    {
+        slots.resize(MEGABYTE);
+    }
+
+    Slot& operator[](std::size_t index) 
+    {
+        if (index >= slots.size()) 
+        {
+            throw std::out_of_range("memory index out of bounds");
+        }
+        return slots[index];
+    }
+
+    std::vector<Slot> slots;
+};
+Memory memory;
+
+uint16_t getEffectiveAddressBaseValue(uint8_t registerOrMemoryFieldValue, EModField mod)
+{
+    switch(registerOrMemoryFieldValue)
+    {
+	case 0 :
+		return registers.get(ERegThreeBitEncodingWordOp::bx) + registers.get(ERegThreeBitEncodingWordOp::si);
+	case 1 :
+		return registers.get(ERegThreeBitEncodingWordOp::bx) + registers.get(ERegThreeBitEncodingWordOp::di);
+	case 2 :
+		return registers.get(ERegThreeBitEncodingWordOp::bp) + registers.get(ERegThreeBitEncodingWordOp::si);
+	case 3 :
+		return registers.get(ERegThreeBitEncodingWordOp::bp) + registers.get(ERegThreeBitEncodingWordOp::di);
+	case 4 :
+		return registers.get(ERegThreeBitEncodingWordOp::si);
+	case 5 :
+        return registers.get(ERegThreeBitEncodingWordOp::di);
+	case 6 :
+		if (mod == EModField::MemModeNoDisp)
+			return 0;
+		else
+            return registers.get(ERegThreeBitEncodingWordOp::bp);
+	case 7 :
+        return registers.get(ERegThreeBitEncodingWordOp::bx);
+	default :
+		throw std::runtime_error("invalid mod_field enum passed !");
+    }
+}
+
 std::unordered_map<uint64_t, InstructionMetadata> mnemonicToInstructionMetadata =
 {
     { MnemonicBitset("100010").to_ulong(), InstructionMetadata(EInstruction::MovRegMemToFromReg, "mov", 6) },
@@ -776,6 +836,33 @@ void simulateInstruction(InstructionMetadata& metadata)
 
        break;
    }
+   case (EInstruction::MovImmToRM) :
+   {
+       if (metadata.instructionFormat == EInstructionFormat::MemImm)
+       {
+           uint16_t effectiveAddressValue = metadata.effectiveAddressValue;
+
+           if (metadata.dBit == EDBit::RegFieldSrcRMFieldDest)
+           {
+               if (metadata.wBit == EWBit::WordOperation)
+               {
+                   Memory::Slot& lowSlotRef = memory[effectiveAddressValue];
+                   Memory::Slot& highSlotRef = memory[effectiveAddressValue + 1];
+
+                   uint16_t value = static_cast<uint16_t>(std::stoul(metadata.immediateValue));
+                   lowSlotRef.value = static_cast<uint8_t>(value & 0x00ff);
+                   highSlotRef.value = static_cast<uint8_t>((value >> 8) & 0x00ff);
+               }
+               else
+               {
+                   Memory::Slot& slotRef = memory[effectiveAddressValue];
+
+                   uint8_t value = static_cast<uint8_t>(std::stoul(metadata.immediateValue));
+                   slotRef.value = value;
+               }
+           }
+       }
+   }
    case (EInstruction::MovRegMemToFromReg) :
    {
        if (metadata.instructionFormat == EInstructionFormat::RegReg)
@@ -804,6 +891,47 @@ void simulateInstruction(InstructionMetadata& metadata)
                {
                    uint8_t value = registers.get(static_cast<ERegThreeBitEncodingByteOp>(metadata.registers[0]));
                    registers.set(static_cast<ERegThreeBitEncodingByteOp>(metadata.registers[1]), value);
+               }
+           }
+       }
+       else if (metadata.instructionFormat == EInstructionFormat::MemReg)
+       {
+           uint16_t effectiveAddressValue = metadata.effectiveAddressValue;
+
+           if (metadata.dBit == EDBit::RegFieldDestRMFieldSrc)
+           {
+               if (metadata.wBit == EWBit::WordOperation)
+               {
+                   Memory::Slot lowByte = memory[effectiveAddressValue];
+                   Memory::Slot highByte = memory[effectiveAddressValue + 1];
+                   uint16_t value = ((uint16_t)highByte.value << 8) | lowByte.value;
+
+                   registers.set(static_cast<ERegThreeBitEncodingWordOp>(metadata.registers[0]), value);
+               }
+               else
+               {
+                   Memory::Slot slot = memory[effectiveAddressValue];
+
+                   registers.set(static_cast<ERegThreeBitEncodingByteOp>(metadata.registers[0]), slot.value);
+               }
+           }
+           else
+           {
+               if (metadata.wBit == EWBit::WordOperation)
+               {
+                   Memory::Slot& lowSlotRef = memory[effectiveAddressValue];
+                   Memory::Slot& highSlotRef = memory[effectiveAddressValue + 1];
+
+                   uint16_t value = registers.get(static_cast<ERegThreeBitEncodingWordOp>(metadata.registers[0]));
+                   lowSlotRef.value = static_cast<uint8_t>(value & 0x00ff);
+                   highSlotRef.value = static_cast<uint8_t>((value >> 8) & 0x00ff);
+               }
+               else
+               {
+                   Memory::Slot& slotRef = memory[effectiveAddressValue];
+
+                   uint8_t value = registers.get(static_cast<ERegThreeBitEncodingByteOp>(metadata.registers[0]));
+                   slotRef.value = value;
                }
            }
        }
@@ -1082,13 +1210,17 @@ void constructEffectiveAddressFromMode(std::ifstream& file, InstructionMetadata&
     }
 
     std::string baseEquation = getEffectiveAddressBaseEquationString(metadata.rmField , metadata.modField);
+    uint16_t baseValue = getEffectiveAddressBaseValue(metadata.rmField , metadata.modField);
+
     if (baseEquation.empty())
     {
         metadata.effectiveAddress = "[";
+        metadata.effectiveAddressValue = 0;
     }
     else
     {
         metadata.effectiveAddress = "[" + baseEquation;
+        metadata.effectiveAddressValue = baseValue;
     }
 
     char byte;
@@ -1103,16 +1235,19 @@ void constructEffectiveAddressFromMode(std::ifstream& file, InstructionMetadata&
             if (baseEquation.empty()) // direct_address case
             {
                 metadata.effectiveAddress += std::to_string(effectiveAddressBitset.to_ulong()) + "]";
+                metadata.effectiveAddressValue += effectiveAddressBitset.to_ulong();
             }
             else
             {
                 if ((effectiveAddressBitset.to_ulong() & 0b10000000) > 0)
                 {
                     metadata.effectiveAddress += " - " + std::to_string(-static_cast<int8_t>(effectiveAddressBitset.to_ulong())) + "]";
+                    metadata.effectiveAddressValue += static_cast<int8_t>(effectiveAddressBitset.to_ulong());
                 }
                 else
                 {
                     metadata.effectiveAddress += " + " + std::to_string(effectiveAddressBitset.to_ulong()) + "]";
+                    metadata.effectiveAddressValue += effectiveAddressBitset.to_ulong();
                 }
             }
         }
@@ -1135,16 +1270,19 @@ void constructEffectiveAddressFromMode(std::ifstream& file, InstructionMetadata&
             if (baseEquation.empty()) // direct_address case
             {
                 metadata.effectiveAddress += std::to_string(effectiveAddressBitset.to_ulong()) + "]";
+                metadata.effectiveAddressValue += effectiveAddressBitset.to_ulong();
             }
             else
             {
                 if ((effectiveAddressBitset.to_ulong() & 0x8000) > 0)
                 {
                     metadata.effectiveAddress += " - " + std::to_string(-static_cast<int16_t>(effectiveAddressBitset.to_ulong())) + "]";
+                    metadata.effectiveAddressValue += static_cast<int16_t>(effectiveAddressBitset.to_ulong());
                 }
                 else
                 {
                     metadata.effectiveAddress += " + " + std::to_string(effectiveAddressBitset.to_ulong()) + "]";
+                    metadata.effectiveAddressValue += effectiveAddressBitset.to_ulong();
                 }
             }
         }
