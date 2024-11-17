@@ -974,19 +974,21 @@ void simulateInstruction(InstructionMetadata& metadata)
 				   if (metadata.instructionString == "add")
 				   {
 					   result = leftHandOperand + rightHandOperand;
+                       registers.setFlags(result); 
+                       registers.set(leftHandOperandRegisterEncoding, result);
 				   }
 				   else if (metadata.instructionString == "sub")
 				   {
-					   result = leftHandOperand - rightHandOperand;
+                       result = leftHandOperand - rightHandOperand;
+                       registers.setFlags(result); 
+                       registers.set(leftHandOperandRegisterEncoding, result);
 				   }
 				   else if (metadata.instructionString == "cmp")
 				   {
+					   result = leftHandOperand - rightHandOperand;
                        registers.setFlags(result); 
-					   break;
                    }
 
-                   registers.setFlags(result); 
-                   registers.set(leftHandOperandRegisterEncoding, result);
                }
                else
                {
@@ -997,19 +999,21 @@ void simulateInstruction(InstructionMetadata& metadata)
 				   if (metadata.instructionString == "add")
 				   {
 					   result = leftHandOperand + rightHandOperand;
+                       registers.setFlags(result); 
+                       registers.set(leftHandOperandRegisterEncoding, result);
 				   }
 				   else if (metadata.instructionString == "sub")
 				   {
 					   result = leftHandOperand - rightHandOperand;
+                       registers.setFlags(result); 
+                       registers.set(leftHandOperandRegisterEncoding, result);
 				   }
 				   else if (metadata.instructionString == "cmp")
 				   {
+					   result = leftHandOperand - rightHandOperand;
                        registers.setFlags(result); 
-					   break;
 				   }
 
-                   registers.setFlags(result); 
-				   registers.set(leftHandOperandRegisterEncoding, result);
                }
            }
            else
@@ -1023,19 +1027,21 @@ void simulateInstruction(InstructionMetadata& metadata)
 				   if (metadata.instructionString == "add")
 				   {
 					   result = leftHandOperand + rightHandOperand;
+                       registers.setFlags(result); 
+                       registers.set(leftHandOperandRegisterEncoding, result);
 				   }
 				   else if (metadata.instructionString == "sub")
 				   {
 					   result = leftHandOperand - rightHandOperand;
+                       registers.setFlags(result); 
+                       registers.set(leftHandOperandRegisterEncoding, result);
 				   }
 				   else if (metadata.instructionString == "cmp")
 				   {
+					   result = leftHandOperand - rightHandOperand;
                        registers.setFlags(result); 
-					   break;
 				   }
 
-                   registers.setFlags(result); 
-                   registers.set(leftHandOperandRegisterEncoding, result);
                }
                else
                {
@@ -1046,19 +1052,21 @@ void simulateInstruction(InstructionMetadata& metadata)
 				   if (metadata.instructionString == "add")
 				   {
 					   result = leftHandOperand + rightHandOperand;
+                       registers.setFlags(result); 
+                       registers.set(leftHandOperandRegisterEncoding, result);
 				   }
 				   else if (metadata.instructionString == "sub")
 				   {
 					   result = leftHandOperand - rightHandOperand;
+                       registers.setFlags(result); 
+                       registers.set(leftHandOperandRegisterEncoding, result);
 				   }
 				   else if (metadata.instructionString == "cmp")
 				   {
+					   result = leftHandOperand - rightHandOperand;
                        registers.setFlags(result); 
-					   break;
 				   }
 
-                   registers.setFlags(result); 
-				   registers.set(leftHandOperandRegisterEncoding, result);
                }
            }
        }
@@ -1080,15 +1088,19 @@ void simulateInstruction(InstructionMetadata& metadata)
                    if (metadata.instructionString == "add")
 				   {
 					   result = leftHandOperand + rightHandOperand;
+                       registers.setFlags((uint16_t)result); 
+                       registers.set(leftHandOperandRegisterEncoding, result);
 				   }
 				   else if (metadata.instructionString == "sub")
 				   {
 					   result = leftHandOperand - rightHandOperand;
+                       registers.setFlags((uint16_t)result); 
+                       registers.set(leftHandOperandRegisterEncoding, result);
 				   }
 				   else if (metadata.instructionString == "cmp")
 				   {
+					   result = leftHandOperand - rightHandOperand;
                        registers.setFlags((uint16_t)result); 
-					   break;
 				   }
                }
                else
@@ -1097,20 +1109,21 @@ void simulateInstruction(InstructionMetadata& metadata)
                    if (metadata.instructionString == "add")
 				   {
 					   result = leftHandOperand + rightHandOperand;
+                       registers.setFlags((uint16_t)result); 
+                       registers.set(leftHandOperandRegisterEncoding, result);
 				   }
 				   else if (metadata.instructionString == "sub")
 				   {
 					   result = leftHandOperand - rightHandOperand;
+                       registers.setFlags((uint16_t)result); 
+                       registers.set(leftHandOperandRegisterEncoding, result);
 				   }
 				   else if (metadata.instructionString == "cmp")
 				   {
+					   result = leftHandOperand - rightHandOperand;
                        registers.setFlags((uint16_t)result); 
-					   break;
 				   }
                }
-
-               registers.setFlags((uint16_t)result); 
-			   registers.set(leftHandOperandRegisterEncoding, result);
 		   }
 		   else
 		   {
@@ -1121,19 +1134,20 @@ void simulateInstruction(InstructionMetadata& metadata)
                if (metadata.instructionString == "add")
                {
                    result = leftHandOperand + rightHandOperand;
+                   registers.setFlags(result); 
+                   registers.set(leftHandOperandRegisterEncoding, result);
                }
                else if (metadata.instructionString == "sub")
                {
                    result = leftHandOperand - rightHandOperand;
+                   registers.setFlags(result); 
+                   registers.set(leftHandOperandRegisterEncoding, result);
                }
                else if (metadata.instructionString == "cmp")
                {
+                   result = leftHandOperand - rightHandOperand;
                    registers.setFlags(result); 
-                   break;
                }
-
-               registers.setFlags(result); 
-               registers.set(leftHandOperandRegisterEncoding, result);
 		   }
        }
 
