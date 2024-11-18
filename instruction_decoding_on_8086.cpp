@@ -691,6 +691,34 @@ uint16_t getEffectiveAddressBaseValue(uint8_t registerOrMemoryFieldValue, EModFi
     }
 }
 
+uint16_t getEAComponent(uint8_t registerOrMemoryFieldValue, EModField mod)
+{
+    switch(registerOrMemoryFieldValue)
+    {
+	case 0 :
+        return 7;
+	case 1 :
+        return 8;
+	case 2 :
+        return 8;
+	case 3 :
+        return 7;
+	case 4 :
+        return 5;
+	case 5 :
+        return 5;
+	case 6 :
+		if (mod == EModField::MemModeNoDisp)
+			return 0;
+		else
+            return 5;
+	case 7 :
+        return 5;
+	default :
+		throw std::runtime_error("invalid mod_field enum passed !");
+    }
+}
+
 std::unordered_map<uint64_t, InstructionMetadata> mnemonicToInstructionMetadata =
 {
     { MnemonicBitset("100010").to_ulong(), InstructionMetadata(EInstruction::MovRegMemToFromReg, "mov", 6) },
