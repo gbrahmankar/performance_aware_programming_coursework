@@ -362,6 +362,11 @@ struct InstructionMetadata
     std::vector<std::string> stringifiedRegisters;
 
     std::string immediateValue;
+
+    // costs
+    uint16_t baseCost = 0;
+    uint16_t effectiveAddressCost = 0;
+    uint16_t netCost = 0;
 };
 
 struct RegisterFile
@@ -691,7 +696,7 @@ uint16_t getEffectiveAddressBaseValue(uint8_t registerOrMemoryFieldValue, EModFi
     }
 }
 
-uint16_t getEAComponent(uint8_t registerOrMemoryFieldValue, EModField mod)
+uint16_t getEACostWithoutDisplacement(uint8_t registerOrMemoryFieldValue, EModField mod)
 {
     switch(registerOrMemoryFieldValue)
     {
@@ -709,13 +714,25 @@ uint16_t getEAComponent(uint8_t registerOrMemoryFieldValue, EModField mod)
         return 5;
 	case 6 :
 		if (mod == EModField::MemModeNoDisp)
-			return 0;
+			return 6;
 		else
             return 5;
 	case 7 :
         return 5;
 	default :
-		throw std::runtime_error("invalid mod_field enum passed !");
+		return 0;
+    }
+}
+
+void setNetInstructionCost(uint16_t baseCost, InstructionMetadata& metadata)
+{
+    metadata.baseCost = baseCost;
+    metadata.effectiveAddressCost = getEACostWithoutDisplacement(metadata.rmField, metadata.modField);
+    metadata.netCost = metadata.baseCost + metadata.effectiveAddressCost;
+
+    if (metadata.modField != EModField::MemModeNoDisp)
+    {
+        metadata.netCost += 4;
     }
 }
 
