@@ -107,6 +107,23 @@ enum EInstructionFormat
     InstructionFormatInvalid
 };
 
+enum EInstructionOperandLayout : uint8_t
+{
+	RegisterToRegister = 0,
+	MemoryToRegister,
+	RegisterToMemory,
+
+	MemoryToAccumulator,
+	AccumulatorToMemory,
+	ImmediateToAccumulator,
+
+	ImmediateToMemory,
+    ImmediateToRegister,
+
+    JmpTaken,
+    JmpNotTaken
+};
+
 enum EFlag
 {
     Zero = (1 << 0),
@@ -331,7 +348,7 @@ std::string getEffectiveAddressBaseEquationString(uint8_t registerOrMemoryFieldV
 }
 
 struct InstructionMetadata
-{
+{     
     InstructionMetadata()
     {}
 
@@ -364,7 +381,6 @@ struct InstructionMetadata
     std::string immediateValue;
 
     // costs
-    uint16_t baseCost = 0;
     uint16_t effectiveAddressCost = 0;
     uint16_t netCost = 0;
 };
@@ -724,11 +740,80 @@ uint16_t getEACostWithoutDisplacement(uint8_t registerOrMemoryFieldValue, EModFi
     }
 }
 
-void setNetInstructionCost(uint16_t baseCost, InstructionMetadata& metadata)
+std::unordered_map<std::string, std::unordered_map<EInstructionOperandLayout, uint16_t>> instructionBaseCostMap = 
 {
-    metadata.baseCost = baseCost;
+{ 
+	"mov",
+	{
+        { EInstructionOperandLayout::AccumulatorToMemory, 10 },
+        { EInstructionOperandLayout::MemoryToAccumulator, 10 },
+
+        { EInstructionOperandLayout::MemoryToRegister, 8 },
+        { EInstructionOperandLayout::RegisterToMemory, 9 },
+
+        { EInstructionOperandLayout::RegisterToRegister, 2 },
+        { EInstructionOperandLayout::ImmediateToRegister, 4 },
+        { EInstructionOperandLayout::ImmediateToMemory, 10 }
+	},
+
+    "add",
+    {
+        { EInstructionOperandLayout::RegisterToRegister, 3 },
+
+        { EInstructionOperandLayout::MemoryToRegister, 9 },
+        { EInstructionOperandLayout::RegisterToMemory, 16 },
+
+        { EInstructionOperandLayout::ImmediateToRegister, 4 },
+        { EInstructionOperandLayout::ImmediateToMemory, 17 },
+
+        { EInstructionOperandLayout::ImmediateToAccumulator, 4 }
+	},
+
+    "sub",
+    {
+        { EInstructionOperandLayout::RegisterToRegister, 3 },
+
+        { EInstructionOperandLayout::MemoryToRegister, 9 },
+        { EInstructionOperandLayout::RegisterToMemory, 16 },
+
+        { EInstructionOperandLayout::ImmediateToAccumulator, 4 },
+        { EInstructionOperandLayout::ImmediateToRegister, 4 },
+
+        { EInstructionOperandLayout::ImmediateToMemory, 17 }
+	},
+
+    "cmp",
+    {
+        { EInstructionOperandLayout::RegisterToRegister, 3 },
+
+        { EInstructionOperandLayout::MemoryToRegister, 9 },
+        { EInstructionOperandLayout::RegisterToMemory, 9 },
+
+        { EInstructionOperandLayout::ImmediateToRegister, 4 },
+        { EInstructionOperandLayout::ImmediateToMemory, 10 },
+
+        { EInstructionOperandLayout::ImmediateToAccumulator, 4 }
+	}
+
+    "jne",
+    {
+        { EInstructionOperandLayout::JmpTaken, 16 },
+        { EInstructionOperandLayout::JmpNotTaken, 4 },
+	}
+}
+};
+
+void setNetInstructionCost(EInstructionOperandLayout instructionLayout, InstructionMetadata& metadata)
+{
     metadata.effectiveAddressCost = getEACostWithoutDisplacement(metadata.rmField, metadata.modField);
-    metadata.netCost = metadata.baseCost + metadata.effectiveAddressCost;
+    if (instructionBaseCostMap.count(metadata.instructionString))
+    {
+        metadata.netCost = instructionBaseCostMap[metadata.instructionString][instructionLayout] + metadata.effectiveAddressCost;
+    }
+    else
+    {
+        metadata.netCost = metadata.effectiveAddressCost;
+    }
 
     if (metadata.modField != EModField::MemModeNoDisp)
     {
@@ -879,6 +964,7 @@ void simulateInstruction(InstructionMetadata& metadata)
            registers.set(static_cast<ERegThreeBitEncodingByteOp>(metadata.registers[0]), static_cast<uint8_t>(std::stoul(metadata.immediateValue)));
        }
 
+       setNetInstructionCost(EInstructionOperandLayout::ImmediateToRegister, metadata);
        break;
    }
    case (EInstruction::MovImmToRM) :
@@ -905,6 +991,8 @@ void simulateInstruction(InstructionMetadata& metadata)
                    uint8_t value = static_cast<uint8_t>(std::stoul(metadata.immediateValue));
                    slotRef.value = value;
                }
+
+			   setNetInstructionCost(EInstructionOperandLayout::ImmediateToMemory, metadata);
            }
        }
    }
@@ -938,6 +1026,8 @@ void simulateInstruction(InstructionMetadata& metadata)
                    registers.set(static_cast<ERegThreeBitEncodingByteOp>(metadata.registers[1]), value);
                }
            }
+
+		   setNetInstructionCost(EInstructionOperandLayout::RegisterToRegister, metadata);
        }
        else if (metadata.instructionFormat == EInstructionFormat::MemReg)
        {
@@ -959,6 +1049,8 @@ void simulateInstruction(InstructionMetadata& metadata)
 
                    registers.set(static_cast<ERegThreeBitEncodingByteOp>(metadata.registers[0]), slot.value);
                }
+
+		       setNetInstructionCost(EInstructionOperandLayout::MemoryToRegister, metadata);
            }
            else
            {
@@ -978,6 +1070,8 @@ void simulateInstruction(InstructionMetadata& metadata)
                    uint8_t value = registers.get(static_cast<ERegThreeBitEncodingByteOp>(metadata.registers[0]));
                    slotRef.value = value;
                }
+
+		       setNetInstructionCost(EInstructionOperandLayout::RegisterToMemory, metadata);
            }
        }
 
@@ -1114,6 +1208,8 @@ void simulateInstruction(InstructionMetadata& metadata)
 
                }
            }
+
+		   setNetInstructionCost(EInstructionOperandLayout::RegisterToRegister, metadata);
        }
 
        break;
@@ -1194,6 +1290,8 @@ void simulateInstruction(InstructionMetadata& metadata)
                    registers.setFlags(result); 
                }
 		   }
+
+		   setNetInstructionCost(EInstructionOperandLayout::ImmediateToRegister, metadata);
        }
 
        break;
@@ -1202,8 +1300,13 @@ void simulateInstruction(InstructionMetadata& metadata)
    {
        if (!registers.getFlag(EFlag::Zero))
        {
-           std::cout << "imm_val=" << metadata.immediateValue << '\n';
            registers.modifyIp(static_cast<int8_t>(std::stoi(metadata.immediateValue)));
+
+           setNetInstructionCost(EInstructionOperandLayout::JmpTaken, metadata);
+       }
+       else
+       {
+           setNetInstructionCost(EInstructionOperandLayout::JmpNotTaken, metadata);
        }
 
        break;
