@@ -121,7 +121,9 @@ enum EInstructionOperandLayout : uint8_t
     ImmediateToRegister,
 
     JmpTaken,
-    JmpNotTaken
+    JmpNotTaken,
+
+    InvalidOperandLayout
 };
 
 enum EFlag
@@ -347,6 +349,73 @@ std::string getEffectiveAddressBaseEquationString(uint8_t registerOrMemoryFieldV
     }
 }
 
+std::unordered_map<std::string, std::unordered_map<EInstructionOperandLayout, uint16_t>> instructionBaseCostMap = 
+{
+{ 
+	"mov",
+	{
+        { EInstructionOperandLayout::AccumulatorToMemory, 10 },
+        { EInstructionOperandLayout::MemoryToAccumulator, 10 },
+
+        { EInstructionOperandLayout::MemoryToRegister, 8 },
+        { EInstructionOperandLayout::RegisterToMemory, 9 },
+
+        { EInstructionOperandLayout::RegisterToRegister, 2 },
+        { EInstructionOperandLayout::ImmediateToRegister, 4 },
+        { EInstructionOperandLayout::ImmediateToMemory, 10 }
+	}
+},
+{
+    "add",
+    {
+        { EInstructionOperandLayout::RegisterToRegister, 3 },
+
+        { EInstructionOperandLayout::MemoryToRegister, 9 },
+        { EInstructionOperandLayout::RegisterToMemory, 16 },
+
+        { EInstructionOperandLayout::ImmediateToRegister, 4 },
+        { EInstructionOperandLayout::ImmediateToMemory, 17 },
+
+        { EInstructionOperandLayout::ImmediateToAccumulator, 4 }
+	}
+},
+{
+    "sub",
+    {
+        { EInstructionOperandLayout::RegisterToRegister, 3 },
+
+        { EInstructionOperandLayout::MemoryToRegister, 9 },
+        { EInstructionOperandLayout::RegisterToMemory, 16 },
+
+        { EInstructionOperandLayout::ImmediateToAccumulator, 4 },
+        { EInstructionOperandLayout::ImmediateToRegister, 4 },
+
+        { EInstructionOperandLayout::ImmediateToMemory, 17 }
+	}
+},
+{
+    "cmp",
+    {
+        { EInstructionOperandLayout::RegisterToRegister, 3 },
+
+        { EInstructionOperandLayout::MemoryToRegister, 9 },
+        { EInstructionOperandLayout::RegisterToMemory, 9 },
+
+        { EInstructionOperandLayout::ImmediateToRegister, 4 },
+        { EInstructionOperandLayout::ImmediateToMemory, 10 },
+
+        { EInstructionOperandLayout::ImmediateToAccumulator, 4 }
+	}
+},
+{
+    "jne",
+    {
+        { EInstructionOperandLayout::JmpTaken, 16 },
+        { EInstructionOperandLayout::JmpNotTaken, 4 }
+	}
+}
+};
+
 struct InstructionMetadata
 {     
     InstructionMetadata()
@@ -358,16 +427,40 @@ struct InstructionMetadata
         mnemonicSize(ms)
     {}
 
+    std::stringstream getInstructionCostStream()
+    {
+        std::stringstream s;
+
+        if (instructionBaseCostMap.count(instructionString))
+        {
+            s << "cost : base=" << instructionBaseCostMap[instructionString][instructionOperandLayout] 
+                << " ea=" << effectiveAddressCost << " ";
+        }
+        else
+        {
+            s << "cost : base=" << 0 << " ea=" << effectiveAddressCost << " ";
+        }
+
+        if (hasDisplacement)
+        {
+            s << "disp+=4" << "; ";
+        }
+
+        return s;
+    }
+
     int8_t mnemonicSize = 0;
     EInstruction instruction = EInstruction::InstructionInvalid;
     EInstructionFormat instructionFormat = EInstructionFormat::InstructionFormatInvalid;
+    EInstructionOperandLayout instructionOperandLayout = EInstructionOperandLayout::InvalidOperandLayout;
     std::string instructionString = "";
 
     EDBit dBit = EDBit::DBitInvalid;
     EWBit wBit = EWBit::WBitInvalid;
     ESBit sBit = ESBit::SBitInvalid;
 
-    EModField modField = EModField::ModFieldInvalid;
+    bool hasDisplacement = false;
+    EModField modField = EModField::MemModeNoDisp;
     uint8_t regField = UINT8_MAX;
     uint8_t rmField = UINT8_MAX;
 
@@ -382,7 +475,7 @@ struct InstructionMetadata
 
     // costs
     uint16_t effectiveAddressCost = 0;
-    uint16_t netCost = 0;
+    uint16_t totalInstructionCost = 0;
 };
 
 struct RegisterFile
@@ -586,7 +679,7 @@ struct RegisterFile
         {
             s << "S";
         }
-        s << "]";
+        s << "]; ";
 
         return s;
     }
@@ -714,6 +807,11 @@ uint16_t getEffectiveAddressBaseValue(uint8_t registerOrMemoryFieldValue, EModFi
 
 uint16_t getEACostWithoutDisplacement(uint8_t registerOrMemoryFieldValue, EModField mod)
 {
+    if (mod == EModField::RegisterMode)
+    {
+        return 0;
+    }
+
     switch(registerOrMemoryFieldValue)
     {
 	case 0 :
@@ -740,84 +838,21 @@ uint16_t getEACostWithoutDisplacement(uint8_t registerOrMemoryFieldValue, EModFi
     }
 }
 
-std::unordered_map<std::string, std::unordered_map<EInstructionOperandLayout, uint16_t>> instructionBaseCostMap = 
-{
-{ 
-	"mov",
-	{
-        { EInstructionOperandLayout::AccumulatorToMemory, 10 },
-        { EInstructionOperandLayout::MemoryToAccumulator, 10 },
-
-        { EInstructionOperandLayout::MemoryToRegister, 8 },
-        { EInstructionOperandLayout::RegisterToMemory, 9 },
-
-        { EInstructionOperandLayout::RegisterToRegister, 2 },
-        { EInstructionOperandLayout::ImmediateToRegister, 4 },
-        { EInstructionOperandLayout::ImmediateToMemory, 10 }
-	},
-
-    "add",
-    {
-        { EInstructionOperandLayout::RegisterToRegister, 3 },
-
-        { EInstructionOperandLayout::MemoryToRegister, 9 },
-        { EInstructionOperandLayout::RegisterToMemory, 16 },
-
-        { EInstructionOperandLayout::ImmediateToRegister, 4 },
-        { EInstructionOperandLayout::ImmediateToMemory, 17 },
-
-        { EInstructionOperandLayout::ImmediateToAccumulator, 4 }
-	},
-
-    "sub",
-    {
-        { EInstructionOperandLayout::RegisterToRegister, 3 },
-
-        { EInstructionOperandLayout::MemoryToRegister, 9 },
-        { EInstructionOperandLayout::RegisterToMemory, 16 },
-
-        { EInstructionOperandLayout::ImmediateToAccumulator, 4 },
-        { EInstructionOperandLayout::ImmediateToRegister, 4 },
-
-        { EInstructionOperandLayout::ImmediateToMemory, 17 }
-	},
-
-    "cmp",
-    {
-        { EInstructionOperandLayout::RegisterToRegister, 3 },
-
-        { EInstructionOperandLayout::MemoryToRegister, 9 },
-        { EInstructionOperandLayout::RegisterToMemory, 9 },
-
-        { EInstructionOperandLayout::ImmediateToRegister, 4 },
-        { EInstructionOperandLayout::ImmediateToMemory, 10 },
-
-        { EInstructionOperandLayout::ImmediateToAccumulator, 4 }
-	}
-
-    "jne",
-    {
-        { EInstructionOperandLayout::JmpTaken, 16 },
-        { EInstructionOperandLayout::JmpNotTaken, 4 },
-	}
-}
-};
-
-void setNetInstructionCost(EInstructionOperandLayout instructionLayout, InstructionMetadata& metadata)
+void setNetInstructionCost(InstructionMetadata& metadata)
 {
     metadata.effectiveAddressCost = getEACostWithoutDisplacement(metadata.rmField, metadata.modField);
     if (instructionBaseCostMap.count(metadata.instructionString))
     {
-        metadata.netCost = instructionBaseCostMap[metadata.instructionString][instructionLayout] + metadata.effectiveAddressCost;
+        metadata.totalInstructionCost = instructionBaseCostMap[metadata.instructionString][metadata.instructionOperandLayout] + metadata.effectiveAddressCost;
     }
     else
     {
-        metadata.netCost = metadata.effectiveAddressCost;
+        metadata.totalInstructionCost = metadata.effectiveAddressCost;
     }
 
-    if (metadata.modField != EModField::MemModeNoDisp)
+    if (metadata.hasDisplacement)
     {
-        metadata.netCost += 4;
+        metadata.totalInstructionCost += 4;
     }
 }
 
@@ -964,7 +999,8 @@ void simulateInstruction(InstructionMetadata& metadata)
            registers.set(static_cast<ERegThreeBitEncodingByteOp>(metadata.registers[0]), static_cast<uint8_t>(std::stoul(metadata.immediateValue)));
        }
 
-       setNetInstructionCost(EInstructionOperandLayout::ImmediateToRegister, metadata);
+       metadata.instructionOperandLayout = EInstructionOperandLayout::ImmediateToRegister;
+       setNetInstructionCost(metadata);
        break;
    }
    case (EInstruction::MovImmToRM) :
@@ -992,7 +1028,8 @@ void simulateInstruction(InstructionMetadata& metadata)
                    slotRef.value = value;
                }
 
-			   setNetInstructionCost(EInstructionOperandLayout::ImmediateToMemory, metadata);
+               metadata.instructionOperandLayout = EInstructionOperandLayout::ImmediateToMemory;
+			   setNetInstructionCost(metadata);
            }
        }
    }
@@ -1027,7 +1064,8 @@ void simulateInstruction(InstructionMetadata& metadata)
                }
            }
 
-		   setNetInstructionCost(EInstructionOperandLayout::RegisterToRegister, metadata);
+           metadata.instructionOperandLayout = EInstructionOperandLayout::RegisterToRegister;
+		   setNetInstructionCost(metadata);
        }
        else if (metadata.instructionFormat == EInstructionFormat::MemReg)
        {
@@ -1050,7 +1088,8 @@ void simulateInstruction(InstructionMetadata& metadata)
                    registers.set(static_cast<ERegThreeBitEncodingByteOp>(metadata.registers[0]), slot.value);
                }
 
-		       setNetInstructionCost(EInstructionOperandLayout::MemoryToRegister, metadata);
+               metadata.instructionOperandLayout = EInstructionOperandLayout::MemoryToRegister;
+		       setNetInstructionCost(metadata);
            }
            else
            {
@@ -1071,7 +1110,8 @@ void simulateInstruction(InstructionMetadata& metadata)
                    slotRef.value = value;
                }
 
-		       setNetInstructionCost(EInstructionOperandLayout::RegisterToMemory, metadata);
+               metadata.instructionOperandLayout = EInstructionOperandLayout::RegisterToMemory;
+		       setNetInstructionCost(metadata);
            }
        }
 
@@ -1209,7 +1249,8 @@ void simulateInstruction(InstructionMetadata& metadata)
                }
            }
 
-		   setNetInstructionCost(EInstructionOperandLayout::RegisterToRegister, metadata);
+           metadata.instructionOperandLayout = EInstructionOperandLayout::RegisterToRegister;
+		   setNetInstructionCost(metadata);
        }
 
        break;
@@ -1291,7 +1332,8 @@ void simulateInstruction(InstructionMetadata& metadata)
                }
 		   }
 
-		   setNetInstructionCost(EInstructionOperandLayout::ImmediateToRegister, metadata);
+           metadata.instructionOperandLayout = EInstructionOperandLayout::ImmediateToRegister;
+		   setNetInstructionCost(metadata);
        }
 
        break;
@@ -1302,11 +1344,13 @@ void simulateInstruction(InstructionMetadata& metadata)
        {
            registers.modifyIp(static_cast<int8_t>(std::stoi(metadata.immediateValue)));
 
-           setNetInstructionCost(EInstructionOperandLayout::JmpTaken, metadata);
+           metadata.instructionOperandLayout = EInstructionOperandLayout::JmpTaken;
+           setNetInstructionCost(metadata);
        }
        else
        {
-           setNetInstructionCost(EInstructionOperandLayout::JmpNotTaken, metadata);
+           metadata.instructionOperandLayout = EInstructionOperandLayout::JmpNotTaken;
+           setNetInstructionCost(metadata);
        }
 
        break;
@@ -1411,6 +1455,8 @@ void constructEffectiveAddressFromMode(std::ifstream& file, InstructionMetadata&
                     metadata.effectiveAddress += " + " + std::to_string(effectiveAddressBitset.to_ulong()) + "]";
                     metadata.effectiveAddressValue += effectiveAddressBitset.to_ulong();
                 }
+
+                metadata.hasDisplacement = true;
             }
         }
         else
@@ -1446,6 +1492,8 @@ void constructEffectiveAddressFromMode(std::ifstream& file, InstructionMetadata&
                     metadata.effectiveAddress += " + " + std::to_string(effectiveAddressBitset.to_ulong()) + "]";
                     metadata.effectiveAddressValue += effectiveAddressBitset.to_ulong();
                 }
+
+                metadata.hasDisplacement = true;
             }
         }
         else
@@ -1791,6 +1839,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    uint16_t totalProgramCost = 0;
     InstructionMetadata ongoingInstructionMetadata;
     std::cout << "bits 16" << '\n';
     while (true) 
@@ -1806,9 +1855,12 @@ int main(int argc, char* argv[])
         if (argc >= 3 && std::string(argv[2]) == "simulate")
         {
             simulateInstruction(ongoingInstructionMetadata);
+            totalProgramCost += ongoingInstructionMetadata.totalInstructionCost;
+
             std::cout << getDisassStream(ongoingInstructionMetadata, false).str() 
                 << registers.getAllRegisterFileStream(true).str() 
-                << registers.getFlagsStream().str() << '\n';
+                << registers.getFlagsStream().str() << ongoingInstructionMetadata.getInstructionCostStream().str() 
+                << "running_cost=" << totalProgramCost << '\n';
         }
         else
         {
@@ -1817,7 +1869,9 @@ int main(int argc, char* argv[])
     }
 
     std::cout << "Final registers:" << '\n';
-    std::cout << registers.getAllRegisterFileStream(false).str();
+    std::cout << registers.getAllRegisterFileStream(false).str() << '\n';
+
+    std::cout << "TotalProgramCost=" << totalProgramCost << '\n';
 
     return 0;    
 }
