@@ -1,4 +1,5 @@
 #include "part_one/8086_decoder_simulator.h"
+#include "part_two/haversine_distance_problem.h"
 
 void executePartOne(int argc, char* argv[])
 {
