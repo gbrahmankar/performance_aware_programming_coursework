@@ -1505,4 +1505,49 @@ std::stringstream InstructionMetadata::getInstructionCostStream()
 
     return s;
 }
+
+void executePartOne(int argc, char* argv[])
+{
+    std::ifstream file(argv[2], std::ios::binary);
+    if (!file.is_open()) 
+    {
+        std::cerr << "failed to open the file. file_name=" << argv[2] << '\n';
+        return;
+    }
+
+    uint16_t totalProgramCost = 0;
+    InstructionMetadata ongoingInstructionMetadata;
+    std::cout << "bits 16" << '\n';
+    while (true) 
+    {
+        ByteBitset firstByteBitset;
+        if (!getBitsetFromInstructionByteStream(file, ongoingInstructionMetadata, firstByteBitset, true))
+        {
+            break;
+        }
+
+        decodeFirstInstructionByte(firstByteBitset, file, ongoingInstructionMetadata); 
+
+        if (argc >= 3 && std::string(argv[3]) == "simulate")
+        {
+            simulateInstruction(ongoingInstructionMetadata);
+            totalProgramCost += ongoingInstructionMetadata.totalInstructionCost;
+
+            std::cout << getDisassStream(ongoingInstructionMetadata, false).str() 
+                << registers.getAllRegisterFileStream(true).str() 
+                << registers.getFlagsStream().str() << ongoingInstructionMetadata.getInstructionCostStream().str() 
+                << "running_cost=" << totalProgramCost << '\n';
+        }
+        else
+        {
+            std::cout << getDisassStream(ongoingInstructionMetadata, true).str();
+        }
+    }
+
+    std::cout << "Final registers:" << '\n';
+    std::cout << registers.getAllRegisterFileStream(false).str() << '\n';
+
+    std::cout << "TotalProgramCost=" << totalProgramCost << '\n';
+}
+
 }

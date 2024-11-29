@@ -1,3 +1,7 @@
+#pragma once
+
+#include "../common_utils.h"
+
 namespace PartTwo
 {
 
@@ -40,5 +44,7 @@ static float ReferenceHaversine(float X0, float Y0, float X1, float Y1, float Ea
     return Result;
 }
 // ----- casey's code ends -----------
+
+void executePartTwo(int argc, char* argv[]);
 
 }
