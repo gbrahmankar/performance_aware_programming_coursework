@@ -20,6 +20,11 @@ int main(int argc, char* argv[])
     }
     else if (std::string(argv[1]) == "part_two")
     {
+        if (argc < 4)
+        {
+            std::cerr << "usage : " << argv[0] << "[uniform/cluster] [random_seed] [number_of_coordinate_points_to_generate]" << '\n';
+            return 1;
+        }
         PartTwo::executePartTwo(argc, argv);
     }
 

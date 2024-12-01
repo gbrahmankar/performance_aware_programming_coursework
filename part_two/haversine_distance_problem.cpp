@@ -45,6 +45,14 @@ static float ReferenceHaversine(float X0, float Y0, float X1, float Y1, float Ea
 
 void executePartTwo(int argc, char* argv[])
 {
+    uint64_t ClusterCountLeft = maxU64;
+    f64 maxAllowedX = 180;
+    f64 maxAllowedY = 90;
+
+    f64 xCenter = 0;
+    f64 yCenter = 0;
+    f64 xRadius = maxAllowedX;
+    f64 yRadius = maxAllowedY;
 }
 
 }
