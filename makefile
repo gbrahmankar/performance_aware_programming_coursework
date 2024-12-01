@@ -1,0 +1,30 @@
+# Compiler and flags
+CXX = g++
+CXXFLAGS = -Wall -Wextra -Wno-unused -Wno-unused-parameter -std=c++14
+
+# Source files
+SRCS = main.cpp part_one/8086_decoder_simulator.cpp part_two/haversine_distance_problem.cpp common_utils.cpp
+
+# Object files (replace .cpp with .o)
+OBJS = $(SRCS:.cpp=.o)
+
+# Target executable
+TARGET = executable_file 
+
+# Default rule
+all: $(TARGET)
+
+# Rule to create the final executable
+$(TARGET): $(OBJS)
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
+
+# Rule to compile each .cpp file into a .o file
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Clean rule to remove compiled files
+clean:
+	rm -f $(OBJS) $(TARGET)
+
+# Phony targets
+.PHONY: all clean

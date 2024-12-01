@@ -302,9 +302,9 @@ struct InstructionMetadata
     {}
 
     InstructionMetadata(EInstruction i, const std::string& is, int8_t ms) :
+        mnemonicSize(ms),
         instruction(i),
-        instructionString(is),
-        mnemonicSize(ms)
+        instructionString(is)
     {}
 
     std::stringstream getInstructionCostStream(); 
