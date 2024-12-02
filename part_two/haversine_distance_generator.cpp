@@ -4,35 +4,56 @@
 
 namespace PartTwo
 {
+    f64 randomInRange(const std::mt19937& generator, f64 minVal, f64 maxVal)
+    {
+        std::uniform_real_distribution<> dist(minVal, maxVal);
+		return dist(generator);
+    }
+
+    f64 randomDegree(const std::mt19937& generator, f64 center, f64 radius, f64 maxAllowed)
+    {
+        f64 minVal = center - radius;
+        if(minVal < -maxAllowed)
+        {
+            minVal = -maxAllowed;
+        }
+
+        f64 maxVal = center + radius;
+        if(maxVal > maxAllowed)
+        {
+            maxVal = maxAllowed;
+        }
+
+        return randomInRange(generator, minVal, maxVal);
+    }
+
     void generateHaversineInputFiles(int argc, char* argv[])
     {
         std::ofstream outJson("haversine_input.json");
         if (!outJson)
         {
-            std::cerr << "failed to open the json file for writing !" << '\n';
+            std::cerr << "failed to open the haversine_input.json file for writing !" << '\n';
             return;
         }
 
 		std::ofstream haversineAnswers("haversine_answers.f64");
         if (!haversineAnswers)
         {
-            std::cerr << "failed to open the haversine answers file for writing !" << '\n';
+            std::cerr << "failed to open the haversine_answers.f64 file for writing !" << '\n';
             return;
         }
 
         u64 seedValue = static_cast<u64>(std::stoul(std::string(argv[4])));
         std::mt19937 generator(seedValue);
-        std::uniform_real_distribution<> dist(1.0, 10.0); // range
-		f64 randomFloat = dist(generator);
 
         f64 xMax = 180; // x ranges from -xMax to +xMax
         f64 yMax = 90; // y ranges from -yMax to +yMax
         
         // center/extents for choosing the 64 random_sized sectors on earth's surface
         f64 xCenter = 0;
-        f64 YCenter = 0;
-        f64 XRadius = xMax;
-        f64 YRadius = yMax;
+        f64 yCenter = 0;
+        f64 xRadius = xMax;
+        f64 yRadius = yMax;
 
 		// cluster values
 		u64 clusterCountLeft = maxU64;
@@ -56,61 +77,46 @@ namespace PartTwo
 			methodName = "uniform";
 		}
 
+        f64 sum = 0;
+        f64 sumCoef = 1.0 / (f64)pairCount;
+
+        outJson << "{\"pairs\":[\n";
+
+        for(u64 pairIndex = 0; pairIndex < pairCount; ++pairIndex)
         {
-			
-
-			{
-				
-				FILE *HaverAnswers = Open(PairCount, "haveranswer", "f64");
-				if(FlexJSON && HaverAnswers)
-				{
-					fprintf(FlexJSON, "{\"pairs\":[\n");
-					f64 Sum = 0;
-					f64 SumCoef = 1.0 / (f64)PairCount;
-					for(u64 PairIndex = 0; PairIndex < PairCount; ++PairIndex)
-					{
-						if(ClusterCountLeft-- == 0)
-						{
-							ClusterCountLeft = ClusterCountMax;
-							XCenter = RandomInRange(&Series, -MaxAllowedX, MaxAllowedX);
-							YCenter = RandomInRange(&Series, -MaxAllowedY, MaxAllowedY);
-							XRadius = RandomInRange(&Series, 0, MaxAllowedX);
-							YRadius = RandomInRange(&Series, 0, MaxAllowedY);
-						}
-						
-						f64 X0 = RandomDegree(&Series, XCenter, XRadius, MaxAllowedX);
-						f64 Y0 = RandomDegree(&Series, YCenter, YRadius, MaxAllowedY);
-						f64 X1 = RandomDegree(&Series, XCenter, XRadius, MaxAllowedX);
-						f64 Y1 = RandomDegree(&Series, YCenter, YRadius, MaxAllowedY);
-						
-						f64 EarthRadius = 6372.8;
-						f64 HaversineDistance = ReferenceHaversine(X0, Y0, X1, Y1, EarthRadius);
-						
-						Sum += SumCoef*HaversineDistance;
-						
-						char const *JSONSep = (PairIndex == (PairCount - 1)) ? "\n" : ",\n";
-						fprintf(FlexJSON, "    {\"x0\":%.16f, \"y0\":%.16f, \"x1\":%.16f, \"y1\":%.16f}%s", X0, Y0, X1, Y1, JSONSep);
-						
-						fwrite(&HaversineDistance, sizeof(HaversineDistance), 1, HaverAnswers);
-					}
-					fprintf(FlexJSON, "]}\n");
-					fwrite(&Sum, sizeof(Sum), 1, HaverAnswers);
-			
-					fprintf(stdout, "Method: %s\n", MethodName);
-					fprintf(stdout, "Random seed: %llu\n", SeedValue);
-					fprintf(stdout, "Pair count: %llu\n", PairCount);
-					fprintf(stdout, "Expected sum: %.16f\n", Sum);
-				}
-				
-				if(FlexJSON) fclose(FlexJSON);
-				if(HaverAnswers) fclose(HaverAnswers);
-			}
-			else
-			{
-				fprintf(stderr, "To avoid accidentally generating massive files, number of pairs must be less than %llu.\n", MaxPairCount);
-			}
+            if(clusterCountLeft-- == 0)
+            {
+                clusterCountLeft = clusterCountMax;
+                xCenter = randomInRange(generator, -xMax, xMax);
+                yCenter = randomInRange(generator, -yMax, yMax);
+                xRadius = randomInRange(generator, 0, xMax);
+                yRadius = randomInRange(generator, 0, yMax);
+            }
+            
+            f64 x0 = randomDegree(generator, xCenter, xRadius, xMax);
+            f64 y0 = randomDegree(generator, yCenter, yRadius, yMax);
+            f64 x1 = randomDegree(generator, xCenter, xRadius, xMax);
+            f64 y1 = randomDegree(generator, yCenter, yRadius, yMax);
+            
+            f64 earthRadius = 6372.8;
+            f64 haversineDistance = ReferenceHaversine(x0, y0, x1, y1, earthRadius);
+            
+            sum += sumCoef * haversineDistance;
+            
+            std::string jsonSep = (pairIndex == (pairCount - 1)) ? "\n" : ",\n";
+            fprintf(FlexJSON, "    {\"x0\":%.16f, \"y0\":%.16f, \"x1\":%.16f, \"y1\":%.16f}%s", X0, Y0, X1, Y1, JSONSep);
+            
+            fwrite(&HaversineDistance, sizeof(HaversineDistance), 1, HaverAnswers);
         }
+        fprintf(FlexJSON, "]}\n");
+        fwrite(&Sum, sizeof(Sum), 1, HaverAnswers);
 
+        fprintf(stdout, "Method: %s\n", MethodName);
+        fprintf(stdout, "Random seed: %llu\n", SeedValue);
+        fprintf(stdout, "Pair count: %llu\n", PairCount);
+        fprintf(stdout, "Expected sum: %.16f\n", Sum);
+        
         outJson.close();
+        haversineAnswers.close();
     }
 }
