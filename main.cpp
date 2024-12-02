@@ -22,7 +22,7 @@ int main(int argc, char* argv[])
     {
         if (argc < 6)
         {
-            std::cerr << "usage : " << argv[0] << "part_two [generator/parser/processor] [uniform/cluster] [random_seed] [number_of_coordinate_points_to_generate]" << '\n';
+            std::cerr << "usage : " << argv[0] << " part_two [generator/parser/processor] [uniform/cluster] [random_seed] [number_of_coordinate_points_to_generate]" << '\n';
             return 1;
         }
         PartTwo::executePartTwo(argc, argv);
