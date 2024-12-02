@@ -13,6 +13,14 @@ namespace PartTwo
             return;
         }
 
+        u64 seedValue = static_cast<u64>(std::stoul(std::string(argv[4])));
+
+        std::mt19937 gen(seedValue);
+        std::uniform_real_distribution<> dist(1.0, 10.0); // range
+
+        // random number
+		f64 randomFloat = dist(gen);
+
         outJson.close();
     }
 }
