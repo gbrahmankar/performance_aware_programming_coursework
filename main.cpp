@@ -5,7 +5,7 @@ int main(int argc, char* argv[])
 {
     if (argc < 2)
     {
-        std::cerr << "usage : " << argv[0] << "<what_part_to_execute. eg : part_one/part_two>" << '\n';
+        std::cerr << "usage : " << argv[0] << "[part_one/part_two]" << '\n';
         return 1;
     }
 
@@ -13,16 +13,16 @@ int main(int argc, char* argv[])
     {
         if (argc < 3)
         {
-            std::cerr << "usage : " << argv[0] << " part_one <binary_encoded_instruction_stream file>" << '\n';
+            std::cerr << "usage : " << argv[0] << " part_one [binary_encoded_instruction_stream_file]" << '\n';
             return 1;
         }
         PartOne::executePartOne(argc, argv);
     }
     else if (std::string(argv[1]) == "part_two")
     {
-        if (argc < 4)
+        if (argc < 6)
         {
-            std::cerr << "usage : " << argv[0] << "[uniform/cluster] [random_seed] [number_of_coordinate_points_to_generate]" << '\n';
+            std::cerr << "usage : " << argv[0] << "part_two [generator/parser/processor] [uniform/cluster] [random_seed] [number_of_coordinate_points_to_generate]" << '\n';
             return 1;
         }
         PartTwo::executePartTwo(argc, argv);

@@ -4,7 +4,5 @@
 
 namespace PartTwo
 {
-
-void executePartTwo(int argc, char* argv[]);
-
+	void generateHaversineInputFiles(int argc, char* argv[]);
 }
