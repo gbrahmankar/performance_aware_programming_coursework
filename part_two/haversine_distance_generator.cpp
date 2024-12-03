@@ -105,7 +105,6 @@ namespace PartTwo
                 jsonSep;
             
             f64 haversineDistance = ReferenceHaversine(x0, y0, x1, y1, 6372.8);
-            std::cout << "distance=" << STREAM_16BIT_PRECISION_FP(haversineDistance) << '\n';
             sum += sumCoef * haversineDistance;
             haversineAnswers << STREAM_16BIT_PRECISION_FP(haversineDistance);
         }
