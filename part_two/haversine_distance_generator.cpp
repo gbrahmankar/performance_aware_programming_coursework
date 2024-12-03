@@ -4,13 +4,13 @@
 
 namespace PartTwo
 {
-    f64 randomInRange(const std::mt19937& generator, f64 minVal, f64 maxVal)
+    f64 randomInRange(std::mt19937& generator, f64 minVal, f64 maxVal)
     {
         std::uniform_real_distribution<> dist(minVal, maxVal);
 		return dist(generator);
     }
 
-    f64 randomDegree(const std::mt19937& generator, f64 center, f64 radius, f64 maxAllowed)
+    f64 randomDegree(std::mt19937& generator, f64 center, f64 radius, f64 maxAllowed)
     {
         f64 minVal = center - radius;
         if(minVal < -maxAllowed)
@@ -104,17 +104,21 @@ namespace PartTwo
             sum += sumCoef * haversineDistance;
             
             std::string jsonSep = (pairIndex == (pairCount - 1)) ? "\n" : ",\n";
-            fprintf(FlexJSON, "    {\"x0\":%.16f, \"y0\":%.16f, \"x1\":%.16f, \"y1\":%.16f}%s", X0, Y0, X1, Y1, JSONSep);
+            outJson << "    {\"x0\":" << STREAM_16BIT_PRECISION_FP(x0) <<
+                ", \"y0\":" << STREAM_16BIT_PRECISION_FP(y0) <<
+                ", \"x1\":" << STREAM_16BIT_PRECISION_FP(x1) <<
+                ", \"y1\":" << STREAM_16BIT_PRECISION_FP(y1) << "}" <<
+                jsonSep;
             
-            fwrite(&HaversineDistance, sizeof(HaversineDistance), 1, HaverAnswers);
+            haversineAnswers << STREAM_16BIT_PRECISION_FP(haversineDistance);
         }
-        fprintf(FlexJSON, "]}\n");
-        fwrite(&Sum, sizeof(Sum), 1, HaverAnswers);
+        outJson << "]}\n";
+        haversineAnswers << STREAM_16BIT_PRECISION_FP(sum);
 
-        fprintf(stdout, "Method: %s\n", MethodName);
-        fprintf(stdout, "Random seed: %llu\n", SeedValue);
-        fprintf(stdout, "Pair count: %llu\n", PairCount);
-        fprintf(stdout, "Expected sum: %.16f\n", Sum);
+        std::cout << "method=" << methodName << '\n';
+        std::cout << "random_seed=" << seedValue << '\n';
+        std::cout << "pair_count=" << pairCount << '\n';
+        std::cout << "expected_sum=" << STREAM_16BIT_PRECISION_FP(sum) << '\n';
         
         outJson.close();
         haversineAnswers.close();

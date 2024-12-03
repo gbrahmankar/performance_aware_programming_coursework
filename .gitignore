@@ -6,3 +6,5 @@
 *.asm*
 *executable*
 *.o*
+*.json*
+*.f64*

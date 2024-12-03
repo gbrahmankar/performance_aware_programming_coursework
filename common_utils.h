@@ -14,6 +14,7 @@
 
 #define STREAM_BYTE(X) "0x" << std::hex << std::setw(2) << std::setfill('0') << unsigned(X)
 #define STREAM_WORD(X) "0x" << std::hex << std::setw(4) << std::setfill('0') << X
+#define STREAM_16BIT_PRECISION_FP(X) std::left << std::fixed << std::setprecision(16) << X
 
 using NibbleBitset = std::bitset<4>;
 using ByteBitset = std::bitset<8>;
