@@ -81,7 +81,6 @@ namespace PartTwo
         f64 sumCoef = 1.0 / (f64)pairCount;
 
         outJson << "{\"pairs\":[\n";
-
         for(u64 pairIndex = 0; pairIndex < pairCount; ++pairIndex)
         {
             if(clusterCountLeft-- == 0)
@@ -98,11 +97,6 @@ namespace PartTwo
             f64 x1 = randomDegree(generator, xCenter, xRadius, xMax);
             f64 y1 = randomDegree(generator, yCenter, yRadius, yMax);
             
-            f64 earthRadius = 6372.8;
-            f64 haversineDistance = ReferenceHaversine(x0, y0, x1, y1, earthRadius);
-            
-            sum += sumCoef * haversineDistance;
-            
             std::string jsonSep = (pairIndex == (pairCount - 1)) ? "\n" : ",\n";
             outJson << "    {\"x0\":" << STREAM_16BIT_PRECISION_FP(x0) <<
                 ", \"y0\":" << STREAM_16BIT_PRECISION_FP(y0) <<
@@ -110,6 +104,9 @@ namespace PartTwo
                 ", \"y1\":" << STREAM_16BIT_PRECISION_FP(y1) << "}" <<
                 jsonSep;
             
+            f64 haversineDistance = ReferenceHaversine(x0, y0, x1, y1, 6372.8);
+            std::cout << "distance=" << STREAM_16BIT_PRECISION_FP(haversineDistance) << '\n';
+            sum += sumCoef * haversineDistance;
             haversineAnswers << STREAM_16BIT_PRECISION_FP(haversineDistance);
         }
         outJson << "]}\n";
