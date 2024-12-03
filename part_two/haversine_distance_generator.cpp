@@ -96,6 +96,7 @@ namespace PartTwo
             f64 y0 = randomDegree(generator, yCenter, yRadius, yMax);
             f64 x1 = randomDegree(generator, xCenter, xRadius, xMax);
             f64 y1 = randomDegree(generator, yCenter, yRadius, yMax);
+            f64 haversineDistance = ReferenceHaversine(x0, y0, x1, y1, 6372.8);
             
             std::string jsonSep = (pairIndex == (pairCount - 1)) ? "\n" : ",\n";
             outJson << "    {\"x0\":" << STREAM_16BIT_PRECISION_FP(x0) <<
@@ -104,9 +105,9 @@ namespace PartTwo
                 ", \"y1\":" << STREAM_16BIT_PRECISION_FP(y1) << "}" <<
                 jsonSep;
             
-            f64 haversineDistance = ReferenceHaversine(x0, y0, x1, y1, 6372.8);
-            sum += sumCoef * haversineDistance;
             haversineAnswers << STREAM_16BIT_PRECISION_FP(haversineDistance);
+
+            sum += sumCoef * haversineDistance;
         }
         outJson << "]}\n";
         haversineAnswers << STREAM_16BIT_PRECISION_FP(sum);
