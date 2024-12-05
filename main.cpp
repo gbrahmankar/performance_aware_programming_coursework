@@ -16,15 +16,17 @@ int main(int argc, char* argv[])
             std::cerr << "usage : " << argv[0] << " part_one [binary_encoded_instruction_stream_file]" << '\n';
             return 1;
         }
+
         PartOne::executePartOne(argc, argv);
     }
     else if (std::string(argv[1]) == "part_two")
     {
-        if (argc < 6)
+        if (argc < 3)
         {
-            std::cerr << "usage : " << argv[0] << " part_two [generator/parser/processor] [uniform/cluster] [random_seed] [number_of_coordinate_points_to_generate]" << '\n';
+            std::cerr << "usage : " << argv[0] << " part_two [generator/parser/processor]" << '\n';
             return 1;
         }
+
         PartTwo::executePartTwo(argc, argv);
     }
 

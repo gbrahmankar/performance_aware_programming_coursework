@@ -5,5 +5,6 @@ namespace PartTwo
 {
     void parseHaversineInput(int argc, char* argv[])
     {
+        return;
     }
 }
