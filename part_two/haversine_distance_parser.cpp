@@ -245,17 +245,30 @@ namespace PartTwo
     void enterChildScope()
     {
 		currentScope = currentScope->childScope.get();
+        if (currentScope->parentScope == nullptr)
+        {
+            std::cout << "warning : entering child_scope without a parent_scope" << '\n';
+        }
     }
 
-    void enterParentScope()
+    bool enterParentScope()
     {
-		currentScope = currentScope->parentScope;
+        if (currentScope)
+        {
+            currentScope = currentScope->parentScope;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     void createSiblingScope()
     {
 		currentScope->sibling = std::make_unique<InternalJsonRepresentation>();
         currentScope->sibling->scopeType = currentScope->scopeType;
+		currentScope->sibling->parentScope = currentScope->parentScope;
     }
 
     void enterSiblingScope()
@@ -265,8 +278,6 @@ namespace PartTwo
 
     void parseScope()
     {
-		std::cout << "started parsing a scope :" << '\n';
-
 		JsonToken token;
 		getNextToken(token);
 		if (token.type == TokenTypeInvalid)
@@ -280,55 +291,79 @@ namespace PartTwo
 			{
 				if (rootScope == nullptr)
 				{
+                    std::cout << "------------------creating root_scope" << '\n';
+
 					rootScope = std::make_unique<InternalJsonRepresentation>();
 					rootScope->key = "base";
+                    rootScope->scopeType = ScopeTypeJson;
 					currentScope = rootScope.get();
-
-                    std::cout << "creating root_scope" << '\n';
-
-					break;
 				}
+                else
+                {
+                    std::cout << "------------------creating and entering child_json_scope" << '\n';
 
-				std::cout << "creating and entering child_json_scope" << '\n';
+                    createChildScope(ScopeTypeJson);
+                    enterChildScope();
+                }
 
-				createChildScope(ScopeTypeJson);
-				enterChildScope();
 				parseScope();
 
 				break;
 			}
 			case (TokenTypeOpenBrace) :
             {
-				std::cout << "creating and entering child_array_scope" << '\n';
+				std::cout << "------------------creating and entering child_array_scope" << '\n';
 
 				createChildScope(ScopeTypeArray);
 				enterChildScope();
+
 				parseScope();
 
                 break;
             }
 			case (TokenTypeCloseBrace) :
-			case (TokenTypeCloseBracket) :
-			{
-				std::cout << "entering parent_scope" << '\n';
+            {
+				std::cout << "------------------entering parent_scope_array" << '\n';
 
 				enterParentScope();
+
+                parseScope();
+
+				break;
+			}
+			case (TokenTypeCloseBracket) :
+			{
+				std::cout << "------------------entering parent_scope_json" << '\n';
+
+				if (!enterParentScope())
+                {
+				    std::cout << "------------------parsing has ended" << '\n';
+                    return;
+                }
+
+                parseScope();
 
 				break;
 			}
             case (TokenTypeComma) :
             {
+                if (currentScope == nullptr)
+                {
+                    std::cout << "wtffff" << '\n';
+                }
+
                 if (currentScope->scopeType == ScopeTypeJson)
                 {
-                    std::cout << "creating and entering a sibling in a json" << '\n';
+                    std::cout << "------------------creating and entering a sibling in a json" << '\n';
                 }
                 else
                 {
-                    std::cout << "creating and entering a sibling in an array" << '\n';
+                    std::cout << "------------------creating and entering a sibling in an array" << '\n';
                 }
 
 				createSiblingScope();
 				enterSiblingScope();
+
 				parseScope();
 
                 break;
@@ -337,7 +372,8 @@ namespace PartTwo
             {
                 currentScope->beforeColon = false;
 
-				std::cout << "switching from before to after a colon in a scope" << '\n';
+				parseScope();
+
                 break;
             }
             case (TokenTypeNumber):
@@ -353,6 +389,8 @@ namespace PartTwo
                     currentScope->value = token.value;
 				    std::cout << "populating value=" << token.value << '\n';
                 }
+                
+                parseScope();
 
                 break;
             }
@@ -376,7 +414,7 @@ namespace PartTwo
         }
 
 		std::cout << "starting_to_parse=" << '\n' << jsonFileBuffer << '\n';
-        parseScope();   
+        parseScope();
 
         file.close();
         return;

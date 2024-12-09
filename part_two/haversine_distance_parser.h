@@ -68,8 +68,8 @@ namespace PartTwo
 	void parseHaversineInput(int argc, char* argv[]);
 
     void createChildScope(ScopeType scopeType);
-    void enterChildScope();
-    void enterParentScope();
+    void benterChildScope();
+    bool enterParentScope();
 
     void createSiblingScope();
     void enterSiblingScope();
