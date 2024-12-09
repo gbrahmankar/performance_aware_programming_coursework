@@ -43,7 +43,48 @@
 
 namespace PartTwo
 {
-	bool isValidJson = true;
+    std::string jsonFileBuffer;
+    u64 parseIndex = 0;
+
+    void GetNextToken(JsonToken& token)
+    {
+        while (parseIndex < jsonFileBuffer.length())
+        {
+            if (!std::isspace(jsonFileBuffer[parseIndex])) 
+            {
+                break;
+            }
+
+            parseIndex += 1;
+        }
+
+        if (parseIndex >= jsonFileBuffer.length())
+        {
+            token.type = TokenTypeInvalid;
+            return;
+        }
+
+        switch(jsonFileBuffer[parseIndex])
+        {
+        case('"') :
+        {
+            parseIndex += 1;
+            u64 stringStartIndex = parseIndex;
+
+            while (parseIndex < jsonFileBuffer.length() && 
+                   jsonFileBuffer[parseIndex] != '"')
+            {
+                parseIndex += 1;
+            }
+
+            token.type = TokenTypeString;
+            token.value = jsonFileBuffer.substr(stringStartIndex, parseIndex - stringStartIndex);
+
+            parseIndex += 1;
+            break;
+        }
+        }
+    }
 
     void parseHaversineInput(int argc, char* argv[])
     {
@@ -55,11 +96,15 @@ namespace PartTwo
 			return;
 		}
 
-		char c;
-		while (file.get(c)) 
-		{
-			std::cout << c;
-		}
+        char c;
+        while(file.get(c))
+        {
+            jsonFileBuffer += c;
+        }
+
+        JsonToken token;
+        GetNextToken(token);
+        std::cout << token.value << '\n';
 
         file.close();
         return;
