@@ -17,6 +17,7 @@ namespace PartTwo
         TokenTypeBool,
 
         TokenTypeComma,
+        TokenTypeColon,
 
 		TokenTypeCount,
 		TokenTypeInvalid
@@ -33,13 +34,14 @@ namespace PartTwo
 
     struct JsonToken
     {
-        TokenType type;
+        TokenType type = TokenTypeInvalid;
         std::string value;
     };
 
     extern std::string jsonFileBuffer;
     extern u64 parseIndex;
 
-    void GetNextToken(JsonToken& token);
+    void printToken(const JsonToken& token);
+    void getNextToken(JsonToken& token);
 	void parseHaversineInput(int argc, char* argv[]);
 }

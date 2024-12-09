@@ -46,7 +46,60 @@ namespace PartTwo
     std::string jsonFileBuffer;
     u64 parseIndex = 0;
 
-    void GetNextToken(JsonToken& token)
+    void printToken(const JsonToken& token)
+    {
+        switch (token.type)
+        {
+			case(TokenType::TokenTypeBool) :
+			{
+                std::cout << "tokentype=bool" << '\n';
+				break;
+			}
+			case(TokenType::TokenTypeOpenBrace) :
+			{
+                std::cout << "tokentype=open_brace" << '\n';
+				break;
+			}
+			case(TokenType::TokenTypeCloseBrace) :
+			{
+                std::cout << "tokentype=close_brace" << '\n';
+				break;
+			}
+			case(TokenType::TokenTypeOpenBracket) :
+			{
+                std::cout << "tokentype=open_bracket" << '\n';
+				break;
+			}
+			case(TokenType::TokenTypeCloseBracket) :
+			{
+                std::cout << "tokentype=close_bracket" << '\n';
+				break;
+			}
+			case(TokenType::TokenTypeNumber) :
+			{
+                std::cout << "tokentype=number value=" << token.value << '\n';
+				break;
+			}
+			case(TokenType::TokenTypeString) :
+			{
+                std::cout << "tokentype=string value=" << token.value << '\n';
+				break;
+			}
+			case(TokenType::TokenTypeComma) :
+			{
+                std::cout << "tokentype=comma" << '\n';
+				break;
+			}
+			case(TokenType::TokenTypeColon) :
+			{
+                std::cout << "tokentype=colon" << '\n';
+				break;
+			}
+        }
+
+    }
+
+    void getNextToken(JsonToken& token)
     {
         while (parseIndex < jsonFileBuffer.length())
         {
@@ -66,23 +119,116 @@ namespace PartTwo
 
         switch(jsonFileBuffer[parseIndex])
         {
-        case('"') :
-        {
-            parseIndex += 1;
-            u64 stringStartIndex = parseIndex;
+			case(':') : 
+			{
+				token.type = TokenTypeColon;
 
-            while (parseIndex < jsonFileBuffer.length() && 
-                   jsonFileBuffer[parseIndex] != '"')
-            {
-                parseIndex += 1;
+				parseIndex += 1;
+                break;
+			}
+            case(',') : 
+			{
+				token.type = TokenTypeComma;
+
+				parseIndex += 1;
+                break;
+			}
+			case('{') :
+			{
+				token.type = TokenTypeOpenBracket;
+
+				parseIndex += 1;
+                break;
             }
+			case('}') :
+			{
+				token.type = TokenTypeCloseBracket;
 
-            token.type = TokenTypeString;
-            token.value = jsonFileBuffer.substr(stringStartIndex, parseIndex - stringStartIndex);
+				parseIndex += 1;
+                break;
+            }
+			case('[') :
+			{
+				token.type = TokenTypeOpenBrace;
 
-            parseIndex += 1;
-            break;
-        }
+				parseIndex += 1;
+                break;
+            }
+			case(']') :
+			{
+				token.type = TokenTypeCloseBrace;
+
+				parseIndex += 1;
+                break;
+            }
+			case('"') :
+			{
+				parseIndex += 1;
+
+				u64 stringStartIndex = parseIndex;
+				while (parseIndex < jsonFileBuffer.length() && 
+					   jsonFileBuffer[parseIndex] != '"')
+				{
+					parseIndex += 1;
+				}
+
+				token.type = TokenTypeString;
+				token.value = jsonFileBuffer.substr(stringStartIndex, parseIndex - stringStartIndex);
+
+				parseIndex += 1;
+				break;
+			}
+            case('t'):
+            case('f'):
+            {
+                token.type = TokenTypeBool;
+
+				while (parseIndex < jsonFileBuffer.length())
+				{
+					if (std::isspace(jsonFileBuffer[parseIndex])) 
+					{
+						break;
+					}
+
+					parseIndex += 1;
+				}
+
+                break;
+            }
+            case ('-') :
+            case ('0') :
+            case ('1') :
+            case ('2') :
+            case ('3') :
+            case ('4') :
+            case ('5') :
+            case ('6') :
+            case ('7') :
+            case ('8') :
+            case ('9') :
+            {
+				u64 stringStartIndex = parseIndex;
+				while (parseIndex < jsonFileBuffer.length())
+				{
+					if (!std::isdigit(jsonFileBuffer[parseIndex]) &&
+                        !(jsonFileBuffer[parseIndex] == '.') &&
+                        !(jsonFileBuffer[parseIndex] == '-'))
+					{
+						break;
+					}
+
+					parseIndex += 1;
+				}
+
+                token.type = TokenTypeNumber;
+				token.value = jsonFileBuffer.substr(stringStartIndex, parseIndex - stringStartIndex);
+                
+                break;
+            }
+            default :
+            {
+                std::cerr << "unidentified_character=" << jsonFileBuffer[parseIndex] << '\n';
+            }
         }
     }
 
@@ -102,9 +248,17 @@ namespace PartTwo
             jsonFileBuffer += c;
         }
 
-        JsonToken token;
-        GetNextToken(token);
-        std::cout << token.value << '\n';
+        while (true)
+        {
+            JsonToken token;
+            getNextToken(token);
+            if (token.type == TokenTypeInvalid)
+            {
+                break;
+            }
+
+            printToken(token);
+        }
 
         file.close();
         return;
