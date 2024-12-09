@@ -46,6 +46,9 @@ namespace PartTwo
     std::string jsonFileBuffer;
     u64 parseIndex = 0;
 
+    InternalJsonRepresentation* currentScope = nullptr;
+    std::unique_ptr<InternalJsonRepresentation> rootScope = nullptr;
+    
     void printToken(const JsonToken& token)
     {
         switch (token.type)
@@ -232,6 +235,130 @@ namespace PartTwo
         }
     }
 
+    void createChildScope(ScopeType scopeType)
+    {
+		currentScope->childScope = std::make_unique<InternalJsonRepresentation>();
+        currentScope->childScope->scopeType = scopeType;
+		currentScope->childScope->parentScope = currentScope;
+    }
+
+    void enterChildScope()
+    {
+		currentScope = currentScope->childScope.get();
+    }
+
+    void enterParentScope()
+    {
+		currentScope = currentScope->parentScope;
+    }
+
+    void createSiblingScope()
+    {
+		currentScope->sibling = std::make_unique<InternalJsonRepresentation>();
+        currentScope->sibling->scopeType = currentScope->scopeType;
+    }
+
+    void enterSiblingScope()
+    {
+		currentScope = currentScope->sibling.get();
+    }
+
+    void parseScope()
+    {
+		std::cout << "started parsing a scope :" << '\n';
+
+		JsonToken token;
+		getNextToken(token);
+		if (token.type == TokenTypeInvalid)
+		{
+			return;
+		}
+
+		switch (token.type)
+		{
+			case (TokenTypeOpenBracket) :
+			{
+				if (rootScope == nullptr)
+				{
+					rootScope = std::make_unique<InternalJsonRepresentation>();
+					rootScope->key = "base";
+					currentScope = rootScope.get();
+
+                    std::cout << "creating root_scope" << '\n';
+
+					break;
+				}
+
+				std::cout << "creating and entering child_json_scope" << '\n';
+
+				createChildScope(ScopeTypeJson);
+				enterChildScope();
+				parseScope();
+
+				break;
+			}
+			case (TokenTypeOpenBrace) :
+            {
+				std::cout << "creating and entering child_array_scope" << '\n';
+
+				createChildScope(ScopeTypeArray);
+				enterChildScope();
+				parseScope();
+
+                break;
+            }
+			case (TokenTypeCloseBrace) :
+			case (TokenTypeCloseBracket) :
+			{
+				std::cout << "entering parent_scope" << '\n';
+
+				enterParentScope();
+
+				break;
+			}
+            case (TokenTypeComma) :
+            {
+                if (currentScope->scopeType == ScopeTypeJson)
+                {
+                    std::cout << "creating and entering a sibling in a json" << '\n';
+                }
+                else
+                {
+                    std::cout << "creating and entering a sibling in an array" << '\n';
+                }
+
+				createSiblingScope();
+				enterSiblingScope();
+				parseScope();
+
+                break;
+            }
+            case (TokenTypeColon) :
+            {
+                currentScope->beforeColon = false;
+
+				std::cout << "switching from before to after a colon in a scope" << '\n';
+                break;
+            }
+            case (TokenTypeNumber):
+            case (TokenTypeString):
+            {
+                if (currentScope->beforeColon && currentScope->scopeType == ScopeTypeJson)
+                {
+                    currentScope->key = token.value;
+				    std::cout << "populating key=" << token.value << '\n';
+                }
+                else
+                {
+                    currentScope->value = token.value;
+				    std::cout << "populating value=" << token.value << '\n';
+                }
+
+                break;
+            }
+		}
+    }
+
     void parseHaversineInput(int argc, char* argv[])
     {
         std::string inputJsonFileName = std::string(argv[3]);
@@ -248,17 +375,8 @@ namespace PartTwo
             jsonFileBuffer += c;
         }
 
-        while (true)
-        {
-            JsonToken token;
-            getNextToken(token);
-            if (token.type == TokenTypeInvalid)
-            {
-                break;
-            }
-
-            printToken(token);
-        }
+		std::cout << "starting_to_parse=" << '\n' << jsonFileBuffer << '\n';
+        parseScope();   
 
         file.close();
         return;
