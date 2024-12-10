@@ -397,6 +397,54 @@ namespace PartTwo
 		}
     }
 
+    InternalJsonRepresentation* getPairsArrayScope()
+    {
+        if (rootScope != nullptr)
+        {
+            return rootScope->childScope.get();
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
+
+	std::unique_ptr<CoordinatePair> getCoordinatePairFromArrayScope(u64 index)
+    {
+        InternalJsonRepresentation* pairsArrayScope = getPairsArrayScope();
+
+        currentScope = pairsArrayScope;
+        u64 currentIndex = 0;
+
+        while (currentScope != nullptr && currentIndex < index)
+        {
+            currentScope = currentScope->sibling.get();
+            currentIndex += 1;
+        }
+
+        if (currentScope == nullptr)
+        {
+            return nullptr;
+        }
+
+        std::unique_ptr<CoordinatePair> pair = std::make_unique<CoordinatePair>();
+        if (currentIndex == index && currentScope)
+        {
+            currentScope = currentScope->childScope.get();
+            pair->x0 = std::stod(currentScope->value);
+            currentScope = currentScope->sibling.get();
+            pair->y0 = std::stod(currentScope->value);
+            currentScope = currentScope->sibling.get();
+            pair->x1 = std::stod(currentScope->value);
+            currentScope = currentScope->sibling.get();
+            pair->y1 = std::stod(currentScope->value);
+
+            return pair;
+        }
+
+        return nullptr;
+    }
+
     void parseHaversineInput(int argc, char* argv[])
     {
         std::string inputJsonFileName = std::string(argv[3]);
@@ -413,10 +461,18 @@ namespace PartTwo
             jsonFileBuffer += c;
         }
 
+        file.close();
+
 		std::cout << "starting_to_parse=" << '\n' << jsonFileBuffer << '\n';
         parseScope();
 
-        file.close();
+        std::unique_ptr<CoordinatePair> pair = getCoordinatePairFromArrayScope(1);
+        if (pair)
+        {
+            std::cout << "x0=" << pair->x0 << ", y0=" << pair->y0 <<
+                " | x1=" << pair->x1 << ", y1=" << pair->y1 << '\n';
+        }
+
         return;
     }
 }

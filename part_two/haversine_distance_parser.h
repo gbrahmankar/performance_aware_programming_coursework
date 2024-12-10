@@ -68,11 +68,14 @@ namespace PartTwo
 	void parseHaversineInput(int argc, char* argv[]);
 
     void createChildScope(ScopeType scopeType);
-    void benterChildScope();
+    void enterChildScope();
     bool enterParentScope();
 
     void createSiblingScope();
     void enterSiblingScope();
 
     void parseScope();
+
+	InternalJsonRepresentation* getPairsArrayScope();
+	std::unique_ptr<CoordinatePair> getCoordinatePairFromArrayScope(u64 index);
 }
