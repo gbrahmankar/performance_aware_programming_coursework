@@ -1,4 +1,5 @@
 #include "../common_utils.h"
+#include "haversine_distance_calculator.h"
 #include "haversine_distance_parser.h"
 
 /*
@@ -466,13 +467,27 @@ namespace PartTwo
 		std::cout << "starting_to_parse=" << '\n' << jsonFileBuffer << '\n';
         parseScope();
 
-        std::unique_ptr<CoordinatePair> pair = getCoordinatePairFromArrayScope(1);
-        if (pair)
-        {
-            std::cout << "x0=" << pair->x0 << ", y0=" << pair->y0 <<
-                " | x1=" << pair->x1 << ", y1=" << pair->y1 << '\n';
-        }
+        f64 sum = 0;
 
+        u64 pairIndex = 0;
+        std::unique_ptr<CoordinatePair> pair = getCoordinatePairFromArrayScope(0);
+        while (pair != nullptr)
+        {
+            f64 haversineDistance = ReferenceHaversine(pair->x0, pair->y0, pair->x1, pair->y1, 6372.8);
+
+            std::cout << "pair_index=" << pairIndex << ", [x0 = " << pair->x0 << ", y0 = " << pair->y0 <<
+                " | x1=" << pair->x1 << ", y1=" << pair->y1 << "] -" << "- [d=" << haversineDistance << "]" << '\n';
+
+            sum += haversineDistance;
+
+            pairIndex += 1;
+            pair = getCoordinatePairFromArrayScope(pairIndex);
+        }
+        
+        f64 sumCoef = 1.0 / (f64)pairIndex;
+        f64 avgSum = sumCoef * sum;
+        std::cout << "haversine_avg_sum=" << avgSum;
+        
         return;
     }
 }
