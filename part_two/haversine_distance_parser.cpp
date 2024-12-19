@@ -475,8 +475,12 @@ namespace PartTwo
         {
             f64 haversineDistance = ReferenceHaversine(pair->x0, pair->y0, pair->x1, pair->y1, 6372.8);
 
-            std::cout << "pair_index=" << pairIndex << ", [x0 = " << pair->x0 << ", y0 = " << pair->y0 <<
-                " | x1=" << pair->x1 << ", y1=" << pair->y1 << "] -" << "- [d=" << haversineDistance << "]" << '\n';
+            std::cout << "pair_index=" << pairIndex 
+                << ", [x0 = " << STREAM_16BIT_PRECISION_FP(pair->x0) 
+                << ", y0 = " << STREAM_16BIT_PRECISION_FP(pair->y0)
+                << " | x1=" << STREAM_16BIT_PRECISION_FP(pair->x1)
+                << ", y1=" << STREAM_16BIT_PRECISION_FP(pair->y1) << "] -" 
+                << "- [d=" << STREAM_16BIT_PRECISION_FP(haversineDistance) << "]" << '\n';
 
             sum += haversineDistance;
 
@@ -486,7 +490,7 @@ namespace PartTwo
         
         f64 sumCoef = 1.0 / (f64)pairIndex;
         f64 avgSum = sumCoef * sum;
-        std::cout << "haversine_avg_sum=" << avgSum;
+        std::cout << "haversine_avg_sum=" << STREAM_16BIT_PRECISION_FP(avgSum);
         
         return;
     }
