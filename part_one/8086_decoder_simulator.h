@@ -230,7 +230,7 @@ struct Memory
 
     Memory()
     {
-        slots.resize(MEGABYTE);
+        slots.resize(MEGABYTE_TO_BYTE);
     }
 
     Slot& operator[](std::size_t index) 

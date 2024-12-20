@@ -31,11 +31,11 @@ using WordBitset = std::bitset<16>;
 
 using MnemonicBitset = std::bitset<8>;
 
-constexpr std::size_t BYTE = 1;
-constexpr std::size_t KILOBYTE = 1024 * BYTE;
-constexpr std::size_t MEGABYTE = 1024 * KILOBYTE;
-constexpr std::size_t GIGABYTE = 1024 * MEGABYTE;
-constexpr std::size_t TERABYTE = 1024 * GIGABYTE;
+constexpr std::size_t ONE_BYTE = 1;
+constexpr std::size_t KILOBYTE_TO_BYTE = 1024 * ONE_BYTE;
+constexpr std::size_t MEGABYTE_TO_BYTE = 1024 * KILOBYTE_TO_BYTE;
+constexpr std::size_t GIGABYTE_TO_BYTE = 1024 * MEGABYTE_TO_BYTE;
+constexpr std::size_t TERABYTE_TO_BYTE = 1024 * GIGABYTE_TO_BYTE;
 
 using u8 = uint8_t;
 using i8 = int8_t;
@@ -84,5 +84,5 @@ extern u64 GetOSTimerFreq(void);
 extern u64 ReadOSTimer(void);
 #endif
 
-u64 ReadCPUTimer(void);
+inline extern u64 ReadCPUTimer(void);
 }

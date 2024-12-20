@@ -51,10 +51,14 @@ void executeTest(int argc, char* argv[])
                  "os_elapsed=" << STREAM_16BIT_PRECISION_FP(OSElapsed) << '\n';
 
     std::cout << "os_secs=" << STREAM_16BIT_PRECISION_FP((f64)OSElapsed/(f64)OSFreq) << '\n';
+	f64 OSSecs = (f64)OSElapsed/(f64)OSFreq;
 
     std::cout << "cpu_start="   << STREAM_16BIT_PRECISION_FP(CPUStart) << " | " <<
                  "cpu_end="     << STREAM_16BIT_PRECISION_FP(CPUEnd) << " | " <<
                  "cpu_elapsed=" << STREAM_16BIT_PRECISION_FP(CPUElapsed) << '\n';
+
+	u64 CPUFreq = static_cast<u64>((f64)CPUElapsed / OSSecs);
+    std::cout << "cpu_freq=" << CPUFreq << '\n';
 }
 // cpu_timer ends 
 }
