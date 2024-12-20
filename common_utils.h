@@ -13,6 +13,14 @@
 #include <unordered_map>
 #include <vector>
 
+#if _WIN32
+#include <intrin.h>
+#include <windows.h>
+#else
+#include <x86intrin.h>
+#include <sys/time.h>
+#endif
+
 #define STREAM_BYTE(X) "0x" << std::hex << std::setw(2) << std::setfill('0') << unsigned(X)
 #define STREAM_WORD(X) "0x" << std::hex << std::setw(4) << std::setfill('0') << X
 #define STREAM_16BIT_PRECISION_FP(X) std::left << std::fixed << std::setprecision(16) << X
@@ -65,3 +73,16 @@ extern double maxF64;
 
 extern long double minF128;
 extern long double maxF128;
+
+namespace Profiler
+{
+#if _WIN32
+extern u64 GetOSTimerFreq(void);
+extern u64 ReadOSTimer(void);
+#else
+extern u64 GetOSTimerFreq(void);
+extern u64 ReadOSTimer(void);
+#endif
+
+extern u64 ReadCPUTimer(void);
+}
