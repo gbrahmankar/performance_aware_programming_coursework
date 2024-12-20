@@ -50,6 +50,13 @@ namespace PartTwo
     InternalJsonRepresentation* currentScope = nullptr;
     std::unique_ptr<InternalJsonRepresentation> rootScope = nullptr;
     
+	void printTimeElapsed(const std::string& label, u64 totalTSCElapsed, u64 begin, u64 end)
+	{
+		u64 elapsed = end - begin;
+		f64 percent = 100.0 * ((f64)elapsed / (f64)totalTSCElapsed);
+        std::cout << label << " : elapsed=" << elapsed << " | percent=" << std::setprecision(2) << percent << '\n';
+	}
+
     void printToken(const JsonToken& token)
     {
         switch (token.type)
@@ -448,6 +455,13 @@ namespace PartTwo
 
     void parseHaversineInput(int argc, char* argv[])
     {
+        // profile
+        u64 timeBegin = Profiler::ReadCPUTimer();
+        u64 timeEnd = 0;
+        u64 timeReadFile = 0;
+        u64 timeParseScope = 0;
+        u64 timeComputeSum = 0;
+
         std::string inputJsonFileName = std::string(argv[3]);
         std::ifstream file(inputJsonFileName);
 		if (!file.is_open()) 
@@ -464,8 +478,14 @@ namespace PartTwo
 
         file.close();
 
+        // profile
+        timeReadFile = Profiler::ReadCPUTimer();
+
 		std::cout << "starting_to_parse=" << '\n' << jsonFileBuffer << '\n';
         parseScope();
+
+        // profile
+        timeParseScope = Profiler::ReadCPUTimer();
 
         f64 sum = 0;
 
@@ -490,8 +510,26 @@ namespace PartTwo
         
         f64 sumCoef = 1.0 / (f64)pairIndex;
         f64 avgSum = sumCoef * sum;
+
+        // profile
+        timeComputeSum = Profiler::ReadCPUTimer();
+
         std::cout << "haversine_avg_sum=" << STREAM_16BIT_PRECISION_FP(avgSum);
-        
+
+        // profile
+        timeEnd = Profiler::ReadCPUTimer();
+
+        u64 totalTimeElapsed = timeEnd - timeBegin;
+        u64 cPUFreq = Profiler::estimateCPUFrequency();
+        if(cPUFreq)
+        {
+            std::cout << "total_time=" << std::setprecision(4) << 1000.0 * (f64)totalTimeElapsed / (f64)cPUFreq << "ms" << " | cpu_freq=" << cPUFreq << '\n';;
+        }
+
+        printTimeElapsed("read_file", totalTimeElapsed, timeBegin, timeReadFile);
+        printTimeElapsed("parse", totalTimeElapsed, timeReadFile, timeParseScope);
+        printTimeElapsed("compute_sum", totalTimeElapsed, timeParseScope, timeComputeSum);
+
         return;
     }
 }

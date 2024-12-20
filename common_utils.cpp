@@ -28,6 +28,7 @@ long double maxF128 = LDBL_MAX;
 namespace Profiler
 {
 
+// casey's code starts
 #if _WIN32
 u64 GetOSTimerFreq(void)
 {
@@ -61,6 +62,29 @@ u64 ReadOSTimer(void)
 inline u64 ReadCPUTimer(void)
 {
 	return __rdtsc();
+}
+// casey's code ends 
+
+u64 estimateCPUFrequency(void)
+{
+	u64 OSFreq = GetOSTimerFreq();
+
+	u64 CPUStart = ReadCPUTimer();
+	u64 OSStart = ReadOSTimer();
+	u64 OSEnd = 0;
+	u64 OSElapsed = 0;
+	while(OSElapsed < OSFreq)
+	{
+		OSEnd = ReadOSTimer();
+		OSElapsed = OSEnd - OSStart;
+	}
+
+	u64 CPUEnd = ReadCPUTimer();
+	u64 CPUElapsed = CPUEnd - CPUStart;
+
+	f64 OSSecs = (f64)OSElapsed/(f64)OSFreq;
+
+	return static_cast<u64>((f64)CPUElapsed / OSSecs);
 }
 
 }

@@ -59,6 +59,7 @@ void executeTest(int argc, char* argv[])
 
 	u64 CPUFreq = static_cast<u64>((f64)CPUElapsed / OSSecs);
     std::cout << "cpu_freq=" << CPUFreq << '\n';
+	std::cout << "estd_cpu_freq=" << Profiler::estimateCPUFrequency() << '\n';
 }
 // cpu_timer ends 
 }
