@@ -64,7 +64,7 @@ namespace PartTwo
     extern u64 parseIndex;
 
     void printToken(const JsonToken& token);
-    void getNextToken(JsonToken& token);
+    void getNextToken(const std::string& jsonFileBuffer, JsonToken& token);
 	void parseHaversineInput(int argc, char* argv[]);
 
     void createChildScope(ScopeType scopeType);
@@ -74,7 +74,7 @@ namespace PartTwo
     void createSiblingScope();
     void enterSiblingScope();
 
-    void parseScope();
+    void parseScope(const std::string& jsonFileBuffer);
 
 	InternalJsonRepresentation* getPairsArrayScope();
 	std::unique_ptr<CoordinatePair> getCoordinatePairFromArrayScope(u64 index);

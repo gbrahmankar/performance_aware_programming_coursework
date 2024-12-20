@@ -44,7 +44,6 @@
 
 namespace PartTwo
 {
-    std::string jsonFileBuffer;
     u64 parseIndex = 0;
 
     InternalJsonRepresentation* currentScope = nullptr;
@@ -110,7 +109,7 @@ namespace PartTwo
 
     }
 
-    void getNextToken(JsonToken& token)
+    void getNextToken(const std::string& jsonFileBuffer, JsonToken& token)
     {
         while (parseIndex < jsonFileBuffer.length())
         {
@@ -284,10 +283,10 @@ namespace PartTwo
 		currentScope = currentScope->sibling.get();
     }
 
-    void parseScope()
+    void parseScope(const std::string& jsonFileBuffer)
     {
 		JsonToken token;
-		getNextToken(token);
+		getNextToken(jsonFileBuffer, token);
 		if (token.type == TokenTypeInvalid)
 		{
 			return;
@@ -314,7 +313,7 @@ namespace PartTwo
                     enterChildScope();
                 }
 
-				parseScope();
+				parseScope(jsonFileBuffer);
 
 				break;
 			}
@@ -325,7 +324,7 @@ namespace PartTwo
 				createChildScope(ScopeTypeArray);
 				enterChildScope();
 
-				parseScope();
+				parseScope(jsonFileBuffer);
 
                 break;
             }
@@ -335,7 +334,7 @@ namespace PartTwo
 
 				enterParentScope();
 
-                parseScope();
+                parseScope(jsonFileBuffer);
 
 				break;
 			}
@@ -349,7 +348,7 @@ namespace PartTwo
                     return;
                 }
 
-                parseScope();
+                parseScope(jsonFileBuffer);
 
 				break;
 			}
@@ -372,7 +371,7 @@ namespace PartTwo
 				createSiblingScope();
 				enterSiblingScope();
 
-				parseScope();
+				parseScope(jsonFileBuffer);
 
                 break;
             }
@@ -380,7 +379,7 @@ namespace PartTwo
             {
                 currentScope->beforeColon = false;
 
-				parseScope();
+				parseScope(jsonFileBuffer);
 
                 break;
             }
@@ -398,7 +397,7 @@ namespace PartTwo
 				    std::cout << "populating value=" << token.value << '\n';
                 }
                 
-                parseScope();
+                parseScope(jsonFileBuffer);
 
                 break;
             }
@@ -462,27 +461,24 @@ namespace PartTwo
         u64 timeParseScope = 0;
         u64 timeComputeSum = 0;
 
-        std::string inputJsonFileName = std::string(argv[3]);
-        std::ifstream file(inputJsonFileName);
-		if (!file.is_open()) 
+		std::string inputJsonFileName = std::string(argv[3]);
+		std::ifstream file(inputJsonFileName, std::ios::binary);
+		if (!file) 
 		{
-			std::cerr << "failed to open the file. file_name=" << argv[2] << '\n';
+			std::cerr << "error: could not open the file=" << inputJsonFileName << '\n';
 			return;
 		}
 
-        char c;
-        while(file.get(c))
-        {
-            jsonFileBuffer += c;
-        }
+        std::string jsonFileBuffer((std::istreambuf_iterator<char>(file)),
+                              std::istreambuf_iterator<char>());
 
-        file.close();
+		file.close();
 
         // profile
         timeReadFile = Profiler::ReadCPUTimer();
 
 		std::cout << "starting_to_parse=" << '\n' << jsonFileBuffer << '\n';
-        parseScope();
+        parseScope(jsonFileBuffer);
 
         // profile
         timeParseScope = Profiler::ReadCPUTimer();
