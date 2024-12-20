@@ -84,5 +84,5 @@ extern u64 GetOSTimerFreq(void);
 extern u64 ReadOSTimer(void);
 #endif
 
-extern u64 ReadCPUTimer(void);
+u64 ReadCPUTimer(void);
 }
