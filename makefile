@@ -3,7 +3,7 @@ CXX = g++
 CXXFLAGS = -Wall -Wextra -Wno-unused -Wno-unused-parameter -Wno-switch -std=c++14
 
 # Source files
-SRCS = main.cpp part_one/8086_decoder_simulator.cpp part_two/haversine_distance_problem.cpp part_two/haversine_distance_generator.cpp part_two/haversine_distance_calculator.cpp part_two/haversine_distance_parser.cpp common_utils.cpp
+SRCS = main.cpp part_one/8086_decoder_simulator.cpp part_two/haversine_distance_problem.cpp part_two/haversine_distance_generator.cpp part_two/haversine_distance_calculator.cpp part_two/haversine_distance_parser.cpp test/test.cpp common_utils.cpp
 
 # Object files (replace .cpp with .o)
 OBJS = $(SRCS:.cpp=.o)

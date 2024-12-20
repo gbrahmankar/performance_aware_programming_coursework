@@ -1,11 +1,12 @@
 #include "part_one/8086_decoder_simulator.h"
 #include "part_two/haversine_distance_problem.h"
+#include "test/test.h"
 
 int main(int argc, char* argv[])
 {
     if (argc < 2)
     {
-        std::cerr << "usage : " << argv[0] << "[part_one/part_two]" << '\n';
+        std::cerr << "usage : " << argv[0] << "[part_one/part_two/test]" << '\n';
         return 1;
     }
 
@@ -28,6 +29,10 @@ int main(int argc, char* argv[])
         }
 
         PartTwo::executePartTwo(argc, argv);
+    }
+    if (std::string(argv[1]) == "test")
+    {
+        Test::executeTest(argc, argv);
     }
 
     return 0;
