@@ -85,7 +85,7 @@ extern u64 GetOSTimerFreq(void);
 extern u64 ReadOSTimer(void);
 #endif
 
-inline extern u64 ReadCPUTimer(void);
+extern u64 ReadCPUTimer(void);
 // casey's code ends 
 
 extern u64 estimateCPUFrequency(void);

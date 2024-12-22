@@ -283,13 +283,13 @@ namespace PartTwo
 		currentScope = currentScope->sibling.get();
     }
 
-    void parseScope(const std::string& jsonFileBuffer)
+    bool parseScope(const std::string& jsonFileBuffer)
     {
 		JsonToken token;
 		getNextToken(jsonFileBuffer, token);
 		if (token.type == TokenTypeInvalid)
 		{
-			return;
+			return false;
 		}
 
 		switch (token.type)
@@ -313,8 +313,6 @@ namespace PartTwo
                     enterChildScope();
                 }
 
-				parseScope(jsonFileBuffer);
-
 				break;
 			}
 			case (TokenTypeOpenBrace) :
@@ -324,8 +322,6 @@ namespace PartTwo
 				createChildScope(ScopeTypeArray);
 				enterChildScope();
 
-				parseScope(jsonFileBuffer);
-
                 break;
             }
 			case (TokenTypeCloseBrace) :
@@ -333,8 +329,6 @@ namespace PartTwo
 				std::cout << "------------------entering parent_scope_array" << '\n';
 
 				enterParentScope();
-
-                parseScope(jsonFileBuffer);
 
 				break;
 			}
@@ -345,10 +339,8 @@ namespace PartTwo
 				if (!enterParentScope())
                 {
 				    std::cout << "------------------parsing has ended" << '\n';
-                    return;
+                    return false;
                 }
-
-                parseScope(jsonFileBuffer);
 
 				break;
 			}
@@ -371,15 +363,11 @@ namespace PartTwo
 				createSiblingScope();
 				enterSiblingScope();
 
-				parseScope(jsonFileBuffer);
-
                 break;
             }
             case (TokenTypeColon) :
             {
                 currentScope->beforeColon = false;
-
-				parseScope(jsonFileBuffer);
 
                 break;
             }
@@ -397,11 +385,13 @@ namespace PartTwo
 				    std::cout << "populating value=" << token.value << '\n';
                 }
                 
-                parseScope(jsonFileBuffer);
-
                 break;
             }
+            default :
+                return false;
 		}
+
+        return true;
     }
 
     InternalJsonRepresentation* getPairsArrayScope()
@@ -478,7 +468,11 @@ namespace PartTwo
         timeReadFile = Profiler::ReadCPUTimer();
 
 		std::cout << "starting_to_parse=" << '\n' << jsonFileBuffer << '\n';
-        parseScope(jsonFileBuffer);
+        bool parseRetVal = false;
+        do
+        {
+            parseRetVal = parseScope(jsonFileBuffer);
+        } while (parseRetVal);
 
         // profile
         timeParseScope = Profiler::ReadCPUTimer();

@@ -74,7 +74,7 @@ namespace PartTwo
     void createSiblingScope();
     void enterSiblingScope();
 
-    void parseScope(const std::string& jsonFileBuffer);
+    bool parseScope(const std::string& jsonFileBuffer);
 
 	InternalJsonRepresentation* getPairsArrayScope();
 	std::unique_ptr<CoordinatePair> getCoordinatePairFromArrayScope(u64 index);
