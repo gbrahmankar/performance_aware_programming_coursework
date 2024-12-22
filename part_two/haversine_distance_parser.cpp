@@ -2,46 +2,6 @@
 #include "haversine_distance_calculator.h"
 #include "haversine_distance_parser.h"
 
-/*
-{
-    "person": {
-        "name": "Alice",        // String
-        "age": 30,             // Number
-        "isEmployed": true,    // Boolean
-        "address": {
-            "street": "123 Maple Street",
-            "city": "Wonderland",
-            "zipCode": 12345
-        },                     // Nested Object
-        "skills": [            // Array
-            "programming",
-            "data analysis",
-            "machine learning"
-        ],
-        "languages": [
-            {
-                "name": "English",
-                "level": "fluent"
-            },
-            {
-                "name": "Spanish",
-                "level": "intermediate"
-            }
-        ]
-    },
-    "project": {
-        "title": "JSON Syntax Example",
-        "deadline": null,      // Null value
-        "budget": 10000.50     // Floating-point Number
-    },
-    "company": {
-        "name": "Tech Corp",
-        "departments": ["HR", "Development", "Marketing"],
-        "remote": false        // Boolean
-    }
-}
-*/
-
 namespace PartTwo
 {
     u64 parseIndex = 0;
@@ -62,47 +22,38 @@ namespace PartTwo
         {
 			case(TokenType::TokenTypeBool) :
 			{
-                std::cout << "tokentype=bool" << '\n';
 				break;
 			}
 			case(TokenType::TokenTypeOpenBrace) :
 			{
-                std::cout << "tokentype=open_brace" << '\n';
 				break;
 			}
 			case(TokenType::TokenTypeCloseBrace) :
 			{
-                std::cout << "tokentype=close_brace" << '\n';
 				break;
 			}
 			case(TokenType::TokenTypeOpenBracket) :
 			{
-                std::cout << "tokentype=open_bracket" << '\n';
 				break;
 			}
 			case(TokenType::TokenTypeCloseBracket) :
 			{
-                std::cout << "tokentype=close_bracket" << '\n';
 				break;
 			}
 			case(TokenType::TokenTypeNumber) :
 			{
-                std::cout << "tokentype=number value=" << token.value << '\n';
 				break;
 			}
 			case(TokenType::TokenTypeString) :
 			{
-                std::cout << "tokentype=string value=" << token.value << '\n';
 				break;
 			}
 			case(TokenType::TokenTypeComma) :
 			{
-                std::cout << "tokentype=comma" << '\n';
 				break;
 			}
 			case(TokenType::TokenTypeColon) :
 			{
-                std::cout << "tokentype=colon" << '\n';
 				break;
 			}
         }
@@ -298,8 +249,6 @@ namespace PartTwo
 			{
 				if (rootScope == nullptr)
 				{
-                    std::cout << "------------------creating root_scope" << '\n';
-
 					rootScope = std::make_unique<InternalJsonRepresentation>();
 					rootScope->key = "base";
                     rootScope->scopeType = ScopeTypeJson;
@@ -307,8 +256,6 @@ namespace PartTwo
 				}
                 else
                 {
-                    std::cout << "------------------creating and entering child_json_scope" << '\n';
-
                     createChildScope(ScopeTypeJson);
                     enterChildScope();
                 }
@@ -317,8 +264,6 @@ namespace PartTwo
 			}
 			case (TokenTypeOpenBrace) :
             {
-				std::cout << "------------------creating and entering child_array_scope" << '\n';
-
 				createChildScope(ScopeTypeArray);
 				enterChildScope();
 
@@ -326,19 +271,14 @@ namespace PartTwo
             }
 			case (TokenTypeCloseBrace) :
             {
-				std::cout << "------------------entering parent_scope_array" << '\n';
-
 				enterParentScope();
 
 				break;
 			}
 			case (TokenTypeCloseBracket) :
 			{
-				std::cout << "------------------entering parent_scope_json" << '\n';
-
 				if (!enterParentScope())
                 {
-				    std::cout << "------------------parsing has ended" << '\n';
                     return false;
                 }
 
@@ -349,15 +289,6 @@ namespace PartTwo
                 if (currentScope == nullptr)
                 {
                     std::cout << "wtffff" << '\n';
-                }
-
-                if (currentScope->scopeType == ScopeTypeJson)
-                {
-                    std::cout << "------------------creating and entering a sibling in a json" << '\n';
-                }
-                else
-                {
-                    std::cout << "------------------creating and entering a sibling in an array" << '\n';
                 }
 
 				createSiblingScope();
@@ -377,12 +308,10 @@ namespace PartTwo
                 if (currentScope->beforeColon && currentScope->scopeType == ScopeTypeJson)
                 {
                     currentScope->key = token.value;
-				    std::cout << "populating key=" << token.value << '\n';
                 }
                 else
                 {
                     currentScope->value = token.value;
-				    std::cout << "populating value=" << token.value << '\n';
                 }
                 
                 break;
@@ -406,40 +335,62 @@ namespace PartTwo
         }
     }
 
-	std::unique_ptr<CoordinatePair> getCoordinatePairFromArrayScope(u64 index)
+	std::unique_ptr<CoordinatePair> getCoordinatePairAtIndexInArrayScope(u64 index)
     {
-        InternalJsonRepresentation* pairsArrayScope = getPairsArrayScope();
-
-        currentScope = pairsArrayScope;
+        InternalJsonRepresentation* currScope = getPairsArrayScope();
         u64 currentIndex = 0;
 
-        while (currentScope != nullptr && currentIndex < index)
+        while (currScope != nullptr && currentIndex < index)
         {
-            currentScope = currentScope->sibling.get();
+            currScope = currScope->sibling.get();
             currentIndex += 1;
         }
 
-        if (currentScope == nullptr)
+        if (currScope == nullptr)
         {
             return nullptr;
         }
 
         std::unique_ptr<CoordinatePair> pair = std::make_unique<CoordinatePair>();
-        if (currentIndex == index && currentScope)
+        if (currentIndex == index && currScope)
         {
-            currentScope = currentScope->childScope.get();
-            pair->x0 = std::stod(currentScope->value);
-            currentScope = currentScope->sibling.get();
-            pair->y0 = std::stod(currentScope->value);
-            currentScope = currentScope->sibling.get();
-            pair->x1 = std::stod(currentScope->value);
-            currentScope = currentScope->sibling.get();
-            pair->y1 = std::stod(currentScope->value);
+            currScope = currScope->childScope.get();
+            pair->x0 = std::stod(currScope->value);
+            currScope = currScope->sibling.get();
+            pair->y0 = std::stod(currScope->value);
+            currScope = currScope->sibling.get();
+            pair->x1 = std::stod(currScope->value);
+            currScope = currScope->sibling.get();
+            pair->y1 = std::stod(currScope->value);
 
             return pair;
         }
 
         return nullptr;
+    }
+
+    std::unique_ptr<CoordinatePair> getCoordinatePairFromArrayScope(InternalJsonRepresentation* currScope)
+    {
+        if (currScope != nullptr)
+        {
+            currScope = currScope->childScope.get();
+        }
+
+        if (currScope == nullptr)
+        {
+            return nullptr;
+        }
+
+        std::unique_ptr<CoordinatePair> pair = std::make_unique<CoordinatePair>();
+        pair->x0 = std::stod(currScope->value);
+        currScope = currScope->sibling.get();
+        pair->y0 = std::stod(currScope->value);
+        currScope = currScope->sibling.get();
+        pair->x1 = std::stod(currScope->value);
+        currScope = currScope->sibling.get();
+        pair->y1 = std::stod(currScope->value);
+
+        return pair;
     }
 
     void parseHaversineInput(int argc, char* argv[])
@@ -467,7 +418,6 @@ namespace PartTwo
         // profile
         timeReadFile = Profiler::ReadCPUTimer();
 
-		std::cout << "starting_to_parse=" << '\n' << jsonFileBuffer << '\n';
         bool parseRetVal = false;
         do
         {
@@ -480,23 +430,22 @@ namespace PartTwo
         f64 sum = 0;
 
         u64 pairIndex = 0;
-        std::unique_ptr<CoordinatePair> pair = getCoordinatePairFromArrayScope(0);
+        currentScope = getPairsArrayScope();
+        std::unique_ptr<CoordinatePair> pair = getCoordinatePairAtIndexInArrayScope(0);
         while (pair != nullptr)
         {
             f64 haversineDistance = ReferenceHaversine(pair->x0, pair->y0, pair->x1, pair->y1, 6372.8);
 
-            std::cout << "pair_index=" << pairIndex 
-                << ", [x0 = " << STREAM_16BIT_PRECISION_FP(pair->x0) 
-                << ", y0 = " << STREAM_16BIT_PRECISION_FP(pair->y0)
-                << " | x1=" << STREAM_16BIT_PRECISION_FP(pair->x1)
-                << ", y1=" << STREAM_16BIT_PRECISION_FP(pair->y1) << "] -" 
-                << "- [d=" << STREAM_16BIT_PRECISION_FP(haversineDistance) << "]" << '\n';
-
             sum += haversineDistance;
 
             pairIndex += 1;
-            pair = getCoordinatePairFromArrayScope(pairIndex);
+            pair = getCoordinatePairFromArrayScope(currentScope);
+            if (currentScope)
+            {
+                currentScope = currentScope->sibling.get();
+            }
         }
+        pair.release();
         
         f64 sumCoef = 1.0 / (f64)pairIndex;
         f64 avgSum = sumCoef * sum;
@@ -504,7 +453,7 @@ namespace PartTwo
         // profile
         timeComputeSum = Profiler::ReadCPUTimer();
 
-        std::cout << "haversine_avg_sum=" << STREAM_16BIT_PRECISION_FP(avgSum);
+        std::cout << "haversine_avg_sum=" << STREAM_16BIT_PRECISION_FP(avgSum) << '\n';
 
         // profile
         timeEnd = Profiler::ReadCPUTimer();
