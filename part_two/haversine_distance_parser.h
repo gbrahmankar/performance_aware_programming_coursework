@@ -55,8 +55,8 @@ namespace PartTwo
         std::string key;
         std::string value;
 
-        std::unique_ptr<InternalJsonRepresentation> sibling = nullptr;
-        std::unique_ptr<InternalJsonRepresentation> childScope = nullptr;
+        InternalJsonRepresentation* sibling = nullptr;
+        InternalJsonRepresentation* childScope = nullptr;
         InternalJsonRepresentation* parentScope = nullptr;
     };
 
@@ -75,8 +75,9 @@ namespace PartTwo
     void enterSiblingScope();
 
     bool parseScope(const std::string& jsonFileBuffer);
+	void freeJsonScopes();
 
 	InternalJsonRepresentation* getPairsArrayScope();
-	std::unique_ptr<CoordinatePair> getCoordinatePairAtIndexInArrayScope(u64 index);
-    std::unique_ptr<CoordinatePair> getCoordinatePairFromArrayScope(InternalJsonRepresentation* currentScope);
+	CoordinatePair* getCoordinatePairAtIndexInArrayScope(u64 index);
+    CoordinatePair* getCoordinatePairFromArrayScope(InternalJsonRepresentation* currentScope);
 }

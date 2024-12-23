@@ -7,7 +7,7 @@ namespace PartTwo
     u64 parseIndex = 0;
 
     InternalJsonRepresentation* currentScope = nullptr;
-    std::unique_ptr<InternalJsonRepresentation> rootScope = nullptr;
+    InternalJsonRepresentation* rootScope = nullptr;
     
     void printToken(const JsonToken& token)
     {
@@ -188,14 +188,14 @@ namespace PartTwo
 
     void createChildScope(ScopeType scopeType)
     {
-		currentScope->childScope = std::make_unique<InternalJsonRepresentation>();
+		currentScope->childScope = new InternalJsonRepresentation();
         currentScope->childScope->scopeType = scopeType;
 		currentScope->childScope->parentScope = currentScope;
     }
 
     void enterChildScope()
     {
-		currentScope = currentScope->childScope.get();
+		currentScope = currentScope->childScope;
         if (currentScope->parentScope == nullptr)
         {
             std::cout << "warning : entering child_scope without a parent_scope" << '\n';
@@ -217,14 +217,14 @@ namespace PartTwo
 
     void createSiblingScope()
     {
-		currentScope->sibling = std::make_unique<InternalJsonRepresentation>();
+		currentScope->sibling = new InternalJsonRepresentation();
         currentScope->sibling->scopeType = currentScope->scopeType;
 		currentScope->sibling->parentScope = currentScope->parentScope;
     }
 
     void enterSiblingScope()
     {
-		currentScope = currentScope->sibling.get();
+		currentScope = currentScope->sibling;
     }
 
     bool parseScope(const std::string& jsonFileBuffer)
@@ -242,10 +242,10 @@ namespace PartTwo
 			{
 				if (rootScope == nullptr)
 				{
-					rootScope = std::make_unique<InternalJsonRepresentation>();
+					rootScope = new InternalJsonRepresentation();
 					rootScope->key = "base";
                     rootScope->scopeType = ScopeTypeJson;
-					currentScope = rootScope.get();
+					currentScope = rootScope;
 				}
                 else
                 {
@@ -320,7 +320,7 @@ namespace PartTwo
     {
         if (rootScope != nullptr)
         {
-            return rootScope->childScope.get();
+            return rootScope->childScope;
         }
         else
         {
@@ -328,14 +328,18 @@ namespace PartTwo
         }
     }
 
-	std::unique_ptr<CoordinatePair> getCoordinatePairAtIndexInArrayScope(u64 index)
+    void freeJsonScopes()
+    {
+    }
+
+	CoordinatePair* getCoordinatePairAtIndexInArrayScope(u64 index)
     {
         InternalJsonRepresentation* currScope = getPairsArrayScope();
         u64 currentIndex = 0;
 
         while (currScope != nullptr && currentIndex < index)
         {
-            currScope = currScope->sibling.get();
+            currScope = currScope->sibling;
             currentIndex += 1;
         }
 
@@ -344,16 +348,16 @@ namespace PartTwo
             return nullptr;
         }
 
-        std::unique_ptr<CoordinatePair> pair = std::make_unique<CoordinatePair>();
+        CoordinatePair* pair = new CoordinatePair();
         if (currentIndex == index && currScope)
         {
-            currScope = currScope->childScope.get();
+            currScope = currScope->childScope;
             pair->x0 = std::stod(currScope->value);
-            currScope = currScope->sibling.get();
+            currScope = currScope->sibling;
             pair->y0 = std::stod(currScope->value);
-            currScope = currScope->sibling.get();
+            currScope = currScope->sibling;
             pair->x1 = std::stod(currScope->value);
-            currScope = currScope->sibling.get();
+            currScope = currScope->sibling;
             pair->y1 = std::stod(currScope->value);
 
             return pair;
@@ -362,11 +366,11 @@ namespace PartTwo
         return nullptr;
     }
 
-    std::unique_ptr<CoordinatePair> getCoordinatePairFromArrayScope(InternalJsonRepresentation* currScope)
+    CoordinatePair* getCoordinatePairFromArrayScope(InternalJsonRepresentation* currScope)
     {
         if (currScope != nullptr)
         {
-            currScope = currScope->childScope.get();
+            currScope = currScope->childScope;
         }
 
         if (currScope == nullptr)
@@ -374,13 +378,13 @@ namespace PartTwo
             return nullptr;
         }
 
-        std::unique_ptr<CoordinatePair> pair = std::make_unique<CoordinatePair>();
+        CoordinatePair* pair = new CoordinatePair();
         pair->x0 = std::stod(currScope->value);
-        currScope = currScope->sibling.get();
+        currScope = currScope->sibling;
         pair->y0 = std::stod(currScope->value);
-        currScope = currScope->sibling.get();
+        currScope = currScope->sibling;
         pair->x1 = std::stod(currScope->value);
-        currScope = currScope->sibling.get();
+        currScope = currScope->sibling;
         pair->y1 = std::stod(currScope->value);
 
         return pair;
@@ -416,7 +420,7 @@ namespace PartTwo
             f64 sum = 0;
             u64 pairIndex = 0;
             currentScope = getPairsArrayScope();
-            std::unique_ptr<CoordinatePair> pair = getCoordinatePairAtIndexInArrayScope(0);
+            CoordinatePair* pair = getCoordinatePairAtIndexInArrayScope(0);
             while (pair != nullptr)
             {
                 f64 haversineDistance = ReferenceHaversine(pair->x0, pair->y0, pair->x1, pair->y1, 6372.8);
@@ -425,7 +429,7 @@ namespace PartTwo
                 pair = getCoordinatePairFromArrayScope(currentScope);
                 if (currentScope)
                 {
-                    currentScope = currentScope->sibling.get();
+                    currentScope = currentScope->sibling;
                 }
             }
 
@@ -433,6 +437,8 @@ namespace PartTwo
             f64 avgSum = sumCoef * sum;
 
             std::cout << "haversine_avg_sum=" << STREAM_16BIT_PRECISION_FP(avgSum) << '\n';
+
+            freeJsonScopes();
         }
 
 	    Profiler::endAndPrintProfile();
