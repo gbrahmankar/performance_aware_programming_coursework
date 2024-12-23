@@ -98,7 +98,10 @@ extern u64 estimateCPUFrequency(void);
 struct ProfileAnchor
 {
     u64 m_tscElapsed;
+    u64 m_tscElapsedChildren;
+
     u64 m_hitCount;
+
     std::string m_label;
 };
 
@@ -112,6 +115,7 @@ struct ProfilerData
     std::vector<ProfileAnchor> m_anchors;
 };
 extern ProfilerData g_profilerData;
+extern u16 g_currentlyActiveAnchorIndex;
 
 struct ProfileBlock 
 {
@@ -119,6 +123,7 @@ struct ProfileBlock
     ~ProfileBlock();
 
     u16 m_anchorIndex = maxU16;
+    u16 m_parentAnchorIndex = maxU16;
     std::string m_label;
     
     u64 m_startTSC;

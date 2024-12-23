@@ -95,11 +95,16 @@ ProfilerData::ProfilerData()
 }
 
 ProfilerData g_profilerData;
+u16 g_currentlyActiveAnchorIndex;
 
 ProfileBlock::ProfileBlock(const std::string& label, u16 anchorIndex)
 {
+	m_parentAnchorIndex = g_currentlyActiveAnchorIndex;
+
     m_label = label;
     m_anchorIndex = anchorIndex;
+
+	g_currentlyActiveAnchorIndex = m_anchorIndex;
 
     m_startTSC = ReadCPUTimer();
 }
@@ -107,21 +112,34 @@ ProfileBlock::ProfileBlock(const std::string& label, u16 anchorIndex)
 ProfileBlock::~ProfileBlock()
 {
 	u64 elapsed = ReadCPUTimer() - m_startTSC;
+	g_currentlyActiveAnchorIndex = m_parentAnchorIndex;
 
 	ProfileAnchor& anchor = g_profilerData.m_anchors[m_anchorIndex];
+	ProfileAnchor& parentAnchor = g_profilerData.m_anchors[m_parentAnchorIndex];
+
 	anchor.m_tscElapsed += elapsed;
 	++anchor.m_hitCount;
+
+	parentAnchor.m_tscElapsedChildren += elapsed;
 
 	anchor.m_label = m_label;
 }
 
 void printTimeElapsed(u64 totalTSCElapsed, const ProfileAnchor& anchor)
 {
-    u64 elapsed = anchor.m_tscElapsed;
+    u64 elapsed = anchor.m_tscElapsed - anchor.m_tscElapsedChildren;
     f64 percent = 100.0 * ((f64)elapsed / (f64)totalTSCElapsed);
 	std::cout << anchor.m_label << "[" << anchor.m_hitCount << "]" 
 		<< " : elapsed=" << elapsed 
-		<< " | percent = " << std::setprecision(2) << percent << '\n';
+		<< " | percent=" << std::setprecision(2) << percent;
+
+	if (anchor.m_tscElapsedChildren > 0)
+	{
+		f64 percentWithChildren = 100.0 * ((f64)anchor.m_tscElapsed / (f64)totalTSCElapsed);
+		std::cout << " | percentWithChildren=" << std::setprecision(2) << percentWithChildren;
+	}
+
+	std::cout << '\n';
 }
 
 void beginProfile()

@@ -332,12 +332,15 @@ namespace PartTwo
     {
         if (scope != nullptr)
         {
-			InternalJsonRepresentation* sibling = scope->sibling;
+            do
+            {
+                InternalJsonRepresentation* sibling = scope->sibling;
 
-            freeJsonScopes(scope->childScope);
-            free(scope);
+                freeJsonScopes(scope->childScope);
+                free(scope);
 
-			freeJsonScopes(sibling);
+                scope = sibling;
+            } while (scope != nullptr);
         }
     }
 
@@ -403,6 +406,8 @@ namespace PartTwo
     {
         Profiler::beginProfile();
 
+        TimeFunction;
+
         std::string jsonFileBuffer;
         {
             // profile
@@ -446,12 +451,14 @@ namespace PartTwo
             {
                 f64 haversineDistance = ReferenceHaversine(pair->x0, pair->y0, pair->x1, pair->y1, 6372.8);
                 sum += haversineDistance;
-                pairIndex += 1;
-                pair = getCoordinatePairFromArrayScope(currentScope);
+
                 if (currentScope)
                 {
                     currentScope = currentScope->sibling;
                 }
+
+                pairIndex += 1;
+                pair = getCoordinatePairFromArrayScope(currentScope);
             }
 
             f64 sumCoef = 1.0 / (f64)pairIndex;
