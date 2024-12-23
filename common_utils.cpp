@@ -87,4 +87,18 @@ u64 estimateCPUFrequency(void)
 	return static_cast<u64>((f64)CPUElapsed / OSSecs);
 }
 
+ProfilerData globalProfilerData;
+
+ProfileBlock::ProfileBlock(const std::string& label, u16 anchorIndex)
+{
+    m_label = label;
+    m_anchorIndex = anchorIndex;
+
+    m_startTSC = ReadCPUTimer();
+}
+
+ProfileBlock::~ProfileBlock()
+{
+}
+
 }

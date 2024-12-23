@@ -21,9 +21,14 @@
 #include <sys/time.h>
 #endif
 
+// common defines
 #define STREAM_BYTE(X) "0x" << std::hex << std::setw(2) << std::setfill('0') << unsigned(X)
 #define STREAM_WORD(X) "0x" << std::hex << std::setw(4) << std::setfill('0') << X
 #define STREAM_16BIT_PRECISION_FP(X) std::left << std::fixed << std::setprecision(16) << X
+
+// profiler defines
+#define TimeBlock(Label) ProfileBlock block##__line__(Label, __COUNTER__ + 1)
+#define TimeFunction TimeBlock(__func__)
 
 using NibbleBitset = std::bitset<4>;
 using ByteBitset = std::bitset<8>;
@@ -89,4 +94,21 @@ extern u64 ReadCPUTimer(void);
 // casey's code ends 
 
 extern u64 estimateCPUFrequency(void);
+
+struct ProfilerData
+{
+};
+extern ProfilerData globalProfilerData;
+
+struct ProfileBlock 
+{
+    ProfileBlock(const std::string& label, u16 anchorIndex);
+    ~ProfileBlock();
+
+    u16 m_anchorIndex = maxU16;
+    std::string m_label;
+    
+    u64 m_startTSC;
+};
+
 }
