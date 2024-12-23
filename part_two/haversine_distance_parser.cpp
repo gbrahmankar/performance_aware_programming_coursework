@@ -401,11 +401,12 @@ namespace PartTwo
 
     void parseHaversineInput(int argc, char* argv[])
     {
-	    Profiler::beginProfile();
+        Profiler::beginProfile();
 
+        std::string jsonFileBuffer;
         {
             // profile
-            TimeFunction;
+            TimeBlock("read_file");
 
             std::string inputJsonFileName = std::string(argv[3]);
             std::ifstream file(inputJsonFileName, std::ios::binary);
@@ -415,19 +416,30 @@ namespace PartTwo
                 return;
             }
 
-            std::string jsonFileBuffer((std::istreambuf_iterator<char>(file)),
+            jsonFileBuffer = std::string((std::istreambuf_iterator<char>(file)),
                 std::istreambuf_iterator<char>());
 
             file.close();
+        }
+
+        {
+            // profile
+            TimeBlock("parse_json");
 
             bool parseRetVal = false;
             do
             {
                 parseRetVal = parseScope(jsonFileBuffer);
             } while (parseRetVal);
+        }
 
-            f64 sum = 0;
-            u64 pairIndex = 0;
+        f64 sum = 0;
+        f64 avgSum = 0;
+        u64 pairIndex = 0;
+        {
+            // profile
+            TimeBlock("calculate_sum");
+
             currentScope = getPairsArrayScope();
             CoordinatePair* pair = getCoordinatePairAtIndexInArrayScope(0);
             while (pair != nullptr)
@@ -443,9 +455,13 @@ namespace PartTwo
             }
 
             f64 sumCoef = 1.0 / (f64)pairIndex;
-            f64 avgSum = sumCoef * sum;
+            avgSum = sumCoef * sum;
+        }
+        std::cout << "haversine_avg_sum=" << STREAM_16BIT_PRECISION_FP(avgSum) << '\n';
 
-            std::cout << "haversine_avg_sum=" << STREAM_16BIT_PRECISION_FP(avgSum) << '\n';
+        {
+            // profile
+            TimeBlock("free_stuff");
 
             freeJsonScopes(rootScope);
         }
