@@ -9,13 +9,6 @@ namespace PartTwo
     InternalJsonRepresentation* currentScope = nullptr;
     std::unique_ptr<InternalJsonRepresentation> rootScope = nullptr;
     
-	void printTimeElapsed(const std::string& label, u64 totalTSCElapsed, u64 begin, u64 end)
-	{
-		u64 elapsed = end - begin;
-		f64 percent = 100.0 * ((f64)elapsed / (f64)totalTSCElapsed);
-        std::cout << label << " : elapsed=" << elapsed << " | percent=" << std::setprecision(2) << percent << '\n';
-	}
-
     void printToken(const JsonToken& token)
     {
         switch (token.type)
@@ -395,80 +388,54 @@ namespace PartTwo
 
     void parseHaversineInput(int argc, char* argv[])
     {
-        // profile
-        u64 timeBegin = Profiler::ReadCPUTimer();
-        u64 timeEnd = 0;
-        u64 timeReadFile = 0;
-        u64 timeParseScope = 0;
-        u64 timeComputeSum = 0;
+	    Profiler::beginProfile();
 
-		std::string inputJsonFileName = std::string(argv[3]);
-		std::ifstream file(inputJsonFileName, std::ios::binary);
-		if (!file) 
-		{
-			std::cerr << "error: could not open the file=" << inputJsonFileName << '\n';
-			return;
-		}
-
-        std::string jsonFileBuffer((std::istreambuf_iterator<char>(file)),
-                              std::istreambuf_iterator<char>());
-
-		file.close();
-
-        // profile
-        timeReadFile = Profiler::ReadCPUTimer();
-
-        bool parseRetVal = false;
-        do
         {
-            parseRetVal = parseScope(jsonFileBuffer);
-        } while (parseRetVal);
+            // profile
+            TimeFunction;
 
-        // profile
-        timeParseScope = Profiler::ReadCPUTimer();
-
-        f64 sum = 0;
-
-        u64 pairIndex = 0;
-        currentScope = getPairsArrayScope();
-        std::unique_ptr<CoordinatePair> pair = getCoordinatePairAtIndexInArrayScope(0);
-        while (pair != nullptr)
-        {
-            f64 haversineDistance = ReferenceHaversine(pair->x0, pair->y0, pair->x1, pair->y1, 6372.8);
-
-            sum += haversineDistance;
-
-            pairIndex += 1;
-            pair = getCoordinatePairFromArrayScope(currentScope);
-            if (currentScope)
+            std::string inputJsonFileName = std::string(argv[3]);
+            std::ifstream file(inputJsonFileName, std::ios::binary);
+            if (!file)
             {
-                currentScope = currentScope->sibling.get();
+                std::cerr << "error: could not open the file=" << inputJsonFileName << '\n';
+                return;
             }
+
+            std::string jsonFileBuffer((std::istreambuf_iterator<char>(file)),
+                std::istreambuf_iterator<char>());
+
+            file.close();
+
+            bool parseRetVal = false;
+            do
+            {
+                parseRetVal = parseScope(jsonFileBuffer);
+            } while (parseRetVal);
+
+            f64 sum = 0;
+            u64 pairIndex = 0;
+            currentScope = getPairsArrayScope();
+            std::unique_ptr<CoordinatePair> pair = getCoordinatePairAtIndexInArrayScope(0);
+            while (pair != nullptr)
+            {
+                f64 haversineDistance = ReferenceHaversine(pair->x0, pair->y0, pair->x1, pair->y1, 6372.8);
+                sum += haversineDistance;
+                pairIndex += 1;
+                pair = getCoordinatePairFromArrayScope(currentScope);
+                if (currentScope)
+                {
+                    currentScope = currentScope->sibling.get();
+                }
+            }
+
+            f64 sumCoef = 1.0 / (f64)pairIndex;
+            f64 avgSum = sumCoef * sum;
+
+            std::cout << "haversine_avg_sum=" << STREAM_16BIT_PRECISION_FP(avgSum) << '\n';
         }
-        pair.release();
-        
-        f64 sumCoef = 1.0 / (f64)pairIndex;
-        f64 avgSum = sumCoef * sum;
 
-        // profile
-        timeComputeSum = Profiler::ReadCPUTimer();
-
-        std::cout << "haversine_avg_sum=" << STREAM_16BIT_PRECISION_FP(avgSum) << '\n';
-
-        // profile
-        timeEnd = Profiler::ReadCPUTimer();
-
-        u64 totalTimeElapsed = timeEnd - timeBegin;
-        u64 cPUFreq = Profiler::estimateCPUFrequency();
-        if(cPUFreq)
-        {
-            std::cout << "total_time=" << std::setprecision(4) << 1000.0 * (f64)totalTimeElapsed / (f64)cPUFreq << "ms" << " | cpu_freq=" << cPUFreq << '\n';;
-        }
-
-        printTimeElapsed("read_file", totalTimeElapsed, timeBegin, timeReadFile);
-        printTimeElapsed("parse", totalTimeElapsed, timeReadFile, timeParseScope);
-        printTimeElapsed("compute_sum", totalTimeElapsed, timeParseScope, timeComputeSum);
-
+	    Profiler::endAndPrintProfile();
         return;
     }
 }

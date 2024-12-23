@@ -27,7 +27,7 @@
 #define STREAM_16BIT_PRECISION_FP(X) std::left << std::fixed << std::setprecision(16) << X
 
 // profiler defines
-#define TimeBlock(Label) ProfileBlock block##__line__(Label, __COUNTER__ + 1)
+#define TimeBlock(Label) Profiler::ProfileBlock block##__line__(Label, __COUNTER__ + 1)
 #define TimeFunction TimeBlock(__func__)
 
 using NibbleBitset = std::bitset<4>;
@@ -95,10 +95,23 @@ extern u64 ReadCPUTimer(void);
 
 extern u64 estimateCPUFrequency(void);
 
+struct ProfileAnchor
+{
+    u64 m_tscElapsed;
+    u64 m_hitCount;
+    std::string m_label;
+};
+
 struct ProfilerData
 {
+    ProfilerData();
+
+    u64 m_startTSC;
+    u64 m_endTSC;
+
+    std::vector<ProfileAnchor> m_anchors;
 };
-extern ProfilerData globalProfilerData;
+extern ProfilerData g_profilerData;
 
 struct ProfileBlock 
 {
@@ -110,5 +123,9 @@ struct ProfileBlock
     
     u64 m_startTSC;
 };
+
+extern void printTimeElapsed(u64 totalTSCElapsed, const ProfileAnchor& anchor);
+extern void beginProfile();
+extern void endAndPrintProfile();
 
 }

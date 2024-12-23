@@ -87,7 +87,14 @@ u64 estimateCPUFrequency(void)
 	return static_cast<u64>((f64)CPUElapsed / OSSecs);
 }
 
-ProfilerData globalProfilerData;
+ProfilerData::ProfilerData()
+	: m_startTSC{0},
+	m_endTSC{0}
+{
+	m_anchors.resize(1024);
+}
+
+ProfilerData g_profilerData;
 
 ProfileBlock::ProfileBlock(const std::string& label, u16 anchorIndex)
 {
@@ -99,6 +106,50 @@ ProfileBlock::ProfileBlock(const std::string& label, u16 anchorIndex)
 
 ProfileBlock::~ProfileBlock()
 {
+	u64 elapsed = ReadCPUTimer() - m_startTSC;
+
+	ProfileAnchor& anchor = g_profilerData.m_anchors[m_anchorIndex];
+	anchor.m_tscElapsed += elapsed;
+	++anchor.m_hitCount;
+
+	anchor.m_label = m_label;
+}
+
+void printTimeElapsed(u64 totalTSCElapsed, const ProfileAnchor& anchor)
+{
+    u64 elapsed = anchor.m_tscElapsed;
+    f64 percent = 100.0 * ((f64)elapsed / (f64)totalTSCElapsed);
+	std::cout << anchor.m_label << "[" << anchor.m_hitCount << "]" 
+		<< " : elapsed=" << elapsed 
+		<< " | percent = " << std::setprecision(2) << percent << '\n';
+}
+
+void beginProfile()
+{
+    g_profilerData.m_startTSC = ReadCPUTimer();
+}
+
+void endAndPrintProfile()
+{
+    g_profilerData.m_endTSC = ReadCPUTimer();
+    u64 cpuFreq = estimateCPUFrequency();
+    
+    u64 totalCPUElapsed = g_profilerData.m_endTSC - g_profilerData.m_startTSC;
+    
+    if(cpuFreq)
+    {
+		std::cout << "total_time=" << std::setprecision(4) << 1000.0 * (f64)totalCPUElapsed / (f64)cpuFreq << "ms" 
+			<< " | cpu_freq=" << cpuFreq << '\n';;
+    }
+    
+    for(u16 anchorIndex = 0; anchorIndex < g_profilerData.m_anchors.size(); ++anchorIndex)
+    {
+		ProfileAnchor& anchor = g_profilerData.m_anchors[anchorIndex];
+        if(anchor.m_tscElapsed)
+        {
+            printTimeElapsed(totalCPUElapsed, anchor);
+        }
+    }
 }
 
 }
