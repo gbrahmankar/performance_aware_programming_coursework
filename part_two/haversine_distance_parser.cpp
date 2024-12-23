@@ -328,8 +328,17 @@ namespace PartTwo
         }
     }
 
-    void freeJsonScopes()
+    void freeJsonScopes(InternalJsonRepresentation* scope)
     {
+        if (scope != nullptr)
+        {
+			InternalJsonRepresentation* sibling = scope->sibling;
+
+            freeJsonScopes(scope->childScope);
+            free(scope);
+
+			freeJsonScopes(sibling);
+        }
     }
 
 	CoordinatePair* getCoordinatePairAtIndexInArrayScope(u64 index)
@@ -438,7 +447,7 @@ namespace PartTwo
 
             std::cout << "haversine_avg_sum=" << STREAM_16BIT_PRECISION_FP(avgSum) << '\n';
 
-            freeJsonScopes();
+            freeJsonScopes(rootScope);
         }
 
 	    Profiler::endAndPrintProfile();
