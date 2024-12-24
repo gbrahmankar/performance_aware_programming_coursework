@@ -404,76 +404,89 @@ namespace PartTwo
 
     void parseHaversineInput(int argc, char* argv[])
     {
+		// profile
         Profiler::beginProfile();
 
-        TimeFunction;
-
-        std::string jsonFileBuffer;
+        // block : parseHaversineInput
         {
-            // profile
-            TimeBlock("read_file");
+			// profile
+            TimeFunction;
 
-            std::string inputJsonFileName = std::string(argv[3]);
-            std::ifstream file(inputJsonFileName, std::ios::binary);
-            if (!file)
+            std::string jsonFileBuffer;
+
+            // block : read_file 
             {
-                std::cerr << "error: could not open the file=" << inputJsonFileName << '\n';
-                return;
-            }
+                // profile
+                TimeBlock("read_file");
 
-            jsonFileBuffer = std::string((std::istreambuf_iterator<char>(file)),
-                std::istreambuf_iterator<char>());
-
-            file.close();
-        }
-
-        {
-            // profile
-            TimeBlock("parse_json");
-
-            bool parseRetVal = false;
-            do
-            {
-                parseRetVal = parseScope(jsonFileBuffer);
-            } while (parseRetVal);
-        }
-
-        f64 sum = 0;
-        f64 avgSum = 0;
-        u64 pairIndex = 0;
-        {
-            // profile
-            TimeBlock("calculate_sum");
-
-            currentScope = getPairsArrayScope();
-            CoordinatePair* pair = getCoordinatePairAtIndexInArrayScope(0);
-            while (pair != nullptr)
-            {
-                f64 haversineDistance = ReferenceHaversine(pair->x0, pair->y0, pair->x1, pair->y1, 6372.8);
-                sum += haversineDistance;
-
-                if (currentScope)
+                std::string inputJsonFileName = std::string(argv[3]);
+                std::ifstream file(inputJsonFileName, std::ios::binary);
+                if (!file)
                 {
-                    currentScope = currentScope->sibling;
+                    std::cerr << "error: could not open the file=" << inputJsonFileName << '\n';
+                    return;
                 }
 
-                pairIndex += 1;
-                pair = getCoordinatePairFromArrayScope(currentScope);
+                jsonFileBuffer = std::string((std::istreambuf_iterator<char>(file)),
+                    std::istreambuf_iterator<char>());
+
+                file.close();
             }
 
-            f64 sumCoef = 1.0 / (f64)pairIndex;
-            avgSum = sumCoef * sum;
+            // block : parse_json 
+            {
+                // profile
+                TimeBlock("parse_json");
+
+                bool parseRetVal = false;
+                do
+                {
+                    parseRetVal = parseScope(jsonFileBuffer);
+                } while (parseRetVal);
+            }
+
+            f64 sum = 0;
+            f64 avgSum = 0;
+            u64 pairIndex = 0;
+
+            // block : calculate_sum 
+            {
+                // profile
+                TimeBlock("calculate_sum");
+
+                currentScope = getPairsArrayScope();
+                CoordinatePair* pair = getCoordinatePairAtIndexInArrayScope(0);
+                while (pair != nullptr)
+                {
+                    f64 haversineDistance = ReferenceHaversine(pair->x0, pair->y0, pair->x1, pair->y1, 6372.8);
+                    sum += haversineDistance;
+
+                    if (currentScope)
+                    {
+                        currentScope = currentScope->sibling;
+                    }
+
+                    pairIndex += 1;
+                    pair = getCoordinatePairFromArrayScope(currentScope);
+                }
+
+                f64 sumCoef = 1.0 / (f64)pairIndex;
+                avgSum = sumCoef * sum;
+            }
+            std::cout << "haversine_avg_sum=" << STREAM_16BIT_PRECISION_FP(avgSum) << '\n';
+
+            // block : free_allocs
+            {
+                // profile
+                TimeBlock("free_allocs");
+
+                freeJsonScopes(rootScope);
+            }
         }
-        std::cout << "haversine_avg_sum=" << STREAM_16BIT_PRECISION_FP(avgSum) << '\n';
 
-        {
-            // profile
-            TimeBlock("free_stuff");
-
-            freeJsonScopes(rootScope);
-        }
-
+		// profile
 	    Profiler::endAndPrintProfile();
+
         return;
     }
 }
