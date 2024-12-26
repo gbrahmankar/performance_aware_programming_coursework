@@ -506,7 +506,7 @@ namespace PartTwo
                 f64 sumCoef = 1.0 / (f64)pairIndex;
                 avgSum = sumCoef * sum;
             }
-            std::cout << "haversine_avg_sum=" << STREAM_16BIT_PRECISION_FP(avgSum) << '\n';
+            std::cout << "haversine_avg_sum=" << STREAM_16BIT_PRECISION_FP(avgSum) << " | pairs_processed=" << pairIndex << '\n';
 
             // block : free_allocs
             {

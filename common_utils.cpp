@@ -174,11 +174,13 @@ void endAndPrintProfile()
     
     if(cpuFreq)
     {
+		std::cout << "-----------------------------------profiling_info_starts--------------------------------------\n";
 		std::cout << "total_time=" << std::setprecision(4) << 1000.0 * (f64)totalCPUElapsed / (f64)cpuFreq << "ms" 
-			<< " | cpu_timer_freq=" << cpuFreq << '\n';;
+			<< " | cpu_timer_freq=" << cpuFreq << "\n\n";
     } 
 
 	printAnchorData(totalCPUElapsed);
+	std::cout << "-----------------------------------profiling_info_ends----------------------------------------\n";
 }
 
 }
