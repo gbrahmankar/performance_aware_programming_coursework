@@ -106,6 +106,9 @@ ProfileBlock::ProfileBlock(const std::string& label, u16 anchorIndex)
 
 	g_currentlyActiveAnchorIndex = m_anchorIndex;
 
+	ProfileAnchor& anchor = g_profilerData.m_anchors[m_anchorIndex];
+	m_oldTSCElapsedInclusive = anchor.m_tscElapsedInclusive;
+
     m_startTSC = ReadCPUTimer();
 }
 
@@ -117,26 +120,25 @@ ProfileBlock::~ProfileBlock()
 	ProfileAnchor& anchor = g_profilerData.m_anchors[m_anchorIndex];
 	ProfileAnchor& parentAnchor = g_profilerData.m_anchors[m_parentAnchorIndex];
 
-	anchor.m_tscElapsed += elapsed;
+	parentAnchor.m_tscElapsedExclusive -= elapsed;
+	anchor.m_tscElapsedExclusive += elapsed;
+	anchor.m_tscElapsedInclusive = m_oldTSCElapsedInclusive + elapsed;
+
 	++anchor.m_hitCount;
-
-	parentAnchor.m_tscElapsedChildren += elapsed;
-
 	anchor.m_label = m_label;
 }
 
 void printTimeElapsed(u64 totalTSCElapsed, const ProfileAnchor& anchor)
 {
-    u64 elapsed = anchor.m_tscElapsed - anchor.m_tscElapsedChildren;
-    f64 percent = 100.0 * ((f64)elapsed / (f64)totalTSCElapsed);
+    f64 percent = 100.0 * ((f64)anchor.m_tscElapsedExclusive / (f64)totalTSCElapsed);
 	std::cout << anchor.m_label << "[" << anchor.m_hitCount << "]" 
-		<< " : elapsed=" << elapsed 
-		<< " | percent=" << std::setprecision(2) << percent;
+		<< " : exclusive_elapsed=" << anchor.m_tscElapsedExclusive 
+		<< " | exclusive_percent=" << std::setprecision(2) << percent;
 
-	if (anchor.m_tscElapsedChildren > 0)
+	if (anchor.m_tscElapsedInclusive != anchor.m_tscElapsedExclusive)
 	{
-		f64 percentWithChildren = 100.0 * ((f64)anchor.m_tscElapsed / (f64)totalTSCElapsed);
-		std::cout << " | percentWithChildren=" << std::setprecision(2) << percentWithChildren;
+		f64 percentWithChildren = 100.0 * ((f64)anchor.m_tscElapsedInclusive / (f64)totalTSCElapsed);
+		std::cout << " | inclusive_percent=" << std::setprecision(2) << percentWithChildren;
 	}
 
 	std::cout << '\n';
@@ -157,13 +159,13 @@ void endAndPrintProfile()
     if(cpuFreq)
     {
 		std::cout << "total_time=" << std::setprecision(4) << 1000.0 * (f64)totalCPUElapsed / (f64)cpuFreq << "ms" 
-			<< " | cpu_freq=" << cpuFreq << '\n';;
+			<< " | cpu_timer_freq=" << cpuFreq << '\n';;
     }
     
     for(u16 anchorIndex = 0; anchorIndex < g_profilerData.m_anchors.size(); ++anchorIndex)
     {
 		ProfileAnchor& anchor = g_profilerData.m_anchors[anchorIndex];
-        if(anchor.m_tscElapsed)
+        if(anchor.m_tscElapsedInclusive > 0)
         {
             printTimeElapsed(totalCPUElapsed, anchor);
         }

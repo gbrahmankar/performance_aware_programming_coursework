@@ -55,6 +55,9 @@ namespace PartTwo
 
     void getNextToken(const std::string& jsonFileBuffer, JsonToken& token)
     {
+        // profile
+        TimeFunction;
+
         while (parseIndex < jsonFileBuffer.length())
         {
             if (!std::isspace(jsonFileBuffer[parseIndex])) 
@@ -188,6 +191,9 @@ namespace PartTwo
 
     void createChildScope(ScopeType scopeType)
     {
+        // profile
+        TimeFunction;
+
 		currentScope->childScope = new InternalJsonRepresentation();
         currentScope->childScope->scopeType = scopeType;
 		currentScope->childScope->parentScope = currentScope;
@@ -195,6 +201,9 @@ namespace PartTwo
 
     void enterChildScope()
     {
+        // profile
+        TimeFunction;
+
 		currentScope = currentScope->childScope;
         if (currentScope->parentScope == nullptr)
         {
@@ -204,6 +213,9 @@ namespace PartTwo
 
     bool enterParentScope()
     {
+        // profile
+        TimeFunction;
+
         if (currentScope)
         {
             currentScope = currentScope->parentScope;
@@ -217,6 +229,9 @@ namespace PartTwo
 
     void createSiblingScope()
     {
+        // profile
+        TimeFunction;
+
 		currentScope->sibling = new InternalJsonRepresentation();
         currentScope->sibling->scopeType = currentScope->scopeType;
 		currentScope->sibling->parentScope = currentScope->parentScope;
@@ -224,11 +239,17 @@ namespace PartTwo
 
     void enterSiblingScope()
     {
+        // profile
+        TimeFunction;
+
 		currentScope = currentScope->sibling;
     }
 
     bool parseScope(const std::string& jsonFileBuffer)
     {
+        // profile
+        TimeFunction;
+
 		JsonToken token;
 		getNextToken(jsonFileBuffer, token);
 		if (token.type == TokenTypeInvalid)
@@ -281,7 +302,7 @@ namespace PartTwo
             {
                 if (currentScope == nullptr)
                 {
-                    std::cout << "wtffff" << '\n';
+                    return false;
                 }
 
 				createSiblingScope();
@@ -318,6 +339,9 @@ namespace PartTwo
 
     InternalJsonRepresentation* getPairsArrayScope()
     {
+        // profile
+        TimeFunction;
+
         if (rootScope != nullptr)
         {
             return rootScope->childScope;
@@ -330,6 +354,9 @@ namespace PartTwo
 
     void freeJsonScopes(InternalJsonRepresentation* scope)
     {
+        // profile
+        TimeFunction;
+
         if (scope != nullptr)
         {
             do
@@ -346,6 +373,9 @@ namespace PartTwo
 
 	CoordinatePair* getCoordinatePairAtIndexInArrayScope(u64 index)
     {
+        // profile
+        TimeFunction;
+
         InternalJsonRepresentation* currScope = getPairsArrayScope();
         u64 currentIndex = 0;
 
@@ -380,6 +410,9 @@ namespace PartTwo
 
     CoordinatePair* getCoordinatePairFromArrayScope(InternalJsonRepresentation* currScope)
     {
+        // profile
+        TimeFunction;
+
         if (currScope != nullptr)
         {
             currScope = currScope->childScope;

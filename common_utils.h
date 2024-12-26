@@ -97,8 +97,8 @@ extern u64 estimateCPUFrequency(void);
 
 struct ProfileAnchor
 {
-    u64 m_tscElapsed;
-    u64 m_tscElapsedChildren;
+    u64 m_tscElapsedExclusive;
+    u64 m_tscElapsedInclusive;
 
     u64 m_hitCount;
 
@@ -127,6 +127,7 @@ struct ProfileBlock
     std::string m_label;
     
     u64 m_startTSC;
+    u64 m_oldTSCElapsedInclusive;
 };
 
 extern void printTimeElapsed(u64 totalTSCElapsed, const ProfileAnchor& anchor);
