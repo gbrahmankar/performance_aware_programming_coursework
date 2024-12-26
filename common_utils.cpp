@@ -87,14 +87,9 @@ u64 estimateCPUFrequency(void)
 	return static_cast<u64>((f64)CPUElapsed / OSSecs);
 }
 
-ProfilerData::ProfilerData()
-	: m_startTSC{0},
-	m_endTSC{0}
-{
-	m_anchors.resize(1024);
-}
+#if PROFILER
 
-ProfilerData g_profilerData;
+std::array<ProfileAnchor, 1024> g_profilerAnchors;
 u16 g_currentlyActiveAnchorIndex;
 
 ProfileBlock::ProfileBlock(const std::string& label, u16 anchorIndex)
@@ -106,7 +101,7 @@ ProfileBlock::ProfileBlock(const std::string& label, u16 anchorIndex)
 
 	g_currentlyActiveAnchorIndex = m_anchorIndex;
 
-	ProfileAnchor& anchor = g_profilerData.m_anchors[m_anchorIndex];
+	ProfileAnchor& anchor = g_profilerAnchors[m_anchorIndex];
 	m_oldTSCElapsedInclusive = anchor.m_tscElapsedInclusive;
 
     m_startTSC = ReadCPUTimer();
@@ -117,8 +112,8 @@ ProfileBlock::~ProfileBlock()
 	u64 elapsed = ReadCPUTimer() - m_startTSC;
 	g_currentlyActiveAnchorIndex = m_parentAnchorIndex;
 
-	ProfileAnchor& anchor = g_profilerData.m_anchors[m_anchorIndex];
-	ProfileAnchor& parentAnchor = g_profilerData.m_anchors[m_parentAnchorIndex];
+	ProfileAnchor& anchor = g_profilerAnchors[m_anchorIndex];
+	ProfileAnchor& parentAnchor = g_profilerAnchors[m_parentAnchorIndex];
 
 	parentAnchor.m_tscElapsedExclusive -= elapsed;
 	anchor.m_tscElapsedExclusive += elapsed;
@@ -144,6 +139,27 @@ void printTimeElapsed(u64 totalTSCElapsed, const ProfileAnchor& anchor)
 	std::cout << '\n';
 }
 
+void printAnchorData(u64 totalCPUElapsed)
+{
+	for(u16 anchorIndex = 0; anchorIndex < g_profilerAnchors.size(); ++anchorIndex)
+    {
+		ProfileAnchor& anchor = g_profilerAnchors[anchorIndex];
+        if(anchor.m_tscElapsedInclusive > 0)
+        {
+            printTimeElapsed(totalCPUElapsed, anchor);
+        }
+    }
+}
+
+#endif
+
+ProfilerData::ProfilerData()
+	: m_startTSC{0},
+	m_endTSC{0}
+{
+}
+ProfilerData g_profilerData;
+
 void beginProfile()
 {
     g_profilerData.m_startTSC = ReadCPUTimer();
@@ -160,16 +176,9 @@ void endAndPrintProfile()
     {
 		std::cout << "total_time=" << std::setprecision(4) << 1000.0 * (f64)totalCPUElapsed / (f64)cpuFreq << "ms" 
 			<< " | cpu_timer_freq=" << cpuFreq << '\n';;
-    }
-    
-    for(u16 anchorIndex = 0; anchorIndex < g_profilerData.m_anchors.size(); ++anchorIndex)
-    {
-		ProfileAnchor& anchor = g_profilerData.m_anchors[anchorIndex];
-        if(anchor.m_tscElapsedInclusive > 0)
-        {
-            printTimeElapsed(totalCPUElapsed, anchor);
-        }
-    }
+    } 
+
+	printAnchorData(totalCPUElapsed);
 }
 
 }

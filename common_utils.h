@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <bitset>
 #include <cfloat>
 #include <fstream>
@@ -27,7 +28,17 @@
 #define STREAM_16BIT_PRECISION_FP(X) std::left << std::fixed << std::setprecision(16) << X
 
 // profiler defines
+#ifndef PROFILER
+#define PROFILER 0
+#endif
+
+#if PROFILER
 #define TimeBlock(Label) Profiler::ProfileBlock block##__line__(Label, __COUNTER__ + 1)
+#else
+#define TimeBlock(Label)
+#define printAnchorData(...)
+#endif
+
 #define TimeFunction TimeBlock(__func__)
 
 using NibbleBitset = std::bitset<4>;
@@ -95,6 +106,8 @@ extern u64 ReadCPUTimer(void);
 
 extern u64 estimateCPUFrequency(void);
 
+#if PROFILER
+
 struct ProfileAnchor
 {
     u64 m_tscElapsedExclusive;
@@ -104,17 +117,7 @@ struct ProfileAnchor
 
     std::string m_label;
 };
-
-struct ProfilerData
-{
-    ProfilerData();
-
-    u64 m_startTSC;
-    u64 m_endTSC;
-
-    std::vector<ProfileAnchor> m_anchors;
-};
-extern ProfilerData g_profilerData;
+extern std::array<ProfileAnchor, 1024> g_profilerAnchors;
 extern u16 g_currentlyActiveAnchorIndex;
 
 struct ProfileBlock 
@@ -131,6 +134,19 @@ struct ProfileBlock
 };
 
 extern void printTimeElapsed(u64 totalTSCElapsed, const ProfileAnchor& anchor);
+extern void printAnchorData(u64 totalCPUElapsed);
+
+#endif
+
+struct ProfilerData
+{
+    ProfilerData();
+
+    u64 m_startTSC;
+    u64 m_endTSC;
+};
+extern ProfilerData g_profilerData;
+
 extern void beginProfile();
 extern void endAndPrintProfile();
 
