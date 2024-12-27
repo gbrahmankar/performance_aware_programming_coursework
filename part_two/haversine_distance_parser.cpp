@@ -450,7 +450,7 @@ namespace PartTwo
             // block : read_file 
             {
                 // profile
-                TimeBlock("read_file");
+                TimeBlock("read_file_misc");
 
                 std::string inputJsonFileName = std::string(argv[3]);
                 std::ifstream file(inputJsonFileName, std::ios::binary);
@@ -460,8 +460,16 @@ namespace PartTwo
                     return;
                 }
 
-                jsonFileBuffer = std::string((std::istreambuf_iterator<char>(file)),
-                    std::istreambuf_iterator<char>());
+                std::istreambuf_iterator<char> begin(file);
+                std::istreambuf_iterator<char> end;
+
+                // profile
+                TimeBandwidth("read_file", std::distance(begin, end));
+
+                file.clear();
+				file.seekg(0, std::ios::beg);
+
+                jsonFileBuffer = std::string(begin, end);
 
                 file.close();
             }

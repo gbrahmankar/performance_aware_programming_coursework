@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <iterator>
 #include <memory>
 #include <random>
 #include <sstream>
@@ -26,6 +27,8 @@
 #define STREAM_BYTE(X) "0x" << std::hex << std::setw(2) << std::setfill('0') << unsigned(X)
 #define STREAM_WORD(X) "0x" << std::hex << std::setw(4) << std::setfill('0') << X
 #define STREAM_16BIT_PRECISION_FP(X) std::left << std::fixed << std::setprecision(16) << X
+#define CONCAT_IMPL(x, y) x##y
+#define CONCAT(x, y) CONCAT_IMPL(x, y)
 
 // profiler defines
 #ifndef PROFILER
@@ -33,12 +36,13 @@
 #endif
 
 #if PROFILER
-#define TimeBlock(Label) Profiler::ProfileBlock block##__line__(Label, __COUNTER__ + 1)
+#define TimeBandwidth(Label, BytesProcessed) Profiler::ProfileBlock CONCAT(block, __LINE__) (Label, __COUNTER__ + 1, BytesProcessed)
 #else
-#define TimeBlock(Label)
+#define TimeBandwidth(Label, BytesProcessed)
 #define printAnchorData(...)
 #endif
 
+#define TimeBlock(Label) TimeBandwidth(Label, 0)
 #define TimeFunction TimeBlock(__func__)
 
 using NibbleBitset = std::bitset<4>;
@@ -114,6 +118,7 @@ struct ProfileAnchor
     u64 m_tscElapsedInclusive;
 
     u64 m_hitCount;
+    u64 m_processedByteCount;
 
     std::string m_label;
 };
@@ -122,7 +127,7 @@ extern u16 g_currentlyActiveAnchorIndex;
 
 struct ProfileBlock 
 {
-    ProfileBlock(const std::string& label, u16 anchorIndex);
+    ProfileBlock(const std::string& label, u16 anchorIndex, u64 byteCount);
     ~ProfileBlock();
 
     u16 m_anchorIndex = maxU16;
@@ -133,8 +138,8 @@ struct ProfileBlock
     u64 m_oldTSCElapsedInclusive;
 };
 
-extern void printTimeElapsed(u64 totalTSCElapsed, const ProfileAnchor& anchor);
-extern void printAnchorData(u64 totalCPUElapsed);
+extern void printTimeElapsed(u64 totalTSCElapsed, u64 cpuTimerFreq, const ProfileAnchor& anchor);
+extern void printAnchorData(u64 totalCPUElapsed, u64 cpuTimerFreq);
 
 #endif
 

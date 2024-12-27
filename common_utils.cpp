@@ -92,7 +92,7 @@ u64 estimateCPUFrequency(void)
 std::array<ProfileAnchor, 1024> g_profilerAnchors;
 u16 g_currentlyActiveAnchorIndex;
 
-ProfileBlock::ProfileBlock(const std::string& label, u16 anchorIndex)
+ProfileBlock::ProfileBlock(const std::string& label, u16 anchorIndex, u64 byteCount)
 {
 	m_parentAnchorIndex = g_currentlyActiveAnchorIndex;
 
@@ -103,6 +103,7 @@ ProfileBlock::ProfileBlock(const std::string& label, u16 anchorIndex)
 
 	ProfileAnchor& anchor = g_profilerAnchors[m_anchorIndex];
 	m_oldTSCElapsedInclusive = anchor.m_tscElapsedInclusive;
+    anchor.m_processedByteCount += byteCount;
 
     m_startTSC = ReadCPUTimer();
 }
@@ -123,7 +124,7 @@ ProfileBlock::~ProfileBlock()
 	anchor.m_label = m_label;
 }
 
-void printTimeElapsed(u64 totalTSCElapsed, const ProfileAnchor& anchor)
+void printTimeElapsed(u64 totalTSCElapsed, u64 cpuTimerFreq, const ProfileAnchor& anchor)
 {
     f64 percent = 100.0 * ((f64)anchor.m_tscElapsedExclusive / (f64)totalTSCElapsed);
 	std::cout << anchor.m_label << "[" << anchor.m_hitCount << "]" 
@@ -136,17 +137,27 @@ void printTimeElapsed(u64 totalTSCElapsed, const ProfileAnchor& anchor)
 		std::cout << " | inclusive_percent=" << std::setprecision(2) << percentWithChildren;
 	}
 
+    if (anchor.m_processedByteCount > 0)
+    {
+        f64 seconds = (f64)anchor.m_tscElapsedInclusive / (f64)cpuTimerFreq;
+        f64 bytesPerSecs = (f64)anchor.m_processedByteCount / seconds;
+        f64 megaBytes = (f64)anchor.m_processedByteCount / MEGABYTE_TO_BYTE;
+        f64 gigaBytesPerSecs = bytesPerSecs / GIGABYTE_TO_BYTE;
+        
+        std::cout << " | processed " << std::setprecision(3) << megaBytes << "mbs at " << gigaBytesPerSecs << "gb/s";
+    }
+
 	std::cout << '\n';
 }
 
-void printAnchorData(u64 totalCPUElapsed)
+void printAnchorData(u64 totalCPUElapsed, u64 cpuTimerFreq)
 {
 	for(u16 anchorIndex = 0; anchorIndex < g_profilerAnchors.size(); ++anchorIndex)
     {
 		ProfileAnchor& anchor = g_profilerAnchors[anchorIndex];
         if(anchor.m_tscElapsedInclusive > 0)
         {
-            printTimeElapsed(totalCPUElapsed, anchor);
+            printTimeElapsed(totalCPUElapsed, cpuTimerFreq, anchor);
         }
     }
 }
@@ -179,7 +190,7 @@ void endAndPrintProfile()
 			<< " | cpu_timer_freq=" << cpuFreq << "\n\n";
     } 
 
-	printAnchorData(totalCPUElapsed);
+	printAnchorData(totalCPUElapsed, cpuFreq);
 	std::cout << "-----------------------------------profiling_info_ends----------------------------------------\n";
 }
 
