@@ -209,9 +209,20 @@ Buffer::Buffer(u64 size)
     }
 }
 
+Buffer::Buffer(u64 size, u8* data, bool ownData)
+{
+    isDataOwned = ownData;
+    m_data = data;
+
+    m_count = size;
+}
+
 Buffer::~Buffer()
 {
-    freeBuffer();
+    if (isDataOwned)
+    {
+        freeBuffer();
+    }
 }
 
 bool Buffer::isInBounds(u64 index)
@@ -266,9 +277,12 @@ bool Buffer::allocateBuffer(u64 size)
 
 void Buffer::freeBuffer()
 {
-    free(m_data);
+    if (m_data != nullptr)
+    {
+        free(m_data);
+        m_data = nullptr;
+    }
 
-    m_data = nullptr;
     m_count = 0;
 }
 // buffer_impl ends 

@@ -165,6 +165,7 @@ extern void endAndPrintProfile();
 struct Buffer
 {
     Buffer(u64 size = 0);
+    Buffer(u64 size, u8* data, bool ownData = false);
     ~Buffer();
 
     bool isInBounds(u64 index);
@@ -173,7 +174,11 @@ struct Buffer
     bool allocateBuffer(u64 size);
     void freeBuffer();
 
-    u8* m_data = nullptr;
     u64 m_count = 0;
+
+    u8* m_data = nullptr;
+    bool isDataOwned = true;
 };
+
+#define CONSTANT_STRING(String) {sizeof(String) - 1, (u8 *)(String)}
 // buffer_decl ends 

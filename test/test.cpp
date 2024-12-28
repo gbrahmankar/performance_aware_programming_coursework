@@ -62,6 +62,11 @@ void executeTest(int argc, char* argv[])
 	std::cout << "estd_cpu_freq=" << Profiler::estimateCPUFrequency() << '\n';
 }
 // cpu_timer ends 
+
+// custom_buffer starts
+Buffer buffer = CONSTANT_STRING("gaurav");
+std::cout << "is_buffer_equal=" << ((buffer.isEqual(CONSTANT_STRING("gaurav"))) ? "true" : "false") << 'n';
+// custom_buffer ends
 }
 
 }
