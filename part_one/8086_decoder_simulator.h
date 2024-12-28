@@ -2,6 +2,11 @@
 
 #include "../common_utils.h"
 
+using NibbleBitset = std::bitset<4>;
+using ByteBitset = std::bitset<8>;
+using WordBitset = std::bitset<16>;
+using MnemonicBitset = std::bitset<8>;
+
 namespace PartOne
 {
 

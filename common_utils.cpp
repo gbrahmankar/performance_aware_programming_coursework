@@ -1,5 +1,6 @@
 #include "common_utils.h"
 
+// size_limits_defn starts 
 int8_t minI8 = INT8_MIN;
 int8_t maxI8 = INT8_MAX;
 uint8_t maxU8 = UINT8_MAX;
@@ -24,7 +25,9 @@ double maxF64 = DBL_MAX;
 
 long double minF128 = LDBL_MIN;
 long double maxF128 = LDBL_MAX;
+// size_limits_defn ends 
 
+// profiler_impl starts 
 namespace Profiler
 {
 
@@ -195,3 +198,77 @@ void endAndPrintProfile()
 }
 
 }
+// profiler_impl ends 
+
+// buffer_impl starts
+Buffer::Buffer(u64 size)
+{
+    if (size > 0)
+    {
+        allocateBuffer(size); 
+    }
+}
+
+Buffer::~Buffer()
+{
+    freeBuffer();
+}
+
+bool Buffer::isInBounds(u64 index)
+{
+    if (index < m_count)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool Buffer::isEqual(const Buffer& rhs)
+{
+    if (rhs.m_count != m_count)
+    {
+        return false;
+    }
+
+    for (u64 index = 0; index < m_count; ++index)
+    {
+        if (m_data[index] != rhs.m_data[index])
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool Buffer::allocateBuffer(u64 size)
+{
+    if (size > 0)
+    {
+        m_data = (u8*)malloc(size);
+        if (m_data != nullptr)
+        {
+            m_count = size;    
+            return true;
+        }
+        else
+        {
+            std::cerr << "failed to allocate block_size=" << size;
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void Buffer::freeBuffer()
+{
+    free(m_data);
+
+    m_data = nullptr;
+    m_count = 0;
+}
+// buffer_impl ends 

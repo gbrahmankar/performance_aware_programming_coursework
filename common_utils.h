@@ -23,14 +23,15 @@
 #include <sys/time.h>
 #endif
 
-// common defines
+// common_defines start
 #define STREAM_BYTE(X) "0x" << std::hex << std::setw(2) << std::setfill('0') << unsigned(X)
 #define STREAM_WORD(X) "0x" << std::hex << std::setw(4) << std::setfill('0') << X
 #define STREAM_16BIT_PRECISION_FP(X) std::left << std::fixed << std::setprecision(16) << X
 #define CONCAT_IMPL(x, y) x##y
 #define CONCAT(x, y) CONCAT_IMPL(x, y)
+// common_defines end
 
-// profiler defines
+// profiler_defines start
 #ifndef PROFILER
 #define PROFILER 0
 #endif
@@ -44,19 +45,17 @@
 
 #define TimeBlock(Label) TimeBandwidth(Label, 0)
 #define TimeFunction TimeBlock(__func__)
+// profiler_defines end 
 
-using NibbleBitset = std::bitset<4>;
-using ByteBitset = std::bitset<8>;
-using WordBitset = std::bitset<16>;
-
-using MnemonicBitset = std::bitset<8>;
-
+// size_conversions start
 constexpr std::size_t ONE_BYTE = 1;
 constexpr std::size_t KILOBYTE_TO_BYTE = 1024 * ONE_BYTE;
 constexpr std::size_t MEGABYTE_TO_BYTE = 1024 * KILOBYTE_TO_BYTE;
 constexpr std::size_t GIGABYTE_TO_BYTE = 1024 * MEGABYTE_TO_BYTE;
 constexpr std::size_t TERABYTE_TO_BYTE = 1024 * GIGABYTE_TO_BYTE;
+// size_conversions end 
 
+// size_typedefs start
 using u8 = uint8_t;
 using i8 = int8_t;
 using u16 = uint16_t;
@@ -68,7 +67,9 @@ using i64 = int64_t;
 using f32 = float;
 using f64 = double;
 using f128 = long double;
+// size_typedefs end 
 
+// size_limits start
 extern int8_t minI8;
 extern int8_t maxI8;
 extern uint8_t maxU8;
@@ -93,7 +94,9 @@ extern double maxF64;
 
 extern long double minF128;
 extern long double maxF128;
+// size_limits end 
 
+// profiler_decl starts 
 namespace Profiler
 {
 // casey's code starts
@@ -156,3 +159,21 @@ extern void beginProfile();
 extern void endAndPrintProfile();
 
 }
+// profiler_decl ends 
+
+// buffer_decl starts 
+struct Buffer
+{
+    Buffer(u64 size = 0);
+    ~Buffer();
+
+    bool isInBounds(u64 index);
+    bool isEqual(const Buffer& rhs);
+
+    bool allocateBuffer(u64 size);
+    void freeBuffer();
+
+    u8* m_data = nullptr;
+    u64 m_count = 0;
+};
+// buffer_decl ends 
