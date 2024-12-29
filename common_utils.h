@@ -3,6 +3,7 @@
 #include <array>
 #include <bitset>
 #include <cfloat>
+#include <cstring>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -173,6 +174,8 @@ struct Buffer
 
     bool allocateBuffer(u64 size);
     void freeBuffer();
+
+    bool copyIntoSelf(const Buffer& rhs);
 
     u64 m_count = 0;
 

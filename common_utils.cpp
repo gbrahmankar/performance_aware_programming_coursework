@@ -257,22 +257,27 @@ bool Buffer::isEqual(const Buffer& rhs)
 
 bool Buffer::allocateBuffer(u64 size)
 {
-    if (size > 0)
+    if (size == 0)
     {
-        m_data = (u8*)malloc(size);
-        if (m_data != nullptr)
-        {
-            m_count = size;    
-            return true;
-        }
-        else
-        {
-            std::cerr << "failed to allocate block_size=" << size;
-            return false;
-        }
+        return false;
     }
 
-    return true;
+    if (m_data != nullptr)
+    {
+        freeBuffer();
+    }
+
+    m_data = (u8*)malloc(size);
+    if (m_data != nullptr)
+    {
+        m_count = size;    
+        return true;
+    }
+    else
+    {
+        std::cerr << "failed to allocate block_size=" << size;
+        return false;
+    }
 }
 
 void Buffer::freeBuffer()
@@ -284,5 +289,16 @@ void Buffer::freeBuffer()
     }
 
     m_count = 0;
+}
+
+bool Buffer::copyIntoSelf(const Buffer& rhs)
+{
+    if (m_count < rhs.m_count)
+    {
+        return false;    
+    }
+
+    memcpy(m_data, rhs.m_data, rhs.m_count);  
+    return true;
 }
 // buffer_impl ends 
