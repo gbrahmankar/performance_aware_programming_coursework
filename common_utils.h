@@ -168,7 +168,10 @@ struct Buffer
 {
     Buffer(u64 size = 0);
     Buffer(u64 size, u8* data, bool ownData = false);
+    Buffer(const Buffer& rhs);
     ~Buffer();
+
+    Buffer& operator=(const Buffer& rhs);
 
     bool isInBounds(u64 index);
     bool isEqual(const Buffer& rhs);
@@ -176,12 +179,12 @@ struct Buffer
     bool allocateBuffer(u64 size);
     void freeBuffer();
 
-    bool copyIntoSelf(const Buffer& rhs);
+    bool deepCopyIntoSelf(const Buffer& rhs);
 
     u64 m_count = 0;
 
     u8* m_data = nullptr;
-    bool isDataOwned = true;
+    bool m_isDataOwned = true;
 };
 
 #define CONSTANT_STRING(String) {sizeof(String) - 1, (u8 *)(String)}

@@ -211,18 +211,38 @@ Buffer::Buffer(u64 size)
 
 Buffer::Buffer(u64 size, u8* data, bool ownData)
 {
-    isDataOwned = ownData;
+    m_isDataOwned = ownData;
     m_data = data;
 
     m_count = size;
 }
 
+Buffer::Buffer(const Buffer& rhs)
+{
+    m_isDataOwned = false;
+    m_data = rhs.m_data;
+
+    m_count = rhs.m_count;
+}
+
 Buffer::~Buffer()
 {
-    if (isDataOwned)
+    freeBuffer();
+}
+
+Buffer& Buffer::operator=(const Buffer& rhs)
+{
+    if (this == &rhs)
     {
-        freeBuffer();
+        return *this; 
     }
+
+    m_isDataOwned = false;
+    m_data = rhs.m_data;
+
+    m_count = rhs.m_count;
+
+    return *this;        
 }
 
 bool Buffer::isInBounds(u64 index)
@@ -282,7 +302,7 @@ bool Buffer::allocateBuffer(u64 size)
 
 void Buffer::freeBuffer()
 {
-    if (m_data != nullptr)
+    if (m_data != nullptr && m_isDataOwned)
     {
         free(m_data);
         m_data = nullptr;
@@ -291,7 +311,7 @@ void Buffer::freeBuffer()
     m_count = 0;
 }
 
-bool Buffer::copyIntoSelf(const Buffer& rhs)
+bool Buffer::deepCopyIntoSelf(const Buffer& rhs)
 {
     if (m_count < rhs.m_count)
     {

@@ -12,6 +12,6 @@ struct ReadParameters
     char const *m_fileName;
 };
 
-void ReadViaFRead(RepetitionTester& tester, const ReadParameters& params);
+extern void readViaFRead(RepetitionTester& tester, const ReadParameters& params);
 
 }

@@ -3,7 +3,7 @@
 namespace PartThree
 {
 
-void ReadViaFRead(RepetitionTester& tester, const ReadParameters& params)
+void readViaFRead(RepetitionTester& tester, const ReadParameters& params)
 {
     while(tester.isTesting())
     {

@@ -25,6 +25,7 @@ struct RepetitionTestResults
 struct RepetitionTester
 {
     bool isTesting();
+    void newTestWave(u64 targetProcessedByteCount, u64 cpuTimerFreq, u32 secondsToTry = 10);
 
     void beginTime();
     void endTime();
