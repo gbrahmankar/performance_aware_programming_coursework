@@ -32,6 +32,8 @@ struct RepetitionTester
 
     void countBytes(u64 bytesToAccumulate);
 
+    void printTime(const char* label);
+    void printResults();
     void reportError(const char* errorMessage);
 
     u64 m_targetProcessedByteCount;
@@ -39,7 +41,7 @@ struct RepetitionTester
     u64 m_tryForTime;
     u64 m_testsStartedAt;
 
-    TestMode m_testMode;
+    TestMode m_testMode = TestModeUninitialized;
     bool m_printNewMinimums;
     u32 m_openBlockCount;
     u32 m_closeBlockCount;
