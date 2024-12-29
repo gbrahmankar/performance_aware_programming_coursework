@@ -22,6 +22,7 @@
 #else
 #include <x86intrin.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 #endif
 
 // common_defines start

@@ -33,9 +33,9 @@ int main(int argc, char* argv[])
     }
     else if (std::string(argv[1]) == "part_three")
     {
-        if (argc < 2)
+        if (argc < 3)
         {
-            std::cerr << "usage : " << argv[0] << " part_two" << '\n';
+            std::cerr << "usage : " << argv[0] << " part_three [read_overhead/]" << '\n';
             return 1;
         }
 
