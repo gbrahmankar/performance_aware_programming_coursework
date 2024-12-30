@@ -32,7 +32,7 @@ struct RepetitionTester
 
     void countBytes(u64 bytesToAccumulate);
 
-    void printTime(const char* label);
+    void printTime(const char* label, f64 cpuTime, u64 byteCount);
     void printResults();
     void reportError(const char* errorMessage);
 

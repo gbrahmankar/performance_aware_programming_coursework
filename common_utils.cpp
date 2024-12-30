@@ -90,6 +90,17 @@ u64 estimateCPUFrequency(void)
 	return static_cast<u64>((f64)CPUElapsed / OSSecs);
 }
 
+f64 secondsFromCPUTime(u64 cpuTime, u64 cpuTimerFreq)
+{
+    f64 result = 0.0;
+    if(cpuTimerFreq)
+    {
+        result = (cpuTime / (f64)cpuTimerFreq);
+    }
+
+    return result;
+}
+
 #if PROFILER
 
 std::array<ProfileAnchor, 1024> g_profilerAnchors;

@@ -71,7 +71,7 @@ bool RepetitionTester::isTesting()
 
                 if(m_printNewMinimums)
                 {
-                    printTime("Min");
+                    printTime("min_time", m_results.m_minTime, m_bytesAccumulatedOnThisTest);
                 }
             }
 
@@ -109,16 +109,39 @@ void RepetitionTester::countBytes(u64 bytesToAccumulate)
     m_bytesAccumulatedOnThisTest += bytesToAccumulate;
 }
 
-void RepetitionTester::printTime(const char* label)
+void RepetitionTester::printTime(const char* label, f64 cpuTime, u64 byteCount)
 {
+    std::cout << "label=" << label << " | cpu_time=" << cpuTime;
+    if(m_cpuTimerFreq)
+    {
+        f64 seconds = Profiler::secondsFromCPUTime(cpuTime, m_cpuTimerFreq);
+        std::cout << " | time=" << seconds * 1000 << "ms";
+
+        if(byteCount)
+        {
+            f64 gigabyte = (1024.0f * 1024.0f * 1024.0f);
+            f64 bestBandwidth = byteCount / (gigabyte * seconds);
+            std::cout << " | bandwidth=" << bestBandwidth << "gb/s\n";
+        }
+    }
 }
 
 void RepetitionTester::printResults()
 {
+    printTime("min_time", (f64)m_results.m_minTime, m_targetProcessedByteCount);
+
+    printTime("max_time", (f64)m_results.m_maxTime, m_targetProcessedByteCount);
+
+    if(m_results.m_testCount)
+    {
+        printTime("average", (f64)m_results.m_totalTime / (f64)m_results.m_testCount, m_targetProcessedByteCount);
+    }
 }
 
 void RepetitionTester::reportError(const char* errorMessage)
 {
+    m_testMode = TestModeError;
+    std::cerr << "error_message=" << errorMessage << '\n';
 }
 
 }

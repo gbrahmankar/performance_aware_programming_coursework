@@ -114,6 +114,7 @@ extern u64 ReadCPUTimer(void);
 // casey's code ends 
 
 extern u64 estimateCPUFrequency(void);
+extern f64 secondsFromCPUTime(u64 cpuTime, u64 cpuTimerFreq);
 
 #if PROFILER
 
