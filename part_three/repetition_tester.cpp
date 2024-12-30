@@ -40,7 +40,7 @@ bool RepetitionTester::isTesting()
 
         if(m_openBlockCount == 0)
         {
-            return false;
+            return true;
         }
 
         if(m_openBlockCount != m_closeBlockCount)
@@ -111,7 +111,7 @@ void RepetitionTester::countBytes(u64 bytesToAccumulate)
 
 void RepetitionTester::printTime(const char* label, f64 cpuTime, u64 byteCount)
 {
-    std::cout << "label=" << label << " | cpu_time=" << cpuTime;
+    std::cout << "label=" << label << " | cpu_clicks=" << cpuTime;
     if(m_cpuTimerFreq)
     {
         f64 seconds = Profiler::secondsFromCPUTime(cpuTime, m_cpuTimerFreq);
@@ -128,14 +128,14 @@ void RepetitionTester::printTime(const char* label, f64 cpuTime, u64 byteCount)
 
 void RepetitionTester::printResults()
 {
+    std::cout << "------printing_final_results_starts------" << '\n';
     printTime("min_time", (f64)m_results.m_minTime, m_targetProcessedByteCount);
-
     printTime("max_time", (f64)m_results.m_maxTime, m_targetProcessedByteCount);
-
     if(m_results.m_testCount)
     {
         printTime("average", (f64)m_results.m_totalTime / (f64)m_results.m_testCount, m_targetProcessedByteCount);
     }
+    std::cout << "-------printing_final_results_ends-------" << '\n';
 }
 
 void RepetitionTester::reportError(const char* errorMessage)

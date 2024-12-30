@@ -15,11 +15,11 @@ enum TestMode : u32
 
 struct RepetitionTestResults
 {
-    u64 m_testCount;
+    u64 m_testCount = 0;
 
-    u64 m_maxTime;
-    u64 m_minTime;
-    u64 m_totalTime;
+    u64 m_maxTime = 0;
+    u64 m_minTime = maxU64 - 1;
+    u64 m_totalTime = 0;
 };
 
 struct RepetitionTester
@@ -36,17 +36,17 @@ struct RepetitionTester
     void printResults();
     void reportError(const char* errorMessage);
 
-    u64 m_targetProcessedByteCount;
-    u64 m_cpuTimerFreq;
-    u64 m_tryForTime;
-    u64 m_testsStartedAt;
+    u64 m_targetProcessedByteCount = 0;
+    u64 m_cpuTimerFreq = 0;
+    u64 m_tryForTime = 0;
+    u64 m_testsStartedAt = 0;
 
     TestMode m_testMode = TestModeUninitialized;
-    bool m_printNewMinimums;
-    u32 m_openBlockCount;
-    u32 m_closeBlockCount;
-    u64 m_timeAccumulatedOnThisTest;
-    u64 m_bytesAccumulatedOnThisTest;
+    bool m_printNewMinimums = true;
+    u32 m_openBlockCount = 0;
+    u32 m_closeBlockCount = 0;
+    u64 m_timeAccumulatedOnThisTest = 0;
+    u64 m_bytesAccumulatedOnThisTest = 0;
 
     RepetitionTestResults m_results;
 };
