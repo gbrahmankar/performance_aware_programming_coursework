@@ -293,33 +293,41 @@ bool Buffer::allocateBuffer(u64 size)
         return false;
     }
 
-    if (m_data != nullptr)
+    if(freeBuffer())
     {
-        freeBuffer();
+        m_data = (u8*)malloc(size);
+        if (m_data != nullptr)
+        {
+            m_count = size;    
+            m_isDataOwned = true;
+            return true;
+        }
+        else
+        {
+            std::cerr << "failed to allocate block_size=" << size;
+            return false;
+        }
     }
 
-    m_data = (u8*)malloc(size);
-    if (m_data != nullptr)
-    {
-        m_count = size;    
-        return true;
-    }
-    else
-    {
-        std::cerr << "failed to allocate block_size=" << size;
-        return false;
-    }
+    return false;
 }
 
-void Buffer::freeBuffer()
+bool Buffer::freeBuffer()
 {
-    if (m_data != nullptr && m_isDataOwned)
+    if (m_data == nullptr)
+    {
+        return true;
+    }
+
+    if(m_isDataOwned)
     {
         free(m_data);
         m_data = nullptr;
+        m_count = 0;
+        return true;
     }
 
-    m_count = 0;
+    return false;
 }
 
 bool Buffer::deepCopyIntoSelf(const Buffer& rhs)

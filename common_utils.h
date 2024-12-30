@@ -178,7 +178,7 @@ struct Buffer
     bool isEqual(const Buffer& rhs);
 
     bool allocateBuffer(u64 size);
-    void freeBuffer();
+    bool freeBuffer();
 
     bool deepCopyIntoSelf(const Buffer& rhs);
 
