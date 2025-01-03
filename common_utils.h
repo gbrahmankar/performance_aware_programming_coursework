@@ -1,5 +1,15 @@
 #pragma once
 
+#if _WIN32
+#define _CRT_SECURE_NO_WARNINGS 
+#include <intrin.h>
+#include <windows.h>
+#else
+#include <x86intrin.h>
+#include <sys/time.h>
+#include <sys/stat.h>
+#endif
+
 #include <array>
 #include <bitset>
 #include <cfloat>
@@ -15,15 +25,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-
-#if _WIN32
-#include <intrin.h>
-#include <windows.h>
-#else
-#include <x86intrin.h>
-#include <sys/time.h>
-#include <sys/stat.h>
-#endif
 
 // common_defines start
 #define STREAM_BYTE(X) "0x" << std::hex << std::setw(2) << std::setfill('0') << unsigned(X)
