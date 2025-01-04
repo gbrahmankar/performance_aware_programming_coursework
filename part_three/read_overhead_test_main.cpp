@@ -31,11 +31,19 @@ void readOverheadTestMain(int argc, char* argv[])
     params.m_destinationBuffer = fileBuffer;
     params.m_fileName = fileName;
 
-    RepetitionTester repetitionTester;
-    std::cout << "------repeat_testing_fread_starts------" << '\n';
-    repetitionTester.newTestWave(params.m_destinationBuffer.m_count, cpuTimerFreq);
-    readViaFRead(repetitionTester, params);
-    std::cout << "------repeat_testing_fread_ends------" << '\n';
+    for(u32 allocType = 1; allocType < 2; ++allocType)
+    {
+        params.m_allocType = (AllocationType)allocType;
+
+        RepetitionTester repetitionTester;
+        printf("\n------repeat_testing_%s%s%s_starts------\n",
+               describeAllocationType((AllocationType)allocType),
+               params.m_allocType ? "+" : "",
+               "fread");
+        repetitionTester.newTestWave(params.m_destinationBuffer.m_count, cpuTimerFreq);
+        readViaFRead(repetitionTester, params);
+        std::cout << "------repeat_testing_fread_ends------" << '\n';
+    }
 }
 
 }

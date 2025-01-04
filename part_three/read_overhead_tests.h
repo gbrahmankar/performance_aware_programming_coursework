@@ -6,12 +6,25 @@
 namespace PartThree
 {
 
+enum AllocationType
+{
+    AllocTypeNone,
+    AllocTypeMalloc,
+
+    AllocTypeCount,
+};
+
 struct ReadParameters
 {
+    AllocationType m_allocType;
     Buffer m_destinationBuffer;
     char const *m_fileName;
 };
 
-extern void readViaFRead(RepetitionTester& tester, const ReadParameters& params);
+extern char const* describeAllocationType(AllocationType allocType);
+extern void handleAllocation(const ReadParameters& params, Buffer& buffer);
+extern void handleDeallocation(const ReadParameters& params, Buffer& buffer);
+
+extern void readViaFRead(RepetitionTester& tester, ReadParameters& params);
 
 }

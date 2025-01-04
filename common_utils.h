@@ -182,6 +182,7 @@ struct Buffer
     bool freeBuffer();
 
     bool deepCopyIntoSelf(const Buffer& rhs);
+    void transferOwnershipIntoSelf(Buffer& rhs);
 
     u64 m_count = 0;
 

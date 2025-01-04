@@ -340,4 +340,13 @@ bool Buffer::deepCopyIntoSelf(const Buffer& rhs)
     memcpy(m_data, rhs.m_data, rhs.m_count);  
     return true;
 }
+
+void Buffer::transferOwnershipIntoSelf(Buffer& rhs)
+{
+    rhs.m_isDataOwned = false;
+    m_isDataOwned = true;
+
+    m_data = rhs.m_data;
+    m_count = rhs.m_count;
+}
 // buffer_impl ends 
