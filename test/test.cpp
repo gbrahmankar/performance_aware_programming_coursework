@@ -1,6 +1,7 @@
 #include "../common_utils.h"
 #include "test.h"
 
+
 namespace Test
 {
 
@@ -80,25 +81,22 @@ std::cout << "is_buffer_equal=" << ((buffer.isEqual(CONSTANT_STRING("gaurav"))) 
     destBuffer.allocateBuffer(1024*1024);
 
     u64 pageFaultsAfterMalloc = PlatformMetrics::readOSPageFaultCount();
-
     u64 time0 = PlatformMetrics::ReadCPUTimer();
     for(u64 index = 0; index < 1024*1024; ++index)
     {
         destBuffer.m_data[index] = (u8)index;
     }
     u64 time1 = PlatformMetrics::ReadCPUTimer();
-
     u64 pageFaultsAfterFirstWrite = PlatformMetrics::readOSPageFaultCount();
 
-    std::cout << "time_elaspsed=" << (f64)(time1 - time0)/(f64)freq << '\n';
+    destBuffer.allocateBuffer(1024*1024);
 
     time0 = PlatformMetrics::ReadCPUTimer();
     for(u64 index = 0; index < 1024*1024; ++index)
     {
-        destBuffer.m_data[index] = (u8)index;
+        destBuffer.m_data[index] = (u8)index + 1;
     }
     time1 = PlatformMetrics::ReadCPUTimer();
-
     u64 pageFaultsAfterSecondWrite = PlatformMetrics::readOSPageFaultCount();
 
     std::cout << "time_elaspsed=" << (f64)(time1 - time0)/(f64)freq << '\n';

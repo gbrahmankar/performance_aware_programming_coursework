@@ -1,4 +1,5 @@
 #include "part_three_main.h"
+#include "incremental_page_touching.h"
 #include "read_overhead_test_main.h"
 
 namespace PartThree
@@ -10,11 +11,21 @@ void executePartThree(int argc, char* argv[])
     {
         if (argc < 4)
         {
-            std::cerr << "usage : " << argv[0] << " part_two read_overhead [file_to_read]" << '\n';
+            std::cerr << "usage : " << argv[0] << " part_three read_overhead [file_to_read]" << '\n';
             return;
         }
 
         PartThree::readOverheadTestMain(argc, argv);
+    }
+    else if (std::string(argv[2]) == "incremental_page_touching")
+    {
+        if (argc < 4)
+        {
+            std::cerr << "usage : " << argv[0] << " part_three incremental_page_touching [page_count]" << '\n';
+            return;
+        }
+
+        PartThree::executeIncrementalPageTouchTest(argc, argv);
     }
 }
 

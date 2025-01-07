@@ -7,6 +7,7 @@ extern "C"
 #include <sys/proc_info.h>
 #include <mach/mach.h>
 #include <mach/mach_init.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>

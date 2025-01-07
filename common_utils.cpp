@@ -125,8 +125,13 @@ u64 readOSPageFaultCount(void)
         std::cerr << "error : failed to get task_info for pid=" << g_globalOsMetrics.processHandle << '\n';
         return 1;
     }
-
-    // std::cout << "pid=" << g_globalOsMetrics.processHandle << " | recorded_page_faults=" << taskInfo.pti_faults << '\n'; 
+/*
+    std::cout << "task_info : cow=" << taskInfo.pti_cow_faults 
+              << " | page_ins=" << static_cast<u64>(taskInfo.pti_pageins)
+              << " | sys_calls_unix=" << static_cast<u64>(taskInfo.pti_syscalls_unix) 
+              << " | sys_calls_mach=" << static_cast<u64>(taskInfo.pti_syscalls_mach) 
+              << '\n'; 
+*/
 
     return taskInfo.pti_faults;
 }
