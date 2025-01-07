@@ -1,13 +1,26 @@
 #pragma once
 
+#ifdef __APPLE__
+extern "C" 
+{
+#include <libproc.h>
+#include <sys/proc_info.h>
+#include <mach/mach.h>
+#include <mach/mach_init.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <x86intrin.h>
+}
+
+#define PROC_TASKINFO_COUNT (sizeof(struct proc_taskinfo) / sizeof(uint32_t))
+#endif
+
 #if _WIN32
 #define _CRT_SECURE_NO_WARNINGS 
 #include <intrin.h>
 #include <windows.h>
-#else
-#include <x86intrin.h>
-#include <sys/time.h>
-#include <sys/stat.h>
 #endif
 
 #include <array>
@@ -32,6 +45,7 @@
 #define STREAM_16BIT_PRECISION_FP(X) std::left << std::fixed << std::setprecision(16) << X
 #define CONCAT_IMPL(x, y) x##y
 #define CONCAT(x, y) CONCAT_IMPL(x, y)
+#define ARRAY_COUNT(arr) (sizeof(arr) / sizeof(arr[0]))
 // common_defines end
 
 // profiler_defines start
@@ -99,10 +113,12 @@ extern long double minF128;
 extern long double maxF128;
 // size_limits end 
 
-// profiler_decl starts 
-namespace Profiler
+// platform_metrics_decl. start.
+namespace PlatformMetrics
 {
-// casey's code starts
+
+// timer_stat helpers. start.
+// casey's helpers for profiling starts 
 #if _WIN32
 extern u64 GetOSTimerFreq(void);
 extern u64 ReadOSTimer(void);
@@ -112,13 +128,41 @@ extern u64 ReadOSTimer(void);
 #endif
 
 extern u64 ReadCPUTimer(void);
-// casey's code ends 
+// casey's helpers for profiling ends 
 
 extern u64 estimateCPUFrequency(void);
 extern f64 secondsFromCPUTime(u64 cpuTime, u64 cpuTimerFreq);
+// timer_stat helpers. end.
 
+// os_metric_stat helpers. start.
+#ifdef __APPLE__
+struct OsMetrics
+{
+    bool m_initialized;
+    pid_t processHandle;
+};
+#elif _WIN32
+struct OsMetrics
+{
+    bool m_initialized;
+    HANDLE processHandle;
+};
+#endif
+extern OsMetrics g_globalOsMetrics;
+
+extern void initializeOSMetrics(void);
+extern u64 readOSPageFaultCount(void);
+// os_metric_stat helpers. end.
+
+}
+// platform_metrics_decl. end.
+
+// profiler_decl starts 
+namespace Profiler
+{
+
+// profiler_source that you want to be included only if profiling is turned on. start.
 #if PROFILER
-
 struct ProfileAnchor
 {
     u64 m_tscElapsedExclusive;
@@ -147,9 +191,10 @@ struct ProfileBlock
 
 extern void printTimeElapsed(u64 totalTSCElapsed, u64 cpuTimerFreq, const ProfileAnchor& anchor);
 extern void printAnchorData(u64 totalCPUElapsed, u64 cpuTimerFreq);
-
 #endif
+// profiler_source that you want to be included only if profiling is turned on. end.
 
+// profiler_source included even if we switch off profiling. start.
 struct ProfilerData
 {
     ProfilerData();
@@ -161,6 +206,7 @@ extern ProfilerData g_profilerData;
 
 extern void beginProfile();
 extern void endAndPrintProfile();
+// profiler_source included even if we switch off profiling. end.
 
 }
 // profiler_decl ends 
@@ -182,7 +228,6 @@ struct Buffer
     bool freeBuffer();
 
     bool deepCopyIntoSelf(const Buffer& rhs);
-    void transferOwnershipIntoSelf(Buffer& rhs);
 
     u64 m_count = 0;
 

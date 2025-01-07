@@ -27,11 +27,12 @@ long double minF128 = LDBL_MIN;
 long double maxF128 = LDBL_MAX;
 // size_limits_defn ends 
 
-// profiler_impl starts 
-namespace Profiler
+// platform_metrics_impl. start.
+namespace PlatformMetrics
 {
 
-// casey's code starts
+// timer_stat helpers. start.
+// casey's helpers for profiling starts
 #if _WIN32
 u64 GetOSTimerFreq(void)
 {
@@ -66,7 +67,7 @@ inline u64 ReadCPUTimer(void)
 {
 	return __rdtsc();
 }
-// casey's code ends 
+// casey's helpers for profiling ends 
 
 u64 estimateCPUFrequency(void)
 {
@@ -100,9 +101,83 @@ f64 secondsFromCPUTime(u64 cpuTime, u64 cpuTimerFreq)
 
     return result;
 }
+// timer_stat helpers. end.
 
-#if PROFILER
+// os_metric_stat helpers. start.
+OsMetrics g_globalOsMetrics;
 
+#ifdef __APPLE__
+u64 readOSPageFaultCount(void)
+{
+    if(!g_globalOsMetrics.m_initialized)
+    {
+        std::cerr << "error : failed to read_page_faults since process_handle not init" << '\n';
+        return 1;
+    }
+
+    struct proc_taskinfo taskInfo;
+    mach_msg_type_number_t infoCount = PROC_TASKINFO_COUNT;
+
+    kern_return_t kr = proc_pidinfo(g_globalOsMetrics.processHandle, PROC_PIDTASKINFO, 0, &taskInfo, infoCount);
+
+    if (kr != KERN_SUCCESS) 
+    {
+        std::cerr << "error : failed to get task_info for pid=" << g_globalOsMetrics.processHandle << '\n';
+        return 1;
+    }
+
+    // std::cout << "pid=" << g_globalOsMetrics.processHandle << " | recorded_page_faults=" << taskInfo.pti_faults << '\n'; 
+
+    return taskInfo.pti_faults;
+}
+
+void initializeOSMetrics(void)
+{
+    if(!g_globalOsMetrics.m_initialized)
+    {
+        g_globalOsMetrics.m_initialized = true;
+        g_globalOsMetrics.processHandle = getpid();
+    }
+}
+#elif _WIN32
+// casey's helpers for os_metrics. start. 
+u64 readOSPageFaultCount(void)
+{
+    if(!g_globalOsMetrics.m_initialized)
+    {
+        std::cerr << "error : failed to read_page_faults since process_handle not init" << '\n';
+        return 1;
+    }
+
+    PROCESS_MEMORY_COUNTERS_EX MemoryCounters = {};
+    MemoryCounters.cb = sizeof(MemoryCounters);
+    GetProcessMemoryInfo(GlobalMetrics.ProcessHandle, (PROCESS_MEMORY_COUNTERS *)&MemoryCounters, sizeof(MemoryCounters));
+    
+    u64 Result = MemoryCounters.PageFaultCount;
+    return Result;
+}
+
+void initializeOSMetrics(void)
+{
+    if(!g_globalOsMetrics.m_initialized)
+    {
+        g_globalOsMetrics.m_initialized = true;
+        g_globalOsMetrics.processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, GetCurrentProcessId());
+    }
+}
+// casey's helpers for os_metrics. end. 
+#endif
+// os_metric_stat helpers. end.
+
+}
+// platform_metrics_impl. end.
+
+// profiler_impl starts 
+namespace Profiler
+{
+
+// profiler_source that you want to be included only if profiling is turned on. start.
+#if PROFILER 
 std::array<ProfileAnchor, 1024> g_profilerAnchors;
 u16 g_currentlyActiveAnchorIndex;
 
@@ -119,12 +194,12 @@ ProfileBlock::ProfileBlock(const std::string& label, u16 anchorIndex, u64 byteCo
 	m_oldTSCElapsedInclusive = anchor.m_tscElapsedInclusive;
     anchor.m_processedByteCount += byteCount;
 
-    m_startTSC = ReadCPUTimer();
+    m_startTSC = PlatformMetrics::ReadCPUTimer();
 }
 
 ProfileBlock::~ProfileBlock()
 {
-	u64 elapsed = ReadCPUTimer() - m_startTSC;
+	u64 elapsed = PlatformMetrics::ReadCPUTimer() - m_startTSC;
 	g_currentlyActiveAnchorIndex = m_parentAnchorIndex;
 
 	ProfileAnchor& anchor = g_profilerAnchors[m_anchorIndex];
@@ -175,9 +250,10 @@ void printAnchorData(u64 totalCPUElapsed, u64 cpuTimerFreq)
         }
     }
 }
+#endif 
+// profiler_source that you want to be included only if profiling is turned on. end.
 
-#endif
-
+// profiler_source included even if we switch off profiling. start.
 ProfilerData::ProfilerData()
 	: m_startTSC{0},
 	m_endTSC{0}
@@ -187,13 +263,13 @@ ProfilerData g_profilerData;
 
 void beginProfile()
 {
-    g_profilerData.m_startTSC = ReadCPUTimer();
+    g_profilerData.m_startTSC = PlatformMetrics::ReadCPUTimer();
 }
 
 void endAndPrintProfile()
 {
-    g_profilerData.m_endTSC = ReadCPUTimer();
-    u64 cpuFreq = estimateCPUFrequency();
+    g_profilerData.m_endTSC = PlatformMetrics::ReadCPUTimer();
+    u64 cpuFreq = PlatformMetrics::estimateCPUFrequency();
     
     u64 totalCPUElapsed = g_profilerData.m_endTSC - g_profilerData.m_startTSC;
     
@@ -207,6 +283,7 @@ void endAndPrintProfile()
 	printAnchorData(totalCPUElapsed, cpuFreq);
 	std::cout << "-----------------------------------profiling_info_ends----------------------------------------\n";
 }
+// profiler_source included even if we switch off profiling. end.
 
 }
 // profiler_impl ends 
@@ -339,14 +416,5 @@ bool Buffer::deepCopyIntoSelf(const Buffer& rhs)
 
     memcpy(m_data, rhs.m_data, rhs.m_count);  
     return true;
-}
-
-void Buffer::transferOwnershipIntoSelf(Buffer& rhs)
-{
-    rhs.m_isDataOwned = false;
-    m_isDataOwned = true;
-
-    m_data = rhs.m_data;
-    m_count = rhs.m_count;
 }
 // buffer_impl ends 

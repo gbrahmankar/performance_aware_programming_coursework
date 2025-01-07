@@ -6,9 +6,22 @@
 namespace PartThree
 {
 
+struct TestFunction
+{
+    char const *name;
+    ReadOverheadTestFunction func;
+};
+
+std::vector<TestFunction> testFunctions =
+{
+    {"write_to_all_bytes", writeToAllBytes},
+    {"fread", readViaFRead}
+};
+
 void readOverheadTestMain(int argc, char* argv[])
 {
-    u64 cpuTimerFreq = Profiler::estimateCPUFrequency();
+    PlatformMetrics::initializeOSMetrics();
+    u64 cpuTimerFreq = PlatformMetrics::estimateCPUFrequency();
 
     char *fileName = argv[3];
 
@@ -31,18 +44,26 @@ void readOverheadTestMain(int argc, char* argv[])
     params.m_destinationBuffer = fileBuffer;
     params.m_fileName = fileName;
 
-    for(u32 allocType = 1; allocType < 2; ++allocType)
+    for(u32 testFuncIndex = 0; testFuncIndex < testFunctions.size(); ++testFuncIndex)
     {
-        params.m_allocType = (AllocationType)allocType;
+        TestFunction& testFunc = testFunctions[testFuncIndex];
 
-        RepetitionTester repetitionTester;
-        printf("\n------repeat_testing_%s%s%s_starts------\n",
-               describeAllocationType((AllocationType)allocType),
-               params.m_allocType ? "+" : "",
-               "fread");
-        repetitionTester.newTestWave(params.m_destinationBuffer.m_count, cpuTimerFreq);
-        readViaFRead(repetitionTester, params);
-        std::cout << "------repeat_testing_fread_ends------" << '\n';
+        for(u32 allocType = 0; allocType < AllocTypeCount; ++allocType)
+        {
+            params.m_allocType = (AllocationType)allocType;
+
+            RepetitionTester repetitionTester;
+            printf("\n------repeat_testing_%s%s%s_starts------\n",
+                   describeAllocationType((AllocationType)allocType),
+                   params.m_allocType ? "+" : "",
+                   testFunc.name);
+            repetitionTester.newTestWave(params.m_destinationBuffer.m_count, cpuTimerFreq);
+            testFunc.func(repetitionTester, params);
+            printf("------repeat_testing_%s%s%s_ends-------\n",
+                   describeAllocationType((AllocationType)allocType),
+                   params.m_allocType ? "+" : "",
+                   testFunc.name);
+        }
     }
 }
 

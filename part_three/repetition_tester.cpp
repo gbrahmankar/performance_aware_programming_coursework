@@ -11,7 +11,7 @@ void RepetitionTester::newTestWave(u64 targetProcessedByteCount, u64 cpuTimerFre
         m_targetProcessedByteCount = targetProcessedByteCount;
         m_cpuTimerFreq = cpuTimerFreq;
         m_printNewMinimums = true;
-        m_results.m_minTime = (maxU64)-1;
+        m_accumulatedOnThisTest.reset(RepValueDefInitMin);
     }
     else if(m_testMode == TestModeCompleted)
     {
@@ -29,14 +29,14 @@ void RepetitionTester::newTestWave(u64 targetProcessedByteCount, u64 cpuTimerFre
     }
 
     m_tryForTime = secondsToTry * cpuTimerFreq;
-    m_testsStartedAt = Profiler::ReadCPUTimer();
+    m_testsStartedAt = PlatformMetrics::ReadCPUTimer();
 }
 
 bool RepetitionTester::isTesting()
 {
     if(m_testMode == TestModeTesting)
     {
-        u64 currentTime = Profiler::ReadCPUTimer();
+        u64 currentTime = PlatformMetrics::ReadCPUTimer();
 
         if(m_openBlockCount == 0)
         {
@@ -48,37 +48,39 @@ bool RepetitionTester::isTesting()
             reportError("Unbalanced BeginTime/EndTime");
         }
 
-        if(m_bytesAccumulatedOnThisTest != m_targetProcessedByteCount)
+        if(m_accumulatedOnThisTest.E[RepValueByteCount] != m_targetProcessedByteCount)
         {
             reportError("Processed byte count mismatch");
         }
 
         if(m_testMode == TestModeTesting)
         {
-            u64 elapsedTime = m_timeAccumulatedOnThisTest;
-            m_results.m_testCount += 1;
-            m_results.m_totalTime += elapsedTime;
-            if(m_results.m_maxTime < elapsedTime)
+            m_results.m_total.E[RepValueTestCount] = 1;
+            for(u32 index = 0; index < RepValueCount; ++index)
             {
-                m_results.m_maxTime = elapsedTime;
+                m_results.m_total.E[index] += m_accumulatedOnThisTest.E[index];
             }
 
-            if(m_results.m_minTime > elapsedTime)
+            if(m_results.m_max.E[RepValueCPUTimer] < m_accumulatedOnThisTest.E[RepValueCPUTimer])
             {
-                m_results.m_minTime = elapsedTime;
+                m_results.m_max = m_accumulatedOnThisTest;
+            }
+
+            if(m_results.m_min.E[RepValueCPUTimer] > m_accumulatedOnThisTest.E[RepValueCPUTimer])
+            {
+                m_results.m_min = m_accumulatedOnThisTest;
 
                 m_testsStartedAt = currentTime;
 
                 if(m_printNewMinimums)
                 {
-                    printTime("min_time", m_results.m_minTime, m_bytesAccumulatedOnThisTest);
+                    printTime("min_time", m_results.m_min);
                 }
             }
 
             m_openBlockCount = 0;
             m_closeBlockCount = 0;
-            m_timeAccumulatedOnThisTest = 0;
-            m_bytesAccumulatedOnThisTest = 0;
+            m_accumulatedOnThisTest.reset(RepValueDefInitMin);
         }
 
         if((currentTime - m_testsStartedAt) > m_tryForTime)
@@ -95,45 +97,60 @@ bool RepetitionTester::isTesting()
 void RepetitionTester::beginTime()
 {
     m_openBlockCount++;
-    m_timeAccumulatedOnThisTest -= Profiler::ReadCPUTimer();
+
+    m_accumulatedOnThisTest.E[RepValueMemPageFaults] -= PlatformMetrics::readOSPageFaultCount();
+    m_accumulatedOnThisTest.E[RepValueCPUTimer] -= PlatformMetrics::ReadCPUTimer();
 }
 
 void RepetitionTester::endTime()
 {
+    m_accumulatedOnThisTest.E[RepValueMemPageFaults] += PlatformMetrics::readOSPageFaultCount();
+    m_accumulatedOnThisTest.E[RepValueCPUTimer] += PlatformMetrics::ReadCPUTimer();
+
     m_closeBlockCount++;
-    m_timeAccumulatedOnThisTest += Profiler::ReadCPUTimer();
 }
 
 void RepetitionTester::countBytes(u64 bytesToAccumulate)
 {
-    m_bytesAccumulatedOnThisTest += bytesToAccumulate;
+    m_accumulatedOnThisTest.E[RepValueByteCount] += bytesToAccumulate;
 }
 
-void RepetitionTester::printTime(const char* label, f64 cpuTime, u64 byteCount)
+void RepetitionTester::printTime(const char* label, RepetitionValue value)
 {
-    std::cout << "label=" << label << " | cpu_clicks=" << cpuTime;
+    u64 testCount = value.E[RepValueTestCount];
+    f64 divisor = testCount ? (f64)testCount : 1;
+
+    f64 E[RepValueCount];
+    for(u32 index = 0; index < RepValueCount; ++index)
+    {
+        E[index] = (f64)value.E[index] / divisor;
+    }
+
+    std::cout << "label=" << label << " | cpu_clicks=" << E[RepValueCPUTimer];
     if(m_cpuTimerFreq)
     {
-        f64 seconds = Profiler::secondsFromCPUTime(cpuTime, m_cpuTimerFreq);
+        f64 seconds = PlatformMetrics::secondsFromCPUTime(E[RepValueCPUTimer], m_cpuTimerFreq);
         std::cout << " | time=" << seconds * 1000 << "ms";
 
-        if(byteCount)
+        if(E[RepValueByteCount])
         {
             f64 gigabyte = (1024.0f * 1024.0f * 1024.0f);
-            f64 bestBandwidth = byteCount / (gigabyte * seconds);
-            std::cout << " | bandwidth=" << bestBandwidth << "gb/s\n";
+            f64 bestBandwidth = E[RepValueByteCount] / (gigabyte * seconds);
+            std::cout << " | bandwidth=" << bestBandwidth << "gb/s";
         }
     }
+
+    std::cout << " | page_faults=" << E[RepValueMemPageFaults] << " | bytes_per_fault=" << E[RepValueByteCount] / (E[RepValueMemPageFaults] * 1024.0) << "k/fault\n";
 }
 
 void RepetitionTester::printResults()
 {
     std::cout << "------printing_final_results_starts------" << '\n';
-    printTime("min_time", (f64)m_results.m_minTime, m_targetProcessedByteCount);
-    printTime("max_time", (f64)m_results.m_maxTime, m_targetProcessedByteCount);
-    if(m_results.m_testCount)
+    printTime("min_time", m_results.m_min);
+    printTime("max_time", m_results.m_max);
+    if(m_results.m_total.E[RepValueTestCount] > 0)
     {
-        printTime("average", (f64)m_results.m_totalTime / (f64)m_results.m_testCount, m_targetProcessedByteCount);
+        printTime("average", m_results.m_total);
     }
     std::cout << "-------printing_final_results_ends-------" << '\n';
 }

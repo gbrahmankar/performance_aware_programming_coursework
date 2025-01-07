@@ -34,6 +34,7 @@ void handleAllocation(const ReadParameters& params, Buffer& buffer)
     {
         case AllocTypeNone :
         {
+            buffer = params.m_destinationBuffer;
         } break;
         
         case AllocTypeMalloc :
@@ -70,9 +71,6 @@ void handleDeallocation(const ReadParameters& params, Buffer& buffer)
 
 void readViaFRead(RepetitionTester& tester, ReadParameters& params)
 {
-    Buffer destBuffer;
-    destBuffer.transferOwnershipIntoSelf(params.m_destinationBuffer);
-
     while(tester.isTesting())
     {
         FILE *file = fopen(params.m_fileName, "rb");
@@ -81,6 +79,7 @@ void readViaFRead(RepetitionTester& tester, ReadParameters& params)
             tester.reportError("fopen failed");
         }
 
+        Buffer destBuffer;
         handleAllocation(params, destBuffer);
         
         tester.beginTime();
@@ -99,6 +98,26 @@ void readViaFRead(RepetitionTester& tester, ReadParameters& params)
         handleDeallocation(params, destBuffer);
         
         fclose(file);
+    }
+}
+
+void writeToAllBytes(RepetitionTester& tester, ReadParameters& params)
+{
+    while(tester.isTesting())
+    {
+        Buffer destBuffer;
+        handleAllocation(params, destBuffer);
+
+        tester.beginTime();
+        for(u64 index = 0; index < destBuffer.m_count; ++index)
+        {
+            destBuffer.m_data[index] = (u8)index;
+        }
+        tester.endTime();
+
+        tester.countBytes(destBuffer.m_count);
+
+        handleDeallocation(params, destBuffer);
     }
 }
 

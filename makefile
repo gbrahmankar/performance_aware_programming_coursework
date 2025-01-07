@@ -1,5 +1,5 @@
 # Compiler and flags
-CXX = g++
+CXX = clang++
 CXXFLAGS = -Wall -Wextra -Wno-unused -Wno-unused-parameter -Wno-switch -std=c++14 -g -DPROFILER 
 
 # Source files
