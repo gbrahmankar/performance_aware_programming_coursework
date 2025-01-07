@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
     {
         if (argc < 3)
         {
-            std::cerr << "usage : " << argv[0] << " part_three [read_overhead/incremental_page_touching]" << '\n';
+            std::cerr << "usage : " << argv[0] << " part_three [read_overhead/incremental_page_touching/decompose_x64_pointer]" << '\n';
             return 1;
         }
 

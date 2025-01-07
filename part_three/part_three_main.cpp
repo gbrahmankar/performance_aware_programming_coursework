@@ -1,4 +1,5 @@
 #include "part_three_main.h"
+#include "decompose_x64_pointer.h"
 #include "incremental_page_touching.h"
 #include "read_overhead_test_main.h"
 
@@ -26,6 +27,16 @@ void executePartThree(int argc, char* argv[])
         }
 
         PartThree::executeIncrementalPageTouchTest(argc, argv);
+    }
+    else if (std::string(argv[2]) == "decompose_x64_pointer")
+    {
+        if (argc < 4)
+        {
+            std::cerr << "usage : " << argv[0] << " part_three decompose_x64_pointer [place_holder]" << '\n';
+            return;
+        }
+
+        PartThree::executeDecomposeVirtualAddress(argc, argv);
     }
 }
 

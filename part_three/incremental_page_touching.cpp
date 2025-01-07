@@ -7,12 +7,6 @@ int executeIncrementalPageTouchTest(int argc, char **argv)
 {
     PlatformMetrics::initializeOSMetrics();
     
-    if(argc < 2)
-    {
-        fprintf(stderr, "usage: %s [# of 4k pages to allocate]\n", argv[0]);
-        return 1;
-    }
-
     u64 pageSize = 4096;
     u64 pageCount = atol(argv[3]);
     u64 totalSize = pageSize * pageCount;
