@@ -115,25 +115,25 @@ u64 readOSPageFaultCount(void)
         return 1;
     }
 
-    struct proc_taskinfo taskInfo;
-    mach_msg_type_number_t infoCount = PROC_TASKINFO_COUNT;
+    task_events_info_data_t events_info;
+    mach_msg_type_number_t count = TASK_EVENTS_INFO_COUNT;
+    kern_return_t kr = task_info(mach_task_self(), TASK_EVENTS_INFO, (task_info_t)&events_info, &count);
 
-    kern_return_t kr = proc_pidinfo(g_globalOsMetrics.processHandle, PROC_PIDTASKINFO, 0, &taskInfo, infoCount);
+    return events_info.faults;
 
-    if (kr != KERN_SUCCESS) 
+    /*
+    if (kr == KERN_SUCCESS) 
     {
-        std::cerr << "error : failed to get task_info for pid=" << g_globalOsMetrics.processHandle << '\n';
-        return 1;
+        printf("Page faults: %llu\n", events_info.faults);
+        printf("Pageins: %llu\n", events_info.pageins);
+        printf("Cow faults: %llu\n", events_info.cow_faults);
+        printf("\n");
+    } 
+    else 
+    {
+        printf("Error: %s\n", mach_error_string(kr));
     }
-/*
-    std::cout << "task_info : cow=" << taskInfo.pti_cow_faults 
-              << " | page_ins=" << static_cast<u64>(taskInfo.pti_pageins)
-              << " | sys_calls_unix=" << static_cast<u64>(taskInfo.pti_syscalls_unix) 
-              << " | sys_calls_mach=" << static_cast<u64>(taskInfo.pti_syscalls_mach) 
-              << '\n'; 
-*/
-
-    return taskInfo.pti_faults;
+    */
 }
 
 void initializeOSMetrics(void)
