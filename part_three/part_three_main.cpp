@@ -1,6 +1,7 @@
-#include "part_three_main.h"
+#include "backwards_page_touching.h"
 #include "decompose_x64_pointer.h"
 #include "incremental_page_touching.h"
+#include "part_three_main.h"
 #include "read_overhead_test_main.h"
 
 namespace PartThree
@@ -37,6 +38,16 @@ void executePartThree(int argc, char* argv[])
         }
 
         PartThree::executeDecomposeVirtualAddress(argc, argv);
+    }
+    else if (std::string(argv[2]) == "backwards_page_touching")
+    {
+        if (argc < 3)
+        {
+            std::cerr << "usage : " << argv[0] << " part_three backwards_page_touching" << '\n';
+            return;
+        }
+
+        PartThree::executeBackwardsPageTouchTest(argc, argv);
     }
 }
 

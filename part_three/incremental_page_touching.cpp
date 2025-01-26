@@ -24,28 +24,21 @@ int executeIncrementalPageTouchTest(int argc, char **argv)
             return EXIT_FAILURE;
         }
 
-        if(data)
+        u64 startFaultCount = PlatformMetrics::readOSPageFaultCount();
+        for(u64 index = 0; index < touchSize; ++index)
         {
-            u64 startFaultCount = PlatformMetrics::readOSPageFaultCount();
-            for(u64 index = 0; index < touchSize; ++index)
-            {
-                data[index] = (u8)index;
-            }
-            u64 endFaultCount = PlatformMetrics::readOSPageFaultCount();
-            
-            u64 faultCount = endFaultCount - startFaultCount;
-            
-            printf("%llu, %llu, %llu, %lld\n", pageCount, touchCount, faultCount, (faultCount - touchCount));
-            
-            if (munmap(data, totalSize) != 0) 
-            {
-                perror("munmap failed");
-                return EXIT_FAILURE;
-            }
+            data[index] = (u8)index;
         }
-        else
+        u64 endFaultCount = PlatformMetrics::readOSPageFaultCount();
+        
+        u64 faultCount = endFaultCount - startFaultCount;
+        
+        printf("%llu, %llu, %llu, %lld\n", pageCount, touchCount, faultCount, (faultCount - touchCount));
+        
+        if (munmap(data, totalSize) != 0) 
         {
-            fprintf(stderr, "error : unable to allocate memory\n");
+            perror("munmap failed");
+            return EXIT_FAILURE;
         }
     }
     		
