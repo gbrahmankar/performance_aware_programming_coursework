@@ -12,12 +12,17 @@ int executeBackwardsPageTouchTest(int argc, char **argv)
     u64 pageCount = 16384;
     u64 totalSize = pageSize * pageCount;
 
+#if __APPLE__
     u8 * data = (u8 *)mmap(NULL, totalSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (data == MAP_FAILED)
     {
         perror("mmap failed");
         return EXIT_FAILURE;
     }
+#elif _WIN32
+	u8 *data = (u8 *)VirtualAlloc(0, totalSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+#endif
+
     printAsLine("buffer_base=", decomposePointer4k((void*)data));
 
     u64 startFaultCount = PlatformMetrics::readOSPageFaultCount();
@@ -46,11 +51,15 @@ int executeBackwardsPageTouchTest(int argc, char **argv)
         }
     }
 
-    if (munmap(data, totalSize) != 0)
-    {
-        perror("munmap failed");
-        return EXIT_FAILURE;
-    }
+#if __APPLE__
+        if (munmap(data, totalSize) != 0) 
+        {
+            perror("munmap failed");
+            return EXIT_FAILURE;
+        }
+#elif _WIN32
+         VirtualFree(data, 0, MEM_RELEASE);
+#endif
     
     return 0;
 }

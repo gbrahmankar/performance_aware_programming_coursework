@@ -22,6 +22,7 @@ extern "C"
 #define _CRT_SECURE_NO_WARNINGS 
 #include <intrin.h>
 #include <windows.h>
+#include <psapi.h>
 #endif
 
 #include <array>
@@ -29,6 +30,7 @@ extern "C"
 #include <cfloat>
 #include <cstring>
 #include <fstream>
+#include <functional>
 #include <iomanip>
 #include <iostream>
 #include <iterator>
@@ -146,7 +148,7 @@ struct OsMetrics
 struct OsMetrics
 {
     bool m_initialized;
-    HANDLE processHandle;
+    HANDLE m_processHandle;
 };
 #endif
 extern OsMetrics g_globalOsMetrics;

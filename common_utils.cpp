@@ -141,7 +141,7 @@ void initializeOSMetrics(void)
     if(!g_globalOsMetrics.m_initialized)
     {
         g_globalOsMetrics.m_initialized = true;
-        g_globalOsMetrics.processHandle = getpid();
+        g_globalOsMetrics.m_processHandle = getpid();
     }
 }
 #elif _WIN32
@@ -156,7 +156,7 @@ u64 readOSPageFaultCount(void)
 
     PROCESS_MEMORY_COUNTERS_EX MemoryCounters = {};
     MemoryCounters.cb = sizeof(MemoryCounters);
-    GetProcessMemoryInfo(GlobalMetrics.ProcessHandle, (PROCESS_MEMORY_COUNTERS *)&MemoryCounters, sizeof(MemoryCounters));
+    GetProcessMemoryInfo(g_globalOsMetrics.m_processHandle, (PROCESS_MEMORY_COUNTERS *)&MemoryCounters, sizeof(MemoryCounters));
     
     u64 Result = MemoryCounters.PageFaultCount;
     return Result;
@@ -167,7 +167,7 @@ void initializeOSMetrics(void)
     if(!g_globalOsMetrics.m_initialized)
     {
         g_globalOsMetrics.m_initialized = true;
-        g_globalOsMetrics.processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, GetCurrentProcessId());
+        g_globalOsMetrics.m_processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, GetCurrentProcessId());
     }
 }
 // casey's helpers for os_metrics. end. 
