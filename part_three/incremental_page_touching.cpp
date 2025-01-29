@@ -1,3 +1,4 @@
+#include "decompose_x64_pointer.h"
 #include "incremental_page_touching.h"
 
 namespace PartThree
@@ -38,6 +39,15 @@ int executeIncrementalPageTouchTest(int argc, char **argv)
         u64 faultCount = endFaultCount - startFaultCount;
         
         printf("%llu, %llu, %llu, %lld\n", pageCount, touchCount, faultCount, (faultCount - touchCount));
+
+	    VirtualAddressLayout address = decomposePointer4k(data);
+		if(touchSize)
+		{
+			address = decomposePointer4k(data + touchSize - 1);
+		}
+                
+		printf("%llu, %llu, %llu, %lld, %u, %u\n", pageCount, touchCount, faultCount, (faultCount - touchCount),
+			   address.m_directoryIndex, address.m_pageTableIndex); 
         
 #if __APPLE__
         if (munmap(data, totalSize) != 0) 
