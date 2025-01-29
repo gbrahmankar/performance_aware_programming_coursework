@@ -142,7 +142,7 @@ extern f64 secondsFromCPUTime(u64 cpuTime, u64 cpuTimerFreq);
 struct OsMetrics
 {
     bool m_initialized;
-    pid_t processHandle;
+    pid_t m_processHandle;
 };
 #elif _WIN32
 struct OsMetrics
