@@ -20,8 +20,8 @@ std::vector<TestFunction> testFunctions =
 
 void readOverheadTestMain(int argc, char* argv[])
 {
-    PlatformMetrics::initializeOSMetrics();
-    u64 cpuTimerFreq = PlatformMetrics::estimateCPUFrequency();
+    initializeOSPlatform();
+    u64 cpuTimerFreq = estimateCPUFrequency();
 
     char *fileName = argv[3];
 

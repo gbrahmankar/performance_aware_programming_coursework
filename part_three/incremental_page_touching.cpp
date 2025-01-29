@@ -6,7 +6,7 @@ namespace PartThree
 
 int executeIncrementalPageTouchTest(int argc, char **argv)
 {
-    PlatformMetrics::initializeOSMetrics();
+    initializeOSPlatform();
     
     u64 pageSize = 4096;
     u64 pageCount = atol(argv[3]);
@@ -29,12 +29,12 @@ int executeIncrementalPageTouchTest(int argc, char **argv)
         u8 *data = (u8 *)VirtualAlloc(0, totalSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 #endif 
 
-        u64 startFaultCount = PlatformMetrics::readOSPageFaultCount();
+        u64 startFaultCount = readOSPageFaultCount();
         for(u64 index = 0; index < touchSize; ++index)
         {
             data[index] = (u8)index;
         }
-        u64 endFaultCount = PlatformMetrics::readOSPageFaultCount();
+        u64 endFaultCount = readOSPageFaultCount();
         
         u64 faultCount = endFaultCount - startFaultCount;
         

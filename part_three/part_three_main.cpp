@@ -36,8 +36,6 @@ void executePartThree(int argc, char* argv[])
             std::cerr << "usage : " << argv[0] << " part_three decompose_x64_pointer [place_holder]" << '\n';
             return;
         }
-
-        PartThree::executeDecomposeVirtualAddress(argc, argv);
     }
     else if (std::string(argv[2]) == "backwards_page_touching")
     {

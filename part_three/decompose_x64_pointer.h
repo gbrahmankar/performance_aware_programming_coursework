@@ -21,6 +21,4 @@ extern VirtualAddressLayout decomposePointer4k(void *ptr);
 extern VirtualAddressLayout decomposePointer2MB(void *ptr);
 extern VirtualAddressLayout decomposePointer1GB(void *ptr);
 
-extern int executeDecomposeVirtualAddress(int argc, char **argv);
-
 }

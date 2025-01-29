@@ -116,49 +116,31 @@ extern long double minF128;
 extern long double maxF128;
 // size_limits end 
 
-// platform_metrics_decl. start.
-namespace PlatformMetrics
+// platform_helpers_decl. start.
+struct OSPlatform
 {
-
-// timer_stat helpers. start.
-// casey's helpers for profiling starts 
-#if _WIN32
-extern u64 GetOSTimerFreq(void);
-extern u64 ReadOSTimer(void);
-#else
-extern u64 GetOSTimerFreq(void);
-extern u64 ReadOSTimer(void);
+    bool m_initialized;
+    u64 m_cpuTimerFreq;
+:wa
+#ifdef __APPLE__
+    pid_t m_processHandle;
+#elif _WIN32
+    HANDLE m_processHandle;
 #endif
+};
+extern OSPlatform g_globalOSPlatform;
 
-extern u64 ReadCPUTimer(void);
-// casey's helpers for profiling ends 
-
+extern void initializeOSPlatform(void);
+extern u64 readOSPageFaultCount(void);
+extern u64 getOSTimerFreq(void);
+extern u64 readOSTimer(void);
+extern u64 readCPUTimer(void);
 extern u64 estimateCPUFrequency(void);
 extern f64 secondsFromCPUTime(u64 cpuTime, u64 cpuTimerFreq);
-// timer_stat helpers. end.
 
-// os_metric_stat helpers. start.
-#ifdef __APPLE__
-struct OsMetrics
-{
-    bool m_initialized;
-    pid_t m_processHandle;
-};
-#elif _WIN32
-struct OsMetrics
-{
-    bool m_initialized;
-    HANDLE m_processHandle;
-};
-#endif
-extern OsMetrics g_globalOsMetrics;
-
-extern void initializeOSMetrics(void);
-extern u64 readOSPageFaultCount(void);
-// os_metric_stat helpers. end.
-
-}
-// platform_metrics_decl. end.
+extern void* osAllocate(size_t byteCount);
+extern void osFree(size_t byteCount, void *baseAddress);
+// platform_helpers_decl. end.
 
 // profiler_decl starts 
 namespace Profiler

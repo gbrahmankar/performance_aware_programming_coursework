@@ -9,15 +9,15 @@ void executeTest(int argc, char* argv[])
 {
 // os_timer starts
 {
-    u64 OSFreq = PlatformMetrics::GetOSTimerFreq();
+    u64 OSFreq = getOSTimerFreq();
     std::cout << "os_freq=" << OSFreq << '\n';	
 
-	u64 OSStart = PlatformMetrics::ReadOSTimer();
+	u64 OSStart = readOSTimer();
 	u64 OSEnd = 0;
 	u64 OSElapsed = 0;
 	while(OSElapsed < OSFreq)
 	{
-		OSEnd = PlatformMetrics::ReadOSTimer();
+		OSEnd = readOSTimer();
 		OSElapsed = OSEnd - OSStart;
 	}
 
@@ -31,20 +31,20 @@ void executeTest(int argc, char* argv[])
 
 // cpu_timer starts
 {
-    u64 OSFreq = PlatformMetrics::GetOSTimerFreq();
+    u64 OSFreq = getOSTimerFreq();
     std::cout << "os_freq=" << OSFreq << '\n';	
 
-	u64 CPUStart = PlatformMetrics::ReadCPUTimer();
-	u64 OSStart = PlatformMetrics::ReadOSTimer();
+	u64 CPUStart = readCPUTimer();
+	u64 OSStart = readOSTimer();
 	u64 OSEnd = 0;
 	u64 OSElapsed = 0;
 	while(OSElapsed < OSFreq)
 	{
-		OSEnd = PlatformMetrics::ReadOSTimer();
+		OSEnd = readOSTimer();
 		OSElapsed = OSEnd - OSStart;
 	}
 
-	u64 CPUEnd = PlatformMetrics::ReadCPUTimer();
+	u64 CPUEnd = readCPUTimer();
 	u64 CPUElapsed = CPUEnd - CPUStart;
 
     std::cout << "os_start="   << STREAM_16BIT_PRECISION_FP(OSStart) << " | " <<
@@ -60,7 +60,7 @@ void executeTest(int argc, char* argv[])
 
 	u64 CPUFreq = static_cast<u64>((f64)CPUElapsed / OSSecs);
     std::cout << "cpu_freq=" << CPUFreq << '\n';
-	std::cout << "estd_cpu_freq=" << PlatformMetrics::estimateCPUFrequency() << '\n';
+	std::cout << "estd_cpu_freq=" << estimateCPUFrequency() << '\n';
 }
 // cpu_timer ends 
 
@@ -71,33 +71,33 @@ std::cout << "is_buffer_equal=" << ((buffer.isEqual(CONSTANT_STRING("gaurav"))) 
 
 // read_page_faults starts 
 {
-    PlatformMetrics::initializeOSMetrics();
+    initializeOSPlatform();
 
-    u64 freq = PlatformMetrics::estimateCPUFrequency();
+    u64 freq = estimateCPUFrequency();
 
-    u64 pageFaultsBeforeMalloc = PlatformMetrics::readOSPageFaultCount();
+    u64 pageFaultsBeforeMalloc = readOSPageFaultCount();
 
     Buffer destBuffer;
     destBuffer.allocateBuffer(1024*1024);
 
-    u64 pageFaultsAfterMalloc = PlatformMetrics::readOSPageFaultCount();
-    u64 time0 = PlatformMetrics::ReadCPUTimer();
+    u64 pageFaultsAfterMalloc = readOSPageFaultCount();
+    u64 time0 = readCPUTimer();
     for(u64 index = 0; index < 1024*1024; ++index)
     {
         destBuffer.m_data[index] = (u8)index;
     }
-    u64 time1 = PlatformMetrics::ReadCPUTimer();
-    u64 pageFaultsAfterFirstWrite = PlatformMetrics::readOSPageFaultCount();
+    u64 time1 = readCPUTimer();
+    u64 pageFaultsAfterFirstWrite = readOSPageFaultCount();
 
     destBuffer.allocateBuffer(1024*1024);
 
-    time0 = PlatformMetrics::ReadCPUTimer();
+    time0 = readCPUTimer();
     for(u64 index = 0; index < 1024*1024; ++index)
     {
         destBuffer.m_data[index] = (u8)index + 1;
     }
-    time1 = PlatformMetrics::ReadCPUTimer();
-    u64 pageFaultsAfterSecondWrite = PlatformMetrics::readOSPageFaultCount();
+    time1 = readCPUTimer();
+    u64 pageFaultsAfterSecondWrite = readOSPageFaultCount();
 
     std::cout << "time_elaspsed=" << (f64)(time1 - time0)/(f64)freq << '\n';
     std::cout << "page_faults=" << pageFaultsAfterMalloc << " | " << pageFaultsAfterFirstWrite << " | " << pageFaultsAfterSecondWrite << '\n';

@@ -6,7 +6,7 @@ namespace PartThree
 
 int executeBackwardsPageTouchTest(int argc, char **argv)
 {
-    PlatformMetrics::initializeOSMetrics();
+    initializeOSPlatform();
     
     u64 pageSize = 4096;
     u64 pageCount = 16384;
@@ -25,7 +25,7 @@ int executeBackwardsPageTouchTest(int argc, char **argv)
 
     printAsLine("buffer_base=", decomposePointer4k((void*)data));
 
-    u64 startFaultCount = PlatformMetrics::readOSPageFaultCount();
+    u64 startFaultCount = readOSPageFaultCount();
 
     u64 priorOverFaultCount = 0;
     u64 priorPageIndex = 0;
@@ -33,7 +33,7 @@ int executeBackwardsPageTouchTest(int argc, char **argv)
     for (u64 pageIndex = 0; pageIndex < pageCount; ++pageIndex)
     {
         data[totalSize - 1 - pageSize*pageIndex] = (u8)pageIndex;
-        u64 endFaultCount = PlatformMetrics::readOSPageFaultCount();
+        u64 endFaultCount = readOSPageFaultCount();
 
         u64 overFaultCount = (endFaultCount - startFaultCount) - pageIndex;
         if (overFaultCount > priorOverFaultCount)

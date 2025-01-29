@@ -57,11 +57,4 @@ VirtualAddressLayout decomposePointer1GB(void *ptr)
     return result;
 }
 
-int executeDecomposeVirtualAddress(int argc, char **argv)
-{
-    PlatformMetrics::initializeOSMetrics();
-    		
-    return 0;
-}
-
 }

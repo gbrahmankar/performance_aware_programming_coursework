@@ -29,14 +29,14 @@ void RepetitionTester::newTestWave(u64 targetProcessedByteCount, u64 cpuTimerFre
     }
 
     m_tryForTime = secondsToTry * cpuTimerFreq;
-    m_testsStartedAt = PlatformMetrics::ReadCPUTimer();
+    m_testsStartedAt = readCPUTimer();
 }
 
 bool RepetitionTester::isTesting()
 {
     if(m_testMode == TestModeTesting)
     {
-        u64 currentTime = PlatformMetrics::ReadCPUTimer();
+        u64 currentTime = readCPUTimer();
 
         if(m_openBlockCount == 0)
         {
@@ -98,14 +98,14 @@ void RepetitionTester::beginTime()
 {
     m_openBlockCount++;
 
-    m_accumulatedOnThisTest.E[RepValueMemPageFaults] -= PlatformMetrics::readOSPageFaultCount();
-    m_accumulatedOnThisTest.E[RepValueCPUTimer] -= PlatformMetrics::ReadCPUTimer();
+    m_accumulatedOnThisTest.E[RepValueMemPageFaults] -= readOSPageFaultCount();
+    m_accumulatedOnThisTest.E[RepValueCPUTimer] -= readCPUTimer();
 }
 
 void RepetitionTester::endTime()
 {
-    m_accumulatedOnThisTest.E[RepValueMemPageFaults] += PlatformMetrics::readOSPageFaultCount();
-    m_accumulatedOnThisTest.E[RepValueCPUTimer] += PlatformMetrics::ReadCPUTimer();
+    m_accumulatedOnThisTest.E[RepValueMemPageFaults] += readOSPageFaultCount();
+    m_accumulatedOnThisTest.E[RepValueCPUTimer] += readCPUTimer();
 
     m_closeBlockCount++;
 }
@@ -129,7 +129,7 @@ void RepetitionTester::printTime(const char* label, RepetitionValue value)
     std::cout << "label=" << label << " | cpu_clicks=" << E[RepValueCPUTimer];
     if(m_cpuTimerFreq)
     {
-        f64 seconds = PlatformMetrics::secondsFromCPUTime(E[RepValueCPUTimer], m_cpuTimerFreq);
+        f64 seconds = secondsFromCPUTime(E[RepValueCPUTimer], m_cpuTimerFreq);
         std::cout << " | time=" << seconds * 1000 << "ms";
 
         if(E[RepValueByteCount])

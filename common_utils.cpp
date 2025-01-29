@@ -27,63 +27,29 @@ long double minF128 = LDBL_MIN;
 long double maxF128 = LDBL_MAX;
 // size_limits_defn ends 
 
-// platform_metrics_impl. start.
-namespace PlatformMetrics
-{
+// platform_helpers_impl. start.
+OSPlatform g_globalOSPlatform;
 
-// timer_stat helpers. start.
-// casey's helpers for profiling starts
-#if _WIN32
-u64 GetOSTimerFreq(void)
-{
-	LARGE_INTEGER Freq;
-	QueryPerformanceFrequency(&Freq);
-	return Freq.QuadPart;
-}
-
-u64 ReadOSTimer(void)
-{
-	LARGE_INTEGER Value;
-	QueryPerformanceCounter(&Value);
-	return Value.QuadPart;
-}
-#else
-u64 GetOSTimerFreq(void)
-{
-	return 1000000;
-}
-
-u64 ReadOSTimer(void)
-{
-	struct timeval Value;
-	gettimeofday(&Value, 0);
-
-	u64 Result = GetOSTimerFreq()*(u64)Value.tv_sec + (u64)Value.tv_usec;
-	return Result;
-}
-#endif
-
-inline u64 ReadCPUTimer(void)
+inline u64 readCPUTimer(void)
 {
 	return __rdtsc();
 }
-// casey's helpers for profiling ends 
 
 u64 estimateCPUFrequency(void)
 {
-	u64 OSFreq = GetOSTimerFreq();
+	u64 OSFreq = getOSTimerFreq();
 
-	u64 CPUStart = ReadCPUTimer();
-	u64 OSStart = ReadOSTimer();
+	u64 CPUStart = readCPUTimer();
+	u64 OSStart = readOSTimer();
 	u64 OSEnd = 0;
 	u64 OSElapsed = 0;
 	while(OSElapsed < OSFreq)
 	{
-		OSEnd = ReadOSTimer();
+		OSEnd = readOSTimer();
 		OSElapsed = OSEnd - OSStart;
 	}
 
-	u64 CPUEnd = ReadCPUTimer();
+	u64 CPUEnd = readCPUTimer();
 	u64 CPUElapsed = CPUEnd - CPUStart;
 
 	f64 OSSecs = (f64)OSElapsed/(f64)OSFreq;
@@ -101,15 +67,36 @@ f64 secondsFromCPUTime(u64 cpuTime, u64 cpuTimerFreq)
 
     return result;
 }
-// timer_stat helpers. end.
-
-// os_metric_stat helpers. start.
-OsMetrics g_globalOsMetrics;
 
 #ifdef __APPLE__
+u64 getOSTimerFreq(void)
+{
+	return 1000000;
+}
+
+u64 readOSTimer(void)
+{
+	struct timeval Value;
+	gettimeofday(&Value, 0);
+
+	u64 Result = getOSTimerFreq()*(u64)Value.tv_sec + (u64)Value.tv_usec;
+	return Result;
+}
+
+void* osAllocate(size_t byteCount)
+{
+    void *result = mmap(0, byteCount, PROT_READ|PROT_WRITE, MAP_ANONYMOUS, 0, 0);
+    return result;
+}
+
+void osFree(size_t byteCount, void *baseAddress)
+{
+    munmap(baseAddress, byteCount);
+}
+
 u64 readOSPageFaultCount(void)
 {
-    if(!g_globalOsMetrics.m_initialized)
+    if(!g_globalOSPlatform.m_initialized)
     {
         std::cerr << "error : failed to read_page_faults since process_handle not init" << '\n';
         return 1;
@@ -136,19 +123,45 @@ u64 readOSPageFaultCount(void)
     */
 }
 
-void initializeOSMetrics(void)
+void initializeOSPlatform(void)
 {
-    if(!g_globalOsMetrics.m_initialized)
+    if(!g_globalOSPlatform.m_initialized)
     {
-        g_globalOsMetrics.m_initialized = true;
-        g_globalOsMetrics.m_processHandle = getpid();
+        g_globalOSPlatform.m_initialized = true;
+        g_globalOSPlatform.m_processHandle = getpid();
+        g_globalOSPlatform.m_cpuTimerFreq = estimateCPUFrequency();
     }
 }
 #elif _WIN32
-// casey's helpers for os_metrics. start. 
+u64 getOSTimerFreq(void)
+{
+	LARGE_INTEGER Freq;
+	QueryPerformanceFrequency(&Freq);
+	return Freq.QuadPart;
+}
+
+u64 readOSTimer(void)
+{
+	LARGE_INTEGER Value;
+	QueryPerformanceCounter(&Value);
+	return Value.QuadPart;
+}
+
+void* osAllocate(size_t byteCount)
+{
+    void *result = VirtualAlloc(0, byteCount, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
+    return result;
+}
+
+void osFree(size_t byteCount, void *baseAddress)
+{
+    (void)byteCount;
+    VirtualFree(baseAddress, 0, MEM_RELEASE);
+}
+
 u64 readOSPageFaultCount(void)
 {
-    if(!g_globalOsMetrics.m_initialized)
+    if(!g_globalOSPlatform.m_initialized)
     {
         std::cerr << "error : failed to read_page_faults since process_handle not init" << '\n';
         return 1;
@@ -156,7 +169,7 @@ u64 readOSPageFaultCount(void)
 
     PROCESS_MEMORY_COUNTERS_EX MemoryCounters = {};
     MemoryCounters.cb = sizeof(MemoryCounters);
-    GetProcessMemoryInfo(g_globalOsMetrics.m_processHandle, (PROCESS_MEMORY_COUNTERS *)&MemoryCounters, sizeof(MemoryCounters));
+    GetProcessMemoryInfo(g_globalOSPlatform.m_processHandle, (PROCESS_MEMORY_COUNTERS *)&MemoryCounters, sizeof(MemoryCounters));
     
     u64 Result = MemoryCounters.PageFaultCount;
     return Result;
@@ -164,18 +177,15 @@ u64 readOSPageFaultCount(void)
 
 void initializeOSMetrics(void)
 {
-    if(!g_globalOsMetrics.m_initialized)
+    if(!g_globalOSPlatform.m_initialized)
     {
-        g_globalOsMetrics.m_initialized = true;
-        g_globalOsMetrics.m_processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, GetCurrentProcessId());
+        g_globalOSPlatform.m_initialized = true;
+        g_globalOSPlatform.m_processHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, GetCurrentProcessId());
+        g_globalOSPlatform.m_cpuTimerFreq = estimateCPUFrequency();
     }
 }
-// casey's helpers for os_metrics. end. 
 #endif
-// os_metric_stat helpers. end.
-
-}
-// platform_metrics_impl. end.
+// platform_helpers_impl. end.
 
 // profiler_impl starts 
 namespace Profiler
@@ -199,12 +209,12 @@ ProfileBlock::ProfileBlock(const std::string& label, u16 anchorIndex, u64 byteCo
 	m_oldTSCElapsedInclusive = anchor.m_tscElapsedInclusive;
     anchor.m_processedByteCount += byteCount;
 
-    m_startTSC = PlatformMetrics::ReadCPUTimer();
+    m_startTSC = readCPUTimer();
 }
 
 ProfileBlock::~ProfileBlock()
 {
-	u64 elapsed = PlatformMetrics::ReadCPUTimer() - m_startTSC;
+	u64 elapsed = readCPUTimer() - m_startTSC;
 	g_currentlyActiveAnchorIndex = m_parentAnchorIndex;
 
 	ProfileAnchor& anchor = g_profilerAnchors[m_anchorIndex];
@@ -268,13 +278,13 @@ ProfilerData g_profilerData;
 
 void beginProfile()
 {
-    g_profilerData.m_startTSC = PlatformMetrics::ReadCPUTimer();
+    g_profilerData.m_startTSC = readCPUTimer();
 }
 
 void endAndPrintProfile()
 {
-    g_profilerData.m_endTSC = PlatformMetrics::ReadCPUTimer();
-    u64 cpuFreq = PlatformMetrics::estimateCPUFrequency();
+    g_profilerData.m_endTSC = readCPUTimer();
+    u64 cpuFreq = estimateCPUFrequency();
     
     u64 totalCPUElapsed = g_profilerData.m_endTSC - g_profilerData.m_startTSC;
     
@@ -377,7 +387,7 @@ bool Buffer::allocateBuffer(u64 size)
 
     if(freeBuffer())
     {
-        m_data = (u8*)malloc(size);
+        m_data = (u8*)osAllocate(size);
         if (m_data != nullptr)
         {
             m_count = size;    
@@ -403,7 +413,8 @@ bool Buffer::freeBuffer()
 
     if(m_isDataOwned)
     {
-        free(m_data);
+        osFree(m_count, m_data);
+
         m_data = nullptr;
         m_count = 0;
         return true;
