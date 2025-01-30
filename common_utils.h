@@ -121,7 +121,6 @@ struct OSPlatform
 {
     bool m_initialized;
     u64 m_cpuTimerFreq;
-:wa
 #ifdef __APPLE__
     pid_t m_processHandle;
 #elif _WIN32

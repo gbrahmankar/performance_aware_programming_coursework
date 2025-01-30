@@ -12,7 +12,7 @@ int executeIncrementalPageTouchTest(int argc, char **argv)
     u64 pageCount = atol(argv[3]);
     u64 totalSize = pageSize * pageCount;
     
-    printf("page_count, touch_count, fault_count, extra_faults\n");
+    printf("page_count, touch_count, fault_count, extra_faults, directory_index, table_index\n");
     
     for(u64 touchCount = 0; touchCount <= pageCount; ++touchCount)
     {

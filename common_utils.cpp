@@ -175,7 +175,7 @@ u64 readOSPageFaultCount(void)
     return Result;
 }
 
-void initializeOSMetrics(void)
+void initializeOSPlatform(void)
 {
     if(!g_globalOSPlatform.m_initialized)
     {
