@@ -195,15 +195,35 @@ extern void endAndPrintProfile();
 }
 // profiler_decl ends 
 
-// buffer_decl starts 
+// buffer_decl starts
 struct Buffer
 {
+	enum AllocationType
+	{
+		AllocTypeNone,
+		AllocTypeMalloc,
+
+		AllocTypeCount,
+	};
+
+	struct AllocationParams
+	{
+		AllocationType m_allocType;
+	    Buffer* m_destinationBuffer;
+		char const *m_fileName;
+	};
+
+	static char const* describeAllocationType(AllocationType allocType);
+
     Buffer(u64 size = 0);
     Buffer(u64 size, u8* data, bool ownData = false);
     Buffer(const Buffer& rhs);
     ~Buffer();
 
     Buffer& operator=(const Buffer& rhs);
+
+    void handleAllocation(const AllocationParams& params);
+    void handleDeallocation(const AllocationParams& params);
 
     bool isInBounds(u64 index);
     bool isEqual(const Buffer& rhs);

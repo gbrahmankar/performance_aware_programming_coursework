@@ -14,8 +14,7 @@ struct TestFunction
 
 std::vector<TestFunction> testFunctions =
 {
-    {"write_to_all_bytes", writeToAllBytes},
-    {"fread", readViaFRead}
+    {"read_via_fread", readViaFRead}
 };
 
 void readOverheadTestMain(int argc, char* argv[])
@@ -40,27 +39,27 @@ void readOverheadTestMain(int argc, char* argv[])
         return;
     }
 
-    ReadParameters params;
-    params.m_destinationBuffer = fileBuffer;
+    Buffer::AllocationParams params;
+    params.m_destinationBuffer = &fileBuffer;
     params.m_fileName = fileName;
 
     for(u32 testFuncIndex = 0; testFuncIndex < testFunctions.size(); ++testFuncIndex)
     {
         TestFunction& testFunc = testFunctions[testFuncIndex];
 
-        for(u32 allocType = 0; allocType < AllocTypeCount; ++allocType)
+        for(u32 allocType = 0; allocType < Buffer::AllocTypeCount; ++allocType)
         {
-            params.m_allocType = (AllocationType)allocType;
+            params.m_allocType = (Buffer::AllocationType)allocType;
 
             RepetitionTester repetitionTester;
             printf("\n------repeat_testing_%s%s%s_starts------\n",
-                   describeAllocationType((AllocationType)allocType),
+                   Buffer::describeAllocationType((Buffer::AllocationType)allocType),
                    params.m_allocType ? "+" : "",
                    testFunc.name);
-            repetitionTester.newTestWave(params.m_destinationBuffer.m_count, cpuTimerFreq);
+            repetitionTester.newTestWave(params.m_destinationBuffer->m_count, cpuTimerFreq);
             testFunc.func(repetitionTester, params);
             printf("------repeat_testing_%s%s%s_ends-------\n",
-                   describeAllocationType((AllocationType)allocType),
+                   Buffer::describeAllocationType((Buffer::AllocationType)allocType),
                    params.m_allocType ? "+" : "",
                    testFunc.name);
         }

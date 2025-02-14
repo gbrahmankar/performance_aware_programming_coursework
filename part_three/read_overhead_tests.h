@@ -6,28 +6,9 @@
 namespace PartThree
 {
 
-enum AllocationType
-{
-    AllocTypeNone,
-    AllocTypeMalloc,
+using ReadOverheadTestFunction = std::function<void(RepetitionTester& tester, Buffer::AllocationParams& params)>;
 
-    AllocTypeCount,
-};
-
-struct ReadParameters
-{
-    AllocationType m_allocType;
-    Buffer m_destinationBuffer;
-    char const *m_fileName;
-};
-
-using ReadOverheadTestFunction = std::function<void(RepetitionTester& tester, ReadParameters& params)>;
-
-extern char const* describeAllocationType(AllocationType allocType);
-extern void handleAllocation(const ReadParameters& params, Buffer& buffer);
-extern void handleDeallocation(const ReadParameters& params, Buffer& buffer);
-
-extern void readViaFRead(RepetitionTester& tester, ReadParameters& params);
-extern void writeToAllBytes(RepetitionTester& tester, ReadParameters& params);
+extern void readViaFRead(RepetitionTester& tester, Buffer::AllocationParams& params);
+extern void writeToAllBytes(RepetitionTester& tester, Buffer::AllocationParams& params);
 
 }

@@ -304,6 +304,78 @@ void endAndPrintProfile()
 // profiler_impl ends 
 
 // buffer_impl starts
+char const* Buffer:: describeAllocationType(AllocationType allocType)
+{
+    char const *result;
+    switch(allocType)
+    {
+        case AllocTypeNone : 
+            {
+                result = "";
+                break;
+            } 
+        case AllocTypeMalloc : 
+            {
+                result = "malloc";
+                break;
+            } 
+        default : 
+            {
+                result = "UNKNOWN";
+                break;
+            } 
+    }
+
+    return result;
+}
+
+void Buffer::handleAllocation(const Buffer::AllocationParams& params)
+{
+    switch(params.m_allocType)
+    {
+        case AllocTypeNone :
+        {
+            if (params.m_destinationBuffer != nullptr)
+            {
+                *this = *params.m_destinationBuffer;
+            }
+        } break;
+        
+        case AllocTypeMalloc :
+        {
+            if (params.m_destinationBuffer != nullptr)
+            {
+                allocateBuffer(params.m_destinationBuffer->m_count);
+            }
+        } break;
+        
+        default :
+        {
+            std::cerr << "error : unrecognized alloc_type\n";
+        } break;
+    }
+}
+
+void Buffer::handleDeallocation(const Buffer::AllocationParams& params)
+{
+    switch(params.m_allocType)
+    {
+        case AllocTypeNone:
+        {
+        } break;
+        
+        case AllocTypeMalloc:
+        {
+            this->~Buffer();
+        } break;
+        
+        default:
+        {
+            std::cerr << "error : unrecognized alloc_type\n";
+        } break;
+    }
+}
+
 Buffer::Buffer(u64 size)
 {
     if (size > 0)

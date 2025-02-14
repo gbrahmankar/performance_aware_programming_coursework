@@ -3,73 +3,7 @@
 namespace PartThree
 {
 
-char const *describeAllocationType(AllocationType allocType)
-{
-    char const *result;
-    switch(allocType)
-    {
-        case AllocTypeNone : 
-            {
-                result = "";
-                break;
-            } 
-        case AllocTypeMalloc : 
-            {
-                result = "malloc";
-                break;
-            } 
-        default : 
-            {
-                result = "UNKNOWN";
-                break;
-            } 
-    }
-
-    return result;
-}
-
-void handleAllocation(const ReadParameters& params, Buffer& buffer)
-{
-    switch(params.m_allocType)
-    {
-        case AllocTypeNone :
-        {
-            buffer = params.m_destinationBuffer;
-        } break;
-        
-        case AllocTypeMalloc :
-        {
-            buffer.allocateBuffer(params.m_destinationBuffer.m_count);
-        } break;
-        
-        default :
-        {
-            std::cerr << "error : unrecognized alloc_type\n";
-        } break;
-    }
-}
-
-void handleDeallocation(const ReadParameters& params, Buffer& buffer)
-{
-    switch(params.m_allocType)
-    {
-        case AllocTypeNone:
-        {
-        } break;
-        
-        case AllocTypeMalloc:
-        {
-            buffer.~Buffer();
-        } break;
-        
-        default:
-        {
-            std::cerr << "error : unrecognized alloc_type\n";
-        } break;
-    }
-}
-
-void readViaFRead(RepetitionTester& tester, ReadParameters& params)
+void readViaFRead(RepetitionTester& tester, Buffer::AllocationParams& params)
 {
     while(tester.isTesting())
     {
@@ -80,7 +14,7 @@ void readViaFRead(RepetitionTester& tester, ReadParameters& params)
         }
 
         Buffer destBuffer;
-        handleAllocation(params, destBuffer);
+        destBuffer.handleAllocation(params);
         
         tester.beginTime();
         size_t result = fread(destBuffer.m_data, destBuffer.m_count, 1, file);
@@ -95,18 +29,18 @@ void readViaFRead(RepetitionTester& tester, ReadParameters& params)
             tester.reportError("fread failed");
         }
 
-        handleDeallocation(params, destBuffer);
+        destBuffer.handleDeallocation(params);
         
         fclose(file);
     }
 }
 
-void writeToAllBytes(RepetitionTester& tester, ReadParameters& params)
+void writeToAllBytes(RepetitionTester& tester, Buffer::AllocationParams& params)
 {
     while(tester.isTesting())
     {
         Buffer destBuffer;
-        handleAllocation(params, destBuffer);
+        destBuffer.handleAllocation(params);
 
         tester.beginTime();
         for(u64 index = 0; index < destBuffer.m_count; ++index)
@@ -117,7 +51,7 @@ void writeToAllBytes(RepetitionTester& tester, ReadParameters& params)
 
         tester.countBytes(destBuffer.m_count);
 
-        handleDeallocation(params, destBuffer);
+        destBuffer.handleDeallocation(params);
     }
 }
 
