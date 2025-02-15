@@ -35,7 +35,7 @@ void readViaFRead(RepetitionTester& tester, Buffer::AllocationParams& params)
     }
 }
 
-void writeToAllBytes(RepetitionTester& tester, Buffer::AllocationParams& params)
+void writeToAllBytesReadOverhead(RepetitionTester& tester, Buffer::AllocationParams& params)
 {
     while(tester.isTesting())
     {

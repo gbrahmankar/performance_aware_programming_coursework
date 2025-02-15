@@ -1,18 +1,16 @@
-#include "../common_utils.h"
 #include "read_overhead_test_main.h"
 #include "read_overhead_tests.h"
-#include "repetition_tester.h"
 
 namespace PartThree
 {
 
-struct TestFunction
+struct TestFunctionReadOverhead
 {
     char const *name;
     ReadOverheadTestFunction func;
 };
 
-std::vector<TestFunction> testFunctions =
+std::vector<TestFunctionReadOverhead> testFunctions =
 {
     {"read_via_fread", readViaFRead}
 };
@@ -45,7 +43,7 @@ void readOverheadTestMain(int argc, char* argv[])
 
     for(u32 testFuncIndex = 0; testFuncIndex < testFunctions.size(); ++testFuncIndex)
     {
-        TestFunction& testFunc = testFunctions[testFuncIndex];
+        TestFunctionReadOverhead& testFunc = testFunctions[testFuncIndex];
 
         for(u32 allocType = 0; allocType < Buffer::AllocTypeCount; ++allocType)
         {

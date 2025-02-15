@@ -208,7 +208,7 @@ struct Buffer
 
 	struct AllocationParams
 	{
-		AllocationType m_allocType;
+		AllocationType m_allocType = AllocTypeNone;
 	    Buffer* m_destinationBuffer;
 		char const *m_fileName;
 	};
