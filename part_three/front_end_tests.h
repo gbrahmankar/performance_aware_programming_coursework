@@ -8,12 +8,25 @@ namespace PartThree
 
 using FrontEndTestFunction = std::function<void(RepetitionTester& tester, Buffer::AllocationParams& params)>;
 
+
+#if _WIN32
+/*
+in git_bash :
+> nasm.exe -f win64 -g part_three/front_end_tests.asm -o fet_win64.obj
+
+in vs_dev_cmd :
+> lib.exe fet_win64.obj /out:performance_aware_programming_vsproj\fet_win64.lib
+*/
+extern "C" void _movAllBytesAsm(u64 count, u8 *data);
+extern "C" void _nopAllBytesAsm(u64 count);
+extern "C" void _cmpAllBytesAsm(u64 count);
+extern "C" void _decAllBytesAsm(u64 count);
+#pragma comment (lib, "fet_win64")
+#elif
 extern "C" void movAllBytesAsm(u64 count, u8 *data);
 extern "C" void nopAllBytesAsm(u64 count);
 extern "C" void cmpAllBytesAsm(u64 count);
 extern "C" void decAllBytesAsm(u64 count);
-#if _WIN32
-#pragma comment (lib, "front_end_test_assembly")
 #endif
 
 extern void movAllBytes(RepetitionTester& tester, Buffer::AllocationParams& params);

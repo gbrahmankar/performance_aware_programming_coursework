@@ -12,11 +12,11 @@ struct TestFunctionFrontEnd
 
 std::vector<TestFunctionFrontEnd> testFunctionsFrontEnd =
 {
-    {"write_to_all_bytes", writeToAllBytesFrontEnd},
+    // {"write_to_all_bytes", writeToAllBytesFrontEnd},
     {"mov_all_bytes", movAllBytes},
-    {"nop_all_bytes", nopAllBytes},
-    {"cmp_all_bytes", cmpAllBytes},
-    {"dec_all_bytes", decAllBytes}
+    // {"nop_all_bytes", nopAllBytes},
+    // {"cmp_all_bytes", cmpAllBytes},
+    // {"dec_all_bytes", decAllBytes}
 };
 
 void frontEndTestMain(int argc, char* argv[])

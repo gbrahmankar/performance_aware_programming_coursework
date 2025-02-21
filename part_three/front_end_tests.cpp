@@ -31,7 +31,7 @@ void movAllBytes(RepetitionTester& tester, Buffer::AllocationParams& params)
         destBuffer.handleAllocation(params);
 
         tester.beginTime();
-        movAllBytesAsm(destBuffer.m_count, destBuffer.m_data);
+        _movAllBytesAsm(destBuffer.m_count, destBuffer.m_data);
         tester.endTime();
 
         tester.countBytes(destBuffer.m_count);
@@ -48,7 +48,7 @@ void nopAllBytes(RepetitionTester& tester, Buffer::AllocationParams& params)
         destBuffer.handleAllocation(params);
 
         tester.beginTime();
-        nopAllBytesAsm(destBuffer.m_count);
+        _nopAllBytesAsm(destBuffer.m_count);
         tester.endTime();
 
         tester.countBytes(destBuffer.m_count);
@@ -65,7 +65,7 @@ void cmpAllBytes(RepetitionTester& tester, Buffer::AllocationParams& params)
         destBuffer.handleAllocation(params);
 
         tester.beginTime();
-        cmpAllBytesAsm(destBuffer.m_count);
+        _cmpAllBytesAsm(destBuffer.m_count);
         tester.endTime();
 
         tester.countBytes(destBuffer.m_count);
@@ -82,7 +82,7 @@ void decAllBytes(RepetitionTester& tester, Buffer::AllocationParams& params)
         destBuffer.handleAllocation(params);
 
         tester.beginTime();
-        decAllBytesAsm(destBuffer.m_count);
+        _decAllBytesAsm(destBuffer.m_count);
         tester.endTime();
 
         tester.countBytes(destBuffer.m_count);
