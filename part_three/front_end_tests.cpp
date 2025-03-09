@@ -31,7 +31,11 @@ void movAllBytes(RepetitionTester& tester, Buffer::AllocationParams& params)
         destBuffer.handleAllocation(params);
 
         tester.beginTime();
+#if _WIN32
         _movAllBytesAsm(destBuffer.m_count, destBuffer.m_data);
+#else
+        movAllBytesAsm(destBuffer.m_count, destBuffer.m_data);
+#endif
         tester.endTime();
 
         tester.countBytes(destBuffer.m_count);
@@ -48,7 +52,11 @@ void nopAllBytes(RepetitionTester& tester, Buffer::AllocationParams& params)
         destBuffer.handleAllocation(params);
 
         tester.beginTime();
+#if _WIN32
         _nopAllBytesAsm(destBuffer.m_count);
+#else
+        nopAllBytesAsm(destBuffer.m_count);
+#endif
         tester.endTime();
 
         tester.countBytes(destBuffer.m_count);
@@ -65,7 +73,11 @@ void cmpAllBytes(RepetitionTester& tester, Buffer::AllocationParams& params)
         destBuffer.handleAllocation(params);
 
         tester.beginTime();
+#if _WIN32
         _cmpAllBytesAsm(destBuffer.m_count);
+#else
+        cmpAllBytesAsm(destBuffer.m_count);
+#endif
         tester.endTime();
 
         tester.countBytes(destBuffer.m_count);
@@ -81,8 +93,12 @@ void decAllBytes(RepetitionTester& tester, Buffer::AllocationParams& params)
         Buffer destBuffer;
         destBuffer.handleAllocation(params);
 
-        tester.beginTime();
+ #if _WIN32
         _decAllBytesAsm(destBuffer.m_count);
+#else
+        decAllBytesAsm(destBuffer.m_count);
+#endif       
+        tester.beginTime();
         tester.endTime();
 
         tester.countBytes(destBuffer.m_count);

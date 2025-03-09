@@ -30,7 +30,7 @@ long double maxF128 = LDBL_MAX;
 // platform_helpers_impl. start.
 OSPlatform g_globalOSPlatform;
 
-inline u64 readCPUTimer(void)
+u64 readCPUTimer(void)
 {
 	return __rdtsc();
 }
@@ -85,7 +85,12 @@ u64 readOSTimer(void)
 
 void* osAllocate(size_t byteCount)
 {
-    void *result = mmap(0, byteCount, PROT_READ|PROT_WRITE, MAP_ANONYMOUS, 0, 0);
+    void *result = mmap(NULL, byteCount, PROT_READ|PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+    if (result == MAP_FAILED) 
+    {
+        assert("mmap failed");
+    }
+
     return result;
 }
 

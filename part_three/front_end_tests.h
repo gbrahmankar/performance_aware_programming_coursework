@@ -22,7 +22,10 @@ extern "C" void _nopAllBytesAsm(u64 count);
 extern "C" void _cmpAllBytesAsm(u64 count);
 extern "C" void _decAllBytesAsm(u64 count);
 #pragma comment (lib, "fet_win64")
-#elif
+#else
+/*
+> nasm.exe -f macho64 -g part_three/front_end_tests.asm -o fet_macho64.lib
+*/
 extern "C" void movAllBytesAsm(u64 count, u8 *data);
 extern "C" void nopAllBytesAsm(u64 count);
 extern "C" void cmpAllBytesAsm(u64 count);
