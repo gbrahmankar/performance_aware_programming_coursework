@@ -1,0 +1,34 @@
+{
+	"folders":
+	[
+		{
+			"path": "."
+		},
+		{
+			"path": "C:\\Users\\gbrahmankar\\projects\\other\\odin\\Odin\\core"
+		},
+		{
+			"path": "C:\\Users\\gbrahmankar\\projects\\other\\odin\\Odin\\vendor"
+		}
+	],
+	"build_systems":
+	[
+		{
+			"file_regex": "^(.+)\\(([0-9]+):([0-9]+)\\) (.+)$",
+
+			"name": "pap_odin",
+			"shell_cmd": "odin run .",
+		}
+	],
+	"settings":
+	{
+		"auto_complete": false,
+		"LSP":
+		{
+			"odin":
+			{
+				"enabled": true,
+			},
+		},
+	}
+}
