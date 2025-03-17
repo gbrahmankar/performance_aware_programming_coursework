@@ -16,4 +16,6 @@ main :: proc() {
     fmt.printf("secs=%f\n", seconds_from_cpu_time(cast(u64)get_invariant_tsc(), tsc_freq))
     fmt.printf("page_size=%d\n", get_page_size())
     fmt.printf("pid=%d\n", get_pid())
+    fmt.printf("rdtsc=%d\n", read_tsc())
+    fmt.printf("tsc_freq=%d\n", tsc_frequency())
 }

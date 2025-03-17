@@ -29,3 +29,11 @@ get_page_size :: proc() -> (int) {
 get_pid :: proc() -> (u32) {
     return windows.GetCurrentProcessId()  
 }
+
+read_tsc :: proc() -> (u64) {
+    return time.read_cycle_counter()     
+}
+
+tsc_frequency :: proc() -> (u64, bool) {
+    return time.tsc_frequency()     
+}
