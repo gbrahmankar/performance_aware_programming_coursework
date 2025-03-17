@@ -2,6 +2,7 @@ package pap_common
 
 import "base:intrinsics"
 import "core:os"
+import "core:sys/windows"
 import "core:time"
 
 get_invariant_tsc_freq :: proc() -> (u64, bool) {
@@ -23,4 +24,8 @@ seconds_from_cpu_time :: proc(cpu_time: u64, cpu_timer_freq: u64) -> (f64) {
 
 get_page_size :: proc() -> (int) {
     return os.get_page_size()
+}
+
+get_pid :: proc() -> (u32) {
+    return windows.GetCurrentProcessId()  
 }

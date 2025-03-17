@@ -8,10 +8,10 @@
 	"buffers":
 	[
 		{
-			"file": "pap_common/os_platform.odin",
+			"file": "main.odin",
 			"settings":
 			{
-				"buffer_size": 964,
+				"buffer_size": 496,
 				"line_ending": "Windows"
 			},
 			"undo_stack":
@@ -79,8 +79,7 @@
 	},
 	"expanded_folders":
 	[
-		"/C/Users/gbrahmankar/projects/performance_aware_programming_coursework/pap_odin",
-		"/C/Users/gbrahmankar/projects/performance_aware_programming_coursework/pap_odin/pap_common"
+		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin"
 	],
 	"file_history":
 	[
@@ -133,26 +132,25 @@
 			[
 				{
 					"buffer": 0,
-					"file": "pap_common/os_platform.odin",
+					"file": "main.odin",
 					"selected": true,
-					"semi_transient": true,
+					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 964,
+						"buffer_size": 496,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								141,
-								141
+								496,
+								496
 							]
 						],
 						"settings":
 						{
-							"lsp_uri": "file:///C:/Users/gbrahmankar/projects/performance_aware_programming_coursework/pap_odin/pap_common/os_platform.odin",
-							"syntax": "Packages/Odin/Odin.sublime-syntax",
+							"syntax": "Packages/Text/Plain text.tmLanguage",
 							"tab_size": 4,
 							"translate_tabs_to_spaces": true
 						},

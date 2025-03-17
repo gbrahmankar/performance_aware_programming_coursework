@@ -11,7 +11,7 @@ main :: proc() {
     if is_invariant_tsc_present == true {
         fmt.printf("cpu_freq=%d\n", tsc_freq)
     }
-
+    
     fmt.printf("cpu_time=%d\n", get_invariant_tsc())
     fmt.printf("secs=%f\n", seconds_from_cpu_time(cast(u64)get_invariant_tsc(), tsc_freq))
     fmt.printf("page_size=%d\n", get_page_size())
