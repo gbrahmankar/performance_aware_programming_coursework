@@ -10,9 +10,11 @@ main :: proc() {
 
     cpu_freq, has_tsc := get_tsc_frequency()
 
-    tsc0 := read_tsc()
-    sleep_for_duration(3.14)
-    tsc1 := read_tsc()
-
-    fmt.println(compute_seconds_from_cpu_time(tsc1 - tsc0, cpu_freq))
+    all_bytes := make([]byte, 4096 * 1024)
+    pf0 := read_page_faults()
+    for &a_byte in all_bytes[:] {
+       a_byte = cast(byte)1 
+    }
+    pf1 := read_page_faults()
+    fmt.println(pf1-pf0)
 }

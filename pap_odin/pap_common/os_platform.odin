@@ -13,6 +13,13 @@ get_pid :: proc() -> (u32) {
     return windows.GetCurrentProcessId()  
 }
 
+read_page_faults :: proc() -> (u32) {
+    memory_counters: PROCESS_MEMORY_COUNTERS_EX
+    memory_counters.cb = size_of(memory_counters)
+    GetProcessMemoryInfoW(windows.GetCurrentProcess(), cast(^PROCESS_MEMORY_COUNTERS_EX)&memory_counters, size_of(memory_counters))
+    return memory_counters.PageFaultCount
+}
+
 // timer helpers
 read_tsc :: proc() -> (u64) {
     return time.read_cycle_counter()     
