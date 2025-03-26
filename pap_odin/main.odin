@@ -1,20 +1,16 @@
 package pap_odin
 
 import "core:fmt"
+import "core:mem/virtual"
 import "core:time"
 
 import "pap_common"
+import "part_three"
 
 main :: proc() {
-    using pap_common 
+    using part_three
 
-    cpu_freq, has_tsc := get_tsc_frequency()
-
-    all_bytes := make([]byte, 4096 * 1024)
-    pf0 := read_page_faults()
-    for &a_byte in all_bytes[:] {
-       a_byte = cast(byte)1 
-    }
-    pf1 := read_page_faults()
-    fmt.println(pf1-pf0)
+    nop_one_three_bytes_asm(5)
+    nop_three_one_byte_asm(5)
+    nop_nine_one_byte_asm(5)
 }

@@ -17,7 +17,7 @@
 			"file_regex": "^(.+)\\(([0-9]+):([0-9]+)\\) (.+)$",
 
 			"name": "pap_odin",
-			"shell_cmd": "odin run .",
+			"shell_cmd": "odin run . -debug",
 		}
 	],
 	"settings":
