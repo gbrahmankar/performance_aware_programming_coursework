@@ -3,8 +3,7 @@
 *debug*
 *example*
 *vsproj*
-*.asm*
 *executable*
-*.o*
+*.o
 *.json*
 *.f64*
