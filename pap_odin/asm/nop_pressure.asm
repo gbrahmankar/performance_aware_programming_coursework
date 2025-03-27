@@ -11,6 +11,7 @@ nop_one_three_bytes:
     xor rax, rax
 .loop:
     db 0x0f, 0x1f, 0x00
+    mov bl, [rdx + rax]
     inc rax
     cmp rax, rcx
     jb .loop
@@ -30,15 +31,6 @@ nop_three_one_byte:
 nop_nine_one_byte:
     xor rax, rax
 .loop:
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
     nop
     nop
     nop

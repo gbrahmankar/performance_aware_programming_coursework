@@ -5,9 +5,9 @@ foreign import nop_pressure "../asm/nop_pressure.lib"
 
 @(default_calling_convention="c")
 foreign nop_pressure {
-    nop_one_three_bytes :: proc(count: u64) -> uint ---
-    nop_three_one_byte :: proc(count: u64) -> uint --- 
-    nop_nine_one_byte :: proc(count: u64) -> uint --- 
+    nop_one_three_bytes :: proc(count: u64, data: ^u8) -> u64 ---
+    nop_three_one_byte :: proc(count: u64, data: ^u8) -> u64 --- 
+    nop_nine_one_byte :: proc(count: u64, data: ^u8) -> u64 --- 
 }
 
 nop_one_three_bytes_asm :: nop_one_three_bytes
