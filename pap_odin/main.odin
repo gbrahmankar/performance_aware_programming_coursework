@@ -12,14 +12,20 @@ main :: proc() {
     using pap_common 
 
     cpu_freq, has_tsc := get_tsc_frequency()
-    number_of_iterations: u64 = 100 
+    number_of_iterations: u64 = 10000000000 
 
     all_bytes, err := virtual.reserve_and_commit(cast(uint)number_of_iterations)
     for &byte_view, i in all_bytes[:] {
-        byte_view = cast(u8)i    
+        byte_view = cast(u8)(i % 5)  
     }
     data: ^u8 = cast(^u8)&all_bytes[0]
 
+    tsc6 := read_tsc()
+    try_byte_data_based_branching_asm(number_of_iterations, data)
+    tsc7 := read_tsc()
+    fmt.println(compute_seconds_from_cpu_time(tsc7-tsc6, cpu_freq))
+
+    /* ------------------------nop_pressure---------------------------------
     tsc0 := read_tsc()
     nop_one_three_bytes_asm(number_of_iterations, data)
     tsc1 := read_tsc()
@@ -34,9 +40,5 @@ main :: proc() {
     nop_nine_one_byte_asm(number_of_iterations, data)
     tsc5 := read_tsc()
     fmt.println(compute_seconds_from_cpu_time(tsc5-tsc4, cpu_freq))
-
-    tsc6 := read_tsc()
-    try_byte_data_based_branching_asm(number_of_iterations, data)
-    tsc7 := read_tsc()
-    fmt.println(compute_seconds_from_cpu_time(tsc7-tsc6, cpu_freq))
+    ------------------------------------------------------------------------*/
 }
