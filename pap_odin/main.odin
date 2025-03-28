@@ -34,4 +34,9 @@ main :: proc() {
     nop_nine_one_byte_asm(number_of_iterations, data)
     tsc5 := read_tsc()
     fmt.println(compute_seconds_from_cpu_time(tsc5-tsc4, cpu_freq))
+
+    tsc6 := read_tsc()
+    try_byte_data_based_branching_asm(number_of_iterations, data)
+    tsc7 := read_tsc()
+    fmt.println(compute_seconds_from_cpu_time(tsc7-tsc6, cpu_freq))
 }
