@@ -12,19 +12,71 @@ main :: proc() {
     using pap_common 
 
     cpu_freq, has_tsc := get_tsc_frequency()
-    number_of_iterations: u64 = 10000000000 
+    number_of_iterations: u64 = 1 * 1024 * 1024 * 1024 
 
     all_bytes, err := virtual.reserve_and_commit(cast(uint)number_of_iterations)
-    for &byte_view, i in all_bytes[:] {
-        byte_view = cast(u8)(i % 5)  
-    }
     data: ^u8 = cast(^u8)&all_bytes[0]
 
-    tsc6 := read_tsc()
-    try_byte_data_based_branching_asm(number_of_iterations, data)
-    tsc7 := read_tsc()
-    fmt.println(compute_seconds_from_cpu_time(tsc7-tsc6, cpu_freq))
+    /* ------------------------bp_pressure----------------------------------
+    lenovo_loq_results :
+    always_taken = 0.49508963746081219
+    never_taken = 0.26138778113452477
+    every_2 =  0.6604545476145216
+    every_3 =  0.4305665305168544
+    every_4 =  0.68952228243110858
+    os_random =  3.1684721444964636
+    crt_random =  3.1744982892599047
+    ------------------------------------------------------------------------*/
 
+    fill_with_branch_pattern(.Always_Taken, all_bytes)
+    data = cast(^u8)&all_bytes[0]
+    tsc0 := read_tsc()
+    try_byte_data_based_branching_asm(number_of_iterations, data)
+    tsc1 := read_tsc()
+    fmt.println("always_taken =", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+
+    fill_with_branch_pattern(.Never_Taken, all_bytes)
+    data = cast(^u8)&all_bytes[0]
+    tsc0 = read_tsc()
+    try_byte_data_based_branching_asm(number_of_iterations, data)
+    tsc1 = read_tsc()
+    fmt.println("never_taken =", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+
+    fill_with_branch_pattern(.Every_2, all_bytes)
+    data = cast(^u8)&all_bytes[0]
+    tsc0 = read_tsc()
+    try_byte_data_based_branching_asm(number_of_iterations, data)
+    tsc1 = read_tsc()
+    fmt.println("every_2 = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+
+    fill_with_branch_pattern(.Every_3, all_bytes)
+    data = cast(^u8)&all_bytes[0]
+    tsc0 = read_tsc()
+    try_byte_data_based_branching_asm(number_of_iterations, data)
+    tsc1 = read_tsc()
+    fmt.println("every_3 = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+
+    fill_with_branch_pattern(.Every_4, all_bytes)
+    data = cast(^u8)&all_bytes[0]
+    tsc0 = read_tsc()
+    try_byte_data_based_branching_asm(number_of_iterations, data)
+    tsc1 = read_tsc()
+    fmt.println("every_4 = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+
+    fill_with_branch_pattern(.Os_Random, all_bytes)
+    data = cast(^u8)&all_bytes[0]
+    tsc0 = read_tsc()
+    try_byte_data_based_branching_asm(number_of_iterations, data)
+    tsc1 = read_tsc()
+    fmt.println("os_random = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+
+    fill_with_branch_pattern(.Crt_Random, all_bytes)
+    data = cast(^u8)&all_bytes[0]
+    tsc0 = read_tsc()
+    try_byte_data_based_branching_asm(number_of_iterations, data)
+    tsc1 = read_tsc()
+    fmt.println("crt_random = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+ 
     /* ------------------------nop_pressure---------------------------------
     tsc0 := read_tsc()
     nop_one_three_bytes_asm(number_of_iterations, data)

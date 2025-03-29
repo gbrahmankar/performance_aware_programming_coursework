@@ -7,33 +7,17 @@ section .text
 
 try_byte_data_based_branching :
     xor rax, rax
-
-; execute this if the byte is 1
-.loop0 :
-    mov bl, [rdx + rax] ; load the byte in
-
-    cmp bl, 0
-    je .loop1 ; penalize here
-
+.loop:
+    mov bl, byte [rdx + rax]
     inc rax
+    test bl, 1
+    jnz .skip
+    nop
+.skip:
     cmp rax, rcx
-    jb .loop0
-
-; we are done, just jump out !
-    jmp .loop2
-
-; execute this if the byte is 0, 3 one_byte nops is the penalty
-.loop1 :
-    nop
-    nop
-    nop
-    
-    inc rax
-    cmp rax, rcx
-    jb .loop0
-
-.loop2 :
+    jb .loop
     ret
+    
 
 
 
