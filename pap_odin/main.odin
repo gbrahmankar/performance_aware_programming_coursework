@@ -1,4 +1,4 @@
-    package pap_odin
+package pap_odin
 
 import "core:fmt"
 import "core:mem/virtual"
@@ -17,9 +17,17 @@ main :: proc() {
     all_bytes, err := virtual.reserve_and_commit(cast(uint)number_of_iterations)
     data: ^u8 = cast(^u8)&all_bytes[0]
 
-    /* --------------------------code_alignment_tests-------------------------
-    ------------------------------------------------------------------------*/
+    tsc0 := read_tsc()
+    rat_add_asm(number_of_iterations) 
+    tsc1 := read_tsc()
+    fmt.println("rat_add = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
 
+    tsc0 = read_tsc()
+    rat_mov_add_asm(number_of_iterations) 
+    tsc1 = read_tsc()
+    fmt.println("rat_mov_add = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+
+    /* --------------------------code_alignment_tests-------------------------
     tsc0 := read_tsc()
     aligned_at_64_bytes_asm(number_of_iterations, data) 
     tsc1 := read_tsc()
@@ -48,6 +56,7 @@ main :: proc() {
     offset_by_63_nops_asm(number_of_iterations, data) 
     tsc1 = read_tsc()
     fmt.println("offset_by_63_nops_asm = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+    ------------------------------------------------------------------------*/
 
     /* --------------------------bp_pressure----------------------------------
     lenovo_loq_results :
