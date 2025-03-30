@@ -1,4 +1,4 @@
-package pap_odin
+    package pap_odin
 
 import "core:fmt"
 import "core:mem/virtual"
@@ -17,7 +17,39 @@ main :: proc() {
     all_bytes, err := virtual.reserve_and_commit(cast(uint)number_of_iterations)
     data: ^u8 = cast(^u8)&all_bytes[0]
 
-    /* ------------------------bp_pressure----------------------------------
+    /* --------------------------code_alignment_tests-------------------------
+    ------------------------------------------------------------------------*/
+
+    tsc0 := read_tsc()
+    aligned_at_64_bytes_asm(number_of_iterations, data) 
+    tsc1 := read_tsc()
+    fmt.println("aligned_at_64_bytes_asm = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+
+    data = cast(^u8)&all_bytes[0]
+    tsc0 = read_tsc()
+    offset_by_1_nop_asm(number_of_iterations, data) 
+    tsc1 = read_tsc()
+    fmt.println("offset_by_1_nop_asm = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+
+    data = cast(^u8)&all_bytes[0]
+    tsc0 = read_tsc()
+    offset_by_15_nops_asm(number_of_iterations, data) 
+    tsc1 = read_tsc()
+    fmt.println("offset_by_15_nops_asm = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+
+    data = cast(^u8)&all_bytes[0]
+    tsc0 = read_tsc()
+    offset_by_31_nops_asm(number_of_iterations, data) 
+    tsc1 = read_tsc()
+    fmt.println("offset_by_31_nops_asm = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+
+    data = cast(^u8)&all_bytes[0]
+    tsc0 = read_tsc()
+    offset_by_63_nops_asm(number_of_iterations, data) 
+    tsc1 = read_tsc()
+    fmt.println("offset_by_63_nops_asm = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+
+    /* --------------------------bp_pressure----------------------------------
     lenovo_loq_results :
     always_taken = 0.49508963746081219
     never_taken = 0.26138778113452477
@@ -26,7 +58,7 @@ main :: proc() {
     every_4 =  0.68952228243110858
     os_random =  3.1684721444964636
     crt_random =  3.1744982892599047
-    ------------------------------------------------------------------------*/
+    --------------------------------------------------------------------------
 
     fill_with_branch_pattern(.Always_Taken, all_bytes)
     data = cast(^u8)&all_bytes[0]
@@ -76,8 +108,9 @@ main :: proc() {
     try_byte_data_based_branching_asm(number_of_iterations, data)
     tsc1 = read_tsc()
     fmt.println("crt_random = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+    ------------------------------------------------------------------------*/
  
-    /* ------------------------nop_pressure---------------------------------
+    /* --------------------------nop_pressure---------------------------------
     tsc0 := read_tsc()
     nop_one_three_bytes_asm(number_of_iterations, data)
     tsc1 := read_tsc()
