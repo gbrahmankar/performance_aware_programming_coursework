@@ -17,6 +17,34 @@ main :: proc() {
     all_bytes, err := virtual.reserve_and_commit(cast(uint)number_of_iterations)
     data: ^u8 = cast(^u8)&all_bytes[0]
 
+    /* --------------------------exec_ports-----------------------------------
+    ------------------------------------------------------------------------*/
+    tsc0 := read_tsc()
+    one_load_per_loop_asm(number_of_iterations, data) 
+    tsc1 := read_tsc()
+    fmt.println("one_load_per_loop = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+
+    tsc0 = read_tsc()
+    two_loads_per_loop_asm(number_of_iterations, data) 
+    tsc1 = read_tsc()
+    fmt.println("two_loads_per_loop = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+
+    tsc0 = read_tsc()
+    three_loads_per_loop_asm(number_of_iterations, data) 
+    tsc1 = read_tsc()
+    fmt.println("three_loads_per_loop = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+
+    tsc0 = read_tsc()
+    four_loads_per_loop_asm(number_of_iterations, data) 
+    tsc1 = read_tsc()
+    fmt.println("four_loads_per_loop = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+
+    tsc0 = read_tsc()
+    five_loads_per_loop_asm(number_of_iterations, data) 
+    tsc1 = read_tsc()
+    fmt.println("five_loads_per_loop = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+
+    /* ------------------------rat_dependency_analysis------------------------
     tsc0 := read_tsc()
     rat_add_asm(number_of_iterations) 
     tsc1 := read_tsc()
@@ -26,6 +54,7 @@ main :: proc() {
     rat_mov_add_asm(number_of_iterations) 
     tsc1 = read_tsc()
     fmt.println("rat_mov_add = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+    ------------------------------------------------------------------------*/
 
     /* --------------------------code_alignment_tests-------------------------
     tsc0 := read_tsc()
