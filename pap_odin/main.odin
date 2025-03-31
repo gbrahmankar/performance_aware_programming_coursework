@@ -44,6 +44,31 @@ main :: proc() {
     tsc1 = read_tsc()
     fmt.println("five_loads_per_loop = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
 
+    tsc0 = read_tsc()
+    one_store_per_loop_asm(number_of_iterations, data) 
+    tsc1 = read_tsc()
+    fmt.println("one_store_per_loop = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+
+    tsc0 = read_tsc()
+    two_stores_per_loop_asm(number_of_iterations, data) 
+    tsc1 = read_tsc()
+    fmt.println("two_stores_per_loop = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+
+    tsc0 = read_tsc()
+    three_stores_per_loop_asm(number_of_iterations, data) 
+    tsc1 = read_tsc()
+    fmt.println("three_stores_per_loop = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+
+    tsc0 = read_tsc()
+    four_stores_per_loop_asm(number_of_iterations, data) 
+    tsc1 = read_tsc()
+    fmt.println("four_stores_per_loop = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+
+    tsc0 = read_tsc()
+    five_stores_per_loop_asm(number_of_iterations, data) 
+    tsc1 = read_tsc()
+    fmt.println("five_stores_per_loop = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+
     /* ------------------------rat_dependency_analysis------------------------
     tsc0 := read_tsc()
     rat_add_asm(number_of_iterations) 
