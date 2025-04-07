@@ -24,6 +24,8 @@ main :: proc() {
     data_rdx: ^u8 = data
     byte_service_area_mask_r8: u64 = 1
 
+    cache_size_bw_test_asm(byte_count_rcx, data_rdx, byte_service_area_mask_r8)
+
     /* --------------------------chapter14_simd-----------------------------------
     tsc0 := read_tsc()
     load_four_bytes_three_times_per_loop_asm(number_of_iterations, data) 
