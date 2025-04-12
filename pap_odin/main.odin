@@ -32,7 +32,11 @@ main :: proc() {
         tsc0 := read_tsc()
         cache_size_bw_test_asm(total_byte_count, data, byte_service_area_mask)
         tsc1 := read_tsc()
-        fmt.println("service_area =", mask_power, byte_service_area_mask+1, ", ts =", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+        time_to_load_from_service_area := compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq)
+        bytes_per_second := cast(f64)total_byte_count / time_to_load_from_service_area 
+        fmt.println("service_area =", mask_power, 
+                    ", ts =", time_to_load_from_service_area, 
+                    ", bps =", bytes_per_second)
     }
 
     /* --------------------------chapter14_simd-----------------------------------
