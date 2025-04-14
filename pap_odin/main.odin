@@ -28,6 +28,7 @@ main :: proc() {
     for block_load_repeat_count in 120..=250 { 
         real_service_area: u64 = LOAD_BLOCK_SIZE * cast(u64)block_load_repeat_count
         outer_loop_count: u64 = ILLUSORY_SERVICE_AREA / real_service_area
+        cropped_off_illusory_area: u64 = ILLUSORY_SERVICE_AREA % real_service_area
         actual_illusory_service_area: u64 = outer_loop_count * real_service_area
 
         tsc0 := read_tsc()
@@ -35,11 +36,13 @@ main :: proc() {
         tsc1 := read_tsc()
         time_to_load_from_service_area := compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq)
         bytes_per_second := cast(f64)actual_illusory_service_area / time_to_load_from_service_area 
+
         fmt.println("service_area =", real_service_area, 
                     ", ts =", time_to_load_from_service_area, 
+                    ", bps =", bytes_per_second,
                     ", inner_loop_count =", block_load_repeat_count, 
                     ", outer_loop_count =", outer_loop_count, 
-                    ", bps =", bytes_per_second)
+                    ", cropped_off_total_area=", cropped_off_illusory_area)
     }
 
     /* --------------------------chapter15_cache_and_bw_tests-----------------------------------
