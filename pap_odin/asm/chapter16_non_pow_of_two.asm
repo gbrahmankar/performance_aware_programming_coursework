@@ -25,7 +25,7 @@ align 64
 
         add rax, 0x100
 
-        sub r9, 0x100
+        dec r9
         jnz .inner_loop
 
     dec rcx

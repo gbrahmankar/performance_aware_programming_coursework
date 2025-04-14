@@ -23,14 +23,28 @@ main :: proc() {
     /* --------------------------chapter16_non_pow_of_two_cache_bw_tests------------------------
     ------------------------------------------------------------------------------------------*/
 
-    outer: u64 = 1
-    inner: u64 = 256
-    non_pow_of_two_cache_bw_test_asm(outer, data, inner)   
+    LOAD_BLOCK_SIZE :: 256
+    ILLUSORY_SERVICE_AREA :: 1 * 1024 * 1024 * 1024
+    for block_load_repeat_count in 120..=250 { 
+        real_service_area: u64 = LOAD_BLOCK_SIZE * cast(u64)block_load_repeat_count
+        outer_loop_count: u64 = ILLUSORY_SERVICE_AREA / real_service_area
+        actual_illusory_service_area: u64 = outer_loop_count * real_service_area
+
+        tsc0 := read_tsc()
+        non_pow_of_two_cache_bw_test_asm(outer_loop_count, data, cast(u64)block_load_repeat_count)   
+        tsc1 := read_tsc()
+        time_to_load_from_service_area := compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq)
+        bytes_per_second := cast(f64)actual_illusory_service_area / time_to_load_from_service_area 
+        fmt.println("service_area =", real_service_area, 
+                    ", ts =", time_to_load_from_service_area, 
+                    ", inner_loop_count =", block_load_repeat_count, 
+                    ", outer_loop_count =", outer_loop_count, 
+                    ", bps =", bytes_per_second)
+    }
 
     /* --------------------------chapter15_cache_and_bw_tests-----------------------------------
     start_power: u64 = 10
     end_power: u64 = 30
-
     for mask_power in start_power..=end_power {
         byte_service_area_mask: u64 = cast(u64)(1) << mask_power
         byte_service_area_mask -= 1
