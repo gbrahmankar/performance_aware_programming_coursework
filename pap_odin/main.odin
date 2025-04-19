@@ -8,13 +8,16 @@ import "pap_common"
 import "part_three"
 
 main :: proc() {
-    using part_three
+        using part_three
     using pap_common 
 
     cpu_freq, has_tsc := get_tsc_frequency()
 
-    total_byte_count: u64 = 1 * 1024 * 1024 * 1024 
-    all_bytes, err := virtual.reserve_and_commit(cast(uint)total_byte_count)
+    total_byte_count: u64 = 1 * 1024 * 1024 * 1024
+    byte_padding: u64 = 256
+    total_byte_count_with_padding: u64 = total_byte_count + byte_padding 
+
+    all_bytes, err := virtual.reserve_and_commit(cast(uint)total_byte_count_with_padding)
     for &byte_view, i in all_bytes {
         byte_view = cast(u8)i
     }
@@ -27,9 +30,40 @@ main :: proc() {
     => 8 * 64 = there are 512_bytes in a cache_set.
     32kb/number_of_cache_sets = 512.
     => number_of_cache_sets = 64 in my pc.
+
+    if we unalign our memory_requests, we potentially incur 2 type of penalties :
+    a) more cache_lines have to move through the memory_subsystem to satisfy the request.
+    b) the loading/combining units have to do more work when the cache_lines
+       arrive in the core. they have to combine potentially multiple cache_lines to 
+       fill up the register involved in the memory_request.
     ------------------------------------------------------------------------------------------*/
 
-    load_penalty_test_asm(total_byte_count, data, 1)
+    LOAD_BLOCK_SIZE :: 256
+    ILLUSORY_SERVICE_AREA :: 1 * 1024 * 1024 * 1024
+    for block_load_repeat_count in 120..=250 {
+        real_service_area: u64 = LOAD_BLOCK_SIZE * cast(u64)block_load_repeat_count
+        outer_loop_count: u64 = ILLUSORY_SERVICE_AREA / real_service_area
+        cropped_off_illusory_area: u64 = ILLUSORY_SERVICE_AREA % real_service_area
+        actual_illusory_service_area: u64 = outer_loop_count * real_service_area
+
+        fmt.println("service_area =", real_service_area, 
+            ", inner_loop_count =", block_load_repeat_count, 
+            ", outer_loop_count =", outer_loop_count, 
+            ", cropped_off_total_area =", cropped_off_illusory_area, ":")
+
+        for unaligned_offset in 0..=10 {
+            data: ^u8 = cast(^u8)&all_bytes[unaligned_offset]
+            tsc0 := read_tsc()
+            load_penalty_test_asm(outer_loop_count, data, cast(u64)block_load_repeat_count)   
+            tsc1 := read_tsc()
+            time_to_load_from_service_area := compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq)
+            bytes_per_second := cast(f64)actual_illusory_service_area / time_to_load_from_service_area 
+
+            fmt.println("unaligned_offset =", unaligned_offset, 
+                        "ts =", time_to_load_from_service_area, 
+                        ", bps =", bytes_per_second)
+        }
+    }
 
     /* --------------------------chapter16_non_pow_of_two_cache_bw_tests------------------------
     LOAD_BLOCK_SIZE :: 256
@@ -51,7 +85,7 @@ main :: proc() {
                     ", bps =", bytes_per_second,
                     ", inner_loop_count =", block_load_repeat_count, 
                     ", outer_loop_count =", outer_loop_count, 
-                    ", cropped_off_total_area=", cropped_off_illusory_area)
+                    ", cropped_off_total_area =", cropped_off_illusory_area)
     }
     ------------------------------------------------------------------------------------------*/
 
