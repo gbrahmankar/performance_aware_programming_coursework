@@ -20,7 +20,6 @@ main :: proc() {
     }
     data: ^u8 = cast(^u8)&all_bytes[0]
 
-
     /* --------------------------chapter18_unaligned_load_penalties-----------------------------
     modern x64_cache_structure -> my lenovo_loq is a 8_way set_associative, 32kb cache =>
     [---64_bytes---] : this is a cache_line (this is a standard for modern x64).
@@ -29,6 +28,8 @@ main :: proc() {
     32kb/number_of_cache_sets = 512.
     => number_of_cache_sets = 64 in my pc.
     ------------------------------------------------------------------------------------------*/
+
+    load_penalty_test_asm(total_byte_count, data, 1)
 
     /* --------------------------chapter16_non_pow_of_two_cache_bw_tests------------------------
     LOAD_BLOCK_SIZE :: 256
