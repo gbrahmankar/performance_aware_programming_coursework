@@ -20,9 +20,17 @@ main :: proc() {
     }
     data: ^u8 = cast(^u8)&all_bytes[0]
 
-    /* --------------------------chapter16_non_pow_of_two_cache_bw_tests------------------------
+
+    /* --------------------------chapter18_unaligned_load_penalties-----------------------------
+    modern x64_cache_structure -> my lenovo_loq is a 8_way set_associative, 32kb cache =>
+    [---64_bytes---] : this is a cache_line (this is a standard for modern x64).
+    [---8*[cache_line]---] : this is a cache_set. this is where that "8_way" comes in. 
+    => 8 * 64 = there are 512_bytes in a cache_set.
+    32kb/number_of_cache_sets = 512.
+    => number_of_cache_sets = 64 in my pc.
     ------------------------------------------------------------------------------------------*/
 
+    /* --------------------------chapter16_non_pow_of_two_cache_bw_tests------------------------
     LOAD_BLOCK_SIZE :: 256
     ILLUSORY_SERVICE_AREA :: 1 * 1024 * 1024 * 1024
     for block_load_repeat_count in 120..=250 { 
@@ -44,6 +52,7 @@ main :: proc() {
                     ", outer_loop_count =", outer_loop_count, 
                     ", cropped_off_total_area=", cropped_off_illusory_area)
     }
+    ------------------------------------------------------------------------------------------*/
 
     /* --------------------------chapter15_cache_and_bw_tests-----------------------------------
     start_power: u64 = 10
