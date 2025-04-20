@@ -39,6 +39,28 @@ main :: proc() {
     [---xremaining_bitsx---] : reserved
     ------------------------------------------------------------------------------------------*/
 
+    LOAD_BLOCK_SIZE :: 256
+    ILLUSORY_SERVICE_AREA :: 1 * 1024 * 1024 * 1024
+    for block_load_repeat_count in 120..=250 { 
+        real_service_area: u64 = LOAD_BLOCK_SIZE * cast(u64)block_load_repeat_count
+        outer_loop_count: u64 = ILLUSORY_SERVICE_AREA / real_service_area
+        cropped_off_illusory_area: u64 = ILLUSORY_SERVICE_AREA % real_service_area
+        actual_illusory_service_area: u64 = outer_loop_count * real_service_area
+
+        tsc0 := read_tsc()
+        cache_set_index_test_asm(outer_loop_count, data, cast(u64)block_load_repeat_count)   
+        tsc1 := read_tsc()
+        time_to_load_from_service_area := compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq)
+        bytes_per_second := cast(f64)actual_illusory_service_area / time_to_load_from_service_area 
+
+        fmt.println("service_area =", real_service_area, 
+                    ", ts =", time_to_load_from_service_area, 
+                    ", bps =", bytes_per_second,
+                    ", inner_loop_count =", block_load_repeat_count, 
+                    ", outer_loop_count =", outer_loop_count, 
+                    ", cropped_off_total_area =", cropped_off_illusory_area)
+    }
+
     /* --------------------------chapter18_unaligned_load_penalties-----------------------------
     modern x64_cache_structure -> my lenovo_loq is a 8_way set_associative, 32kb cache =>
     [---64_bytes---] : this is a cache_line (this is a standard for modern x64).
