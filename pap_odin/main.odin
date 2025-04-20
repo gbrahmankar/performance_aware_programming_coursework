@@ -23,20 +23,35 @@ main :: proc() {
     }
     data: ^u8 = cast(^u8)&all_bytes[0]
 
+    /* --------------------------chapter19_cache_sets_and_indexing-----------------------------
+    2^5 * 2^10 = 32kb
+    8_way set_associative => 3_tag_bits.
+
+    number_of_cache_lines = 32kb/64bytes = 512.
+    number_of_cache_sets  = 512/8 = 64 in the L1 of my pc.
+    => 6_index_bits to refer to each cache_set.
+    
+    msb_[[---xremaining_bitsx---][---3_tag_bits---][---6_index_bits---][---x6_bitsx---]]_lsb : a mem_req :D
+    lowest to highest in significance :
+    [---x6_bitsx---] : each byte in a cache_line. we would be indexing at a level above this ie. cache_set.
+    [---6_index_bits---] : 6_bits to index a cache_set in a cache.
+    [---3_tag_bits---] : 3_bits for tagging a cache_line within a cache_set.
+    [---xremaining_bitsx---] : reserved
+    ------------------------------------------------------------------------------------------*/
+
     /* --------------------------chapter18_unaligned_load_penalties-----------------------------
     modern x64_cache_structure -> my lenovo_loq is a 8_way set_associative, 32kb cache =>
     [---64_bytes---] : this is a cache_line (this is a standard for modern x64).
     [---8*[cache_line]---] : this is a cache_set. this is where that "8_way" comes in. 
     => 8 * 64 = there are 512_bytes in a cache_set.
     32kb/number_of_cache_sets = 512.
-    => number_of_cache_sets = 64 in my pc.
+    => number_of_cache_sets = 64 in the L1 of my pc.
 
     if we unalign our memory_requests, we potentially incur 2 type of penalties :
     a) more cache_lines have to move through the memory_subsystem to satisfy the request.
     b) the loading/combining units have to do more work when the cache_lines
        arrive in the core. they have to combine potentially multiple cache_lines to 
        fill up the register involved in the memory_request.
-    ------------------------------------------------------------------------------------------*/
 
     LOAD_BLOCK_SIZE :: 256
     ILLUSORY_SERVICE_AREA :: 1 * 1024 * 1024 * 1024
@@ -64,6 +79,7 @@ main :: proc() {
                         ", bps =", bytes_per_second)
         }
     }
+    ------------------------------------------------------------------------------------------*/
 
     /* --------------------------chapter16_non_pow_of_two_cache_bw_tests------------------------
     LOAD_BLOCK_SIZE :: 256
