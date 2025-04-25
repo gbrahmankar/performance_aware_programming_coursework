@@ -13,16 +13,6 @@ main :: proc() {
 
     cpu_freq, has_tsc := get_tsc_frequency()
 
-    total_byte_count: u64 = 1 * 1024 * 1024 * 1024
-    byte_padding: u64 = 256
-    total_byte_count_with_padding: u64 = total_byte_count + byte_padding 
-
-    all_bytes, err := virtual.reserve_and_commit(cast(uint)total_byte_count_with_padding)
-    for &byte_view, i in all_bytes {
-        byte_view = cast(u8)i
-    }
-    data: ^u8 = cast(^u8)&all_bytes[0]
-
     /* --------------------------chapter19_cache_sets_and_indexing-----------------------------
     2^5 * 2^10 = 32kb
     8_way set_associative => 3_tag_bits.
@@ -39,27 +29,43 @@ main :: proc() {
     [---xremaining_bitsx---] : reserved
     ------------------------------------------------------------------------------------------*/
 
-    LOAD_BLOCK_SIZE :: 256
-    ILLUSORY_SERVICE_AREA :: 1 * 1024 * 1024 * 1024
-    for block_load_repeat_count in 120..=250 { 
-        real_service_area: u64 = LOAD_BLOCK_SIZE * cast(u64)block_load_repeat_count
-        outer_loop_count: u64 = ILLUSORY_SERVICE_AREA / real_service_area
-        cropped_off_illusory_area: u64 = ILLUSORY_SERVICE_AREA % real_service_area
-        actual_illusory_service_area: u64 = outer_loop_count * real_service_area
+    CACHE_LINE_SIZE :: 64 
+    NUMBER_OF_CACHE_LINES_TO_LOAD :: 256
+    REPEAT_COUNT :: 256
+    TOTAL_BYTES :: CACHE_LINE_SIZE * NUMBER_OF_CACHE_LINES_TO_LOAD * REPEAT_COUNT
+
+    BASE_STRIDE :: CACHE_LINE_SIZE
+
+    csi_all_bytes, _ := virtual.reserve_and_commit(cast(uint)TOTAL_BYTES)
+    defer delete(csi_all_bytes)
+    for &byte_view, i in csi_all_bytes {
+        byte_view = cast(u8)i
+    }
+    csi_data: ^u8 = cast(^u8)&csi_all_bytes[0]
+
+    for stride_multiplier in 0..=128 {
+        stride := BASE_STRIDE * stride_multiplier
 
         tsc0 := read_tsc()
-        cache_set_index_test_asm(outer_loop_count, data, cast(u64)block_load_repeat_count)   
+        cache_set_index_test_asm(REPEAT_COUNT, csi_data, cast(u64)NUMBER_OF_CACHE_LINES_TO_LOAD, cast(u64)stride)
         tsc1 := read_tsc()
-        time_to_load_from_service_area := compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq)
-        bytes_per_second := cast(f64)actual_illusory_service_area / time_to_load_from_service_area 
+        time_elapsed := compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq)
 
-        fmt.println("service_area =", real_service_area, 
-                    ", ts =", time_to_load_from_service_area, 
-                    ", bps =", bytes_per_second,
-                    ", inner_loop_count =", block_load_repeat_count, 
-                    ", outer_loop_count =", outer_loop_count, 
-                    ", cropped_off_total_area =", cropped_off_illusory_area)
+        fmt.println(stride, time_elapsed)
     }
+
+    /* ---------------------------------common_allocation--------------------------------------
+    total_byte_count: u64 = 1 * 1024 * 1024 * 1024
+    byte_padding: u64 = 256
+    total_byte_count_with_padding: u64 = total_byte_count + byte_padding 
+
+    all_bytes, err := virtual.reserve_and_commit(cast(uint)total_byte_count_with_padding)
+    defer delete(all_bytes)
+    for &byte_view, i in all_bytes {
+        byte_view = cast(u8)i
+    }
+    data: ^u8 = cast(^u8)&all_bytes[0]
+    ------------------------------------------------------------------------------------------*/
 
     /* --------------------------chapter18_unaligned_load_penalties-----------------------------
     modern x64_cache_structure -> my lenovo_loq is a 8_way set_associative, 32kb cache =>

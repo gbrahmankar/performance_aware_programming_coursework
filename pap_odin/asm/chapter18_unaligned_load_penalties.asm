@@ -11,15 +11,24 @@ align 64
     mov r9, r8
     mov rax, rdx
     .inner_loop:
-        vmovdqu ymm0, [rax]
-        vmovdqu ymm0, [rax + 32]
-        vmovdqu ymm0, [rax + 64]
-        vmovdqu ymm0, [rax + 96]
-        vmovdqu ymm0, [rax + 128]
-        vmovdqu ymm0, [rax + 160]
-        vmovdqu ymm0, [rax + 192]
-        vmovdqu xmm0, [rax + 224]
-        vmovdqu xmm0, [rax + 240]
+        lea rbx, [rax]
+        vmovdqu ymm0, [rbx]
+        lea rbx, [rax + 0x20]
+        vmovdqu ymm0, [rbx]
+        lea rbx, [rax + 0x20 * 2]
+        vmovdqu ymm0, [rbx]
+        lea rbx, [rax + 0x20 * 3]
+        vmovdqu ymm0, [rbx]
+        lea rbx, [rax + 0x20 * 4]
+        vmovdqu ymm0, [rbx]
+        lea rbx, [rax + 0x20 * 5]
+        vmovdqu ymm0, [rbx]
+        lea rbx, [rax + 0x20 * 6]
+        vmovdqu ymm0, [rbx]
+        lea rbx, [rax + 0x20 * 7]
+        vmovdqu xmm0, [rbx]
+        lea rbx, [rax + 0x20 * 8]
+        vmovdqu xmm0, [rbx]
 
         add rax, 0x100
 

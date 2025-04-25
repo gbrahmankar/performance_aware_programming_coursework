@@ -8,31 +8,17 @@ section .text
 cache_set_index_test:
 align 64
 .outer_loop:
-    mov r9, r8
+    mov r10, r8
     mov rax, rdx
+
     .inner_loop:
-		lea rbx, [rax]
+        lea rbx, [rax]
         vmovdqu ymm0, [rbx]
         lea rbx, [rax + 0x20]
         vmovdqu ymm0, [rbx]
-        lea rbx, [rax + 0x20 * 2]
-        vmovdqu ymm0, [rbx]
-        lea rbx, [rax + 0x20 * 3]
-        vmovdqu ymm0, [rbx]
-        lea rbx, [rax + 0x20 * 4]
-        vmovdqu ymm0, [rbx]
-        lea rbx, [rax + 0x20 * 5]
-        vmovdqu ymm0, [rbx]
-        lea rbx, [rax + 0x20 * 6]
-        vmovdqu ymm0, [rbx]
-        lea rbx, [rax + 0x20 * 7]
-        vmovdqu xmm0, [rbx]
-        lea rbx, [rax + 0x20 * 8]
-        vmovdqu xmm0, [rbx]
+        add rax, r9 
 
-        add rax, 0x100
-
-        dec r9
+        dec r10
         jnz .inner_loop
 
     dec rcx
