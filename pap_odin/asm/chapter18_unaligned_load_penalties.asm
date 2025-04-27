@@ -27,7 +27,7 @@ align 64
         vmovdqu ymm0, [rbx]
         lea rbx, [rax + 0x20 * 7]
         vmovdqu xmm0, [rbx]
-        lea rbx, [rax + 0x20 * 8]
+        lea rbx, [rax + 0x20 * 7 + 0x10]
         vmovdqu xmm0, [rbx]
 
         add rax, 0x100
