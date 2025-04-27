@@ -60,6 +60,7 @@ main :: proc() {
     b) a very weak write, which will evict the line from every level and then write it to the mem. 
     ------------------------------------------------------------------------------------------*/
 
+    BASE_SRC_BUFFER_READ_SIZE :: 256
     SRC_BUFFER_SIZE  :: 1 * 1024 * 1024
     src_bytes, _ := virtual.reserve_and_commit(cast(uint)SRC_BUFFER_SIZE)
     defer delete(src_bytes)
@@ -76,18 +77,40 @@ main :: proc() {
     }
     dst_data: ^u8 = cast(^u8)&dst_bytes[0]
 
-    BASE_SRC_BUFFER_READ_SIZE :: 256
+    Test_Function :: struct {
+        test_name: string,
+        test_func: proc "c" (outer: u64, src_data: ^u8, inner: u64, dst_data: ^u8) -> u64    
+    } 
+
+    raw_movs_test: Test_Function = {
+        test_name = "raw_mov",
+        test_func = raw_movs_asm 
+    }
+
+    streaming_bytes_test: Test_Function = {
+        test_name = "streaming_bytes",
+        test_func = streaming_bytes_asm 
+    }
+
+    test_functions: []Test_Function = { raw_movs_test, streaming_bytes_test }
 
     for source_buffer_size := BASE_SRC_BUFFER_READ_SIZE ; source_buffer_size <= SRC_BUFFER_SIZE; source_buffer_size *= 2 {
         inner_loop_count: u64 = cast(u64)source_buffer_size / BASE_SRC_BUFFER_READ_SIZE 
         outer_loop_count: u64 = DST_BUFFER_SIZE / (BASE_SRC_BUFFER_READ_SIZE * inner_loop_count)
 
-        tsc0 := read_tsc()
-        non_temporal_stores_test_asm(outer_loop_count, src_data, inner_loop_count, dst_data)
-        tsc1 := read_tsc()
-        time_elapsed := compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq)
-
-        fmt.println("src_size =", source_buffer_size, ", elapsed = ", time_elapsed)
+        fmt.println("----------------------", "src_size =", source_buffer_size, "----------------------")
+        for func in test_functions {
+            for &byte_view, i in dst_bytes {
+                byte_view = cast(u8)0
+            }
+            dst_data: ^u8 = cast(^u8)&dst_bytes[0]
+            
+            tsc0 := read_tsc()
+            func.test_func(outer_loop_count, src_data, inner_loop_count, dst_data)
+            tsc1 := read_tsc()
+            time_elapsed := compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq)
+            fmt.println("test_name =", func.test_name, ", elapsed =", time_elapsed)
+        }
     }
 
     /* ---------------------------------common_allocation--------------------------------------
