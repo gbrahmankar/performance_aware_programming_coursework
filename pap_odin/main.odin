@@ -7,8 +7,13 @@ import "core:time"
 import "pap_common"
 import "part_three"
 
+Test_Function :: struct {
+    test_name: string,
+    test_func: proc "c" (outer: u64, src_data: ^u8, inner: u64, dst_data: ^u8) -> u64    
+}
+
 main :: proc() {
-        using part_three
+    using part_three
     using pap_common 
 
     cpu_freq, has_tsc := get_tsc_frequency()
@@ -58,33 +63,10 @@ main :: proc() {
     /* -----------------------------chapter20_non_temporal_stores-------------------------------
     a) this instruction doesn't care about the standard memory consistency rules. 
     b) a very weak write, which will evict the line from every level and then write it to the mem. 
-    ------------------------------------------------------------------------------------------*/
-
-    BASE_SRC_BUFFER_READ_SIZE :: 256
-    SRC_BUFFER_SIZE  :: 1 * 1024 * 1024
-    src_bytes, _ := virtual.reserve_and_commit(cast(uint)SRC_BUFFER_SIZE)
-    defer delete(src_bytes)
-    for &byte_view, i in src_bytes {
-        byte_view = cast(u8)i
-    }
-    src_data: ^u8 = cast(^u8)&src_bytes[0]
-
-    DST_BUFFER_SIZE :: 1 * 1024 * 1024 * 1024
-    dst_bytes, _ := virtual.reserve_and_commit(cast(uint)DST_BUFFER_SIZE)
-    defer delete(dst_bytes)
-    for &byte_view, i in dst_bytes {
-        byte_view = cast(u8)0
-    }
-    dst_data: ^u8 = cast(^u8)&dst_bytes[0]
-
-    Test_Function :: struct {
-        test_name: string,
-        test_func: proc "c" (outer: u64, src_data: ^u8, inner: u64, dst_data: ^u8) -> u64    
-    } 
 
     raw_movs_test: Test_Function = {
-        test_name = "raw_mov",
-        test_func = raw_movs_asm 
+        test_name = "raw_movs",
+        test_func = raw_movs_nt_asm 
     }
 
     streaming_bytes_test: Test_Function = {
@@ -94,6 +76,23 @@ main :: proc() {
 
     test_functions: []Test_Function = { raw_movs_test, streaming_bytes_test }
 
+    BASE_SRC_BUFFER_READ_SIZE :: 256
+    SRC_BUFFER_SIZE  :: 1 * 1024 * 1024
+    src_bytes, _ := virtual.reserve_and_commit(cast(uint)SRC_BUFFER_SIZE)
+    defer delete(src_bytes)
+    for &byte_view, i in src_bytes {
+        byte_view = cast(u8)i
+    }
+    src_data: ^u8 = cast(^u8)&src_bytes[0] 
+
+    DST_BUFFER_SIZE :: 1 * 1024 * 1024 * 1024
+    dst_bytes, _ := virtual.reserve_and_commit(cast(uint)DST_BUFFER_SIZE)
+    defer delete(dst_bytes)
+    for &byte_view, i in dst_bytes {
+        byte_view = cast(u8)0
+    }
+    dst_data: ^u8 = cast(^u8)&dst_bytes[0] 
+ 
     for source_buffer_size := BASE_SRC_BUFFER_READ_SIZE ; source_buffer_size <= SRC_BUFFER_SIZE; source_buffer_size *= 2 {
         inner_loop_count: u64 = cast(u64)source_buffer_size / BASE_SRC_BUFFER_READ_SIZE 
         outer_loop_count: u64 = DST_BUFFER_SIZE / (BASE_SRC_BUFFER_READ_SIZE * inner_loop_count)
@@ -104,7 +103,7 @@ main :: proc() {
                 byte_view = cast(u8)0
             }
             dst_data: ^u8 = cast(^u8)&dst_bytes[0]
-            
+
             tsc0 := read_tsc()
             func.test_func(outer_loop_count, src_data, inner_loop_count, dst_data)
             tsc1 := read_tsc()
@@ -112,6 +111,29 @@ main :: proc() {
             fmt.println("test_name =", func.test_name, ", elapsed =", time_elapsed)
         }
     }
+    ------------------------------------------------------------------------------------------*/
+
+    /* -----------------------------------chapter21_prefetch------------------------------------
+    a) branch_predictor should not be able to predict the branch im about to take.
+    b) in a branch, i will have a few math_ops based on the data that was fetched.
+    c) data required to execute these ops should already be prefetched from the previous branch.
+    d) a mod_3 branch switch between two execution routines.
+    e) load required for the other branch would be prefetched 
+    ------------------------------------------------------------------------------------------*/
+
+    traverse_links_without_prefetch_test: Test_Function = {
+        test_name = "traverse_links_without_prefetch",
+        test_func = traverse_links_without_prefetch_asm
+    }
+
+    traverse_links_with_prefetch_test: Test_Function = {
+        test_name = "traverse_links_with_prefetch",
+        test_func = traverse_links_with_prefetch_asm
+    }
+
+    test_functions: []Test_Function = { traverse_links_without_prefetch_test, traverse_links_with_prefetch_test }
+
+    CACHE_LINE_SIZE :: 64
 
     /* ---------------------------------common_allocation--------------------------------------
     total_byte_count: u64 = 1 * 1024 * 1024 * 1024
