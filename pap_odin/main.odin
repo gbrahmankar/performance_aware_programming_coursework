@@ -1,11 +1,14 @@
 package pap_odin
 
 import "core:fmt"
+import "core:mem"
 import "core:mem/virtual"
 import "core:time"
 
 import "pap_common"
 import "part_three"
+
+CACHE_LINE_SIZE :: 64
 
 Test_Function :: struct {
     test_name: string,
@@ -34,7 +37,6 @@ main :: proc() {
     [---xremaining_bitsx---] : reserved
     // -----------------------------------------------------------------------------------------
 
-    CACHE_LINE_SIZE :: 64 
     NUMBER_OF_CACHE_LINES_TO_LOAD :: 256
     REPEAT_COUNT :: 256
     TOTAL_BYTES :: CACHE_LINE_SIZE * NUMBER_OF_CACHE_LINES_TO_LOAD * REPEAT_COUNT
@@ -112,7 +114,7 @@ main :: proc() {
         }
     }
     ------------------------------------------------------------------------------------------*/
-
+ 
     /* -----------------------------------chapter21_prefetch------------------------------------
     a) branch_predictor should not be able to predict the branch im about to take.
     b) in a branch, i will have a few math_ops based on the data that was fetched.
@@ -120,6 +122,15 @@ main :: proc() {
     d) a mod_3 branch switch between two execution routines.
     e) load required for the other branch would be prefetched 
     ------------------------------------------------------------------------------------------*/
+
+    total_byte_count: u64 = 1 * 1024 * 1024 * 1024
+    byte_padding: u64 = 256
+    total_byte_count_with_padding: u64 = total_byte_count + byte_padding 
+
+    all_bytes, err := virtual.reserve_and_commit(cast(uint)total_byte_count_with_padding)
+    defer delete(all_bytes)
+
+    data: ^u8 = cast(^u8)(&all_bytes[0])
 
     traverse_links_without_prefetch_test: Test_Function = {
         test_name = "traverse_links_without_prefetch",
@@ -133,7 +144,51 @@ main :: proc() {
 
     test_functions: []Test_Function = { traverse_links_without_prefetch_test, traverse_links_with_prefetch_test }
 
-    CACHE_LINE_SIZE :: 64
+    LINKED_LIST_LENGTH :: 1024 * 1024
+    TEST_SIZE_BYTES :: CACHE_LINE_SIZE * LINKED_LIST_LENGTH
+
+    cache_line_count: u64 = cast(u64)len(all_bytes) / CACHE_LINE_SIZE
+    jump_offset: u64 = 0
+
+    for outer_loop_index in 0..<LINKED_LIST_LENGTH {
+        next_offset: u64
+        next_pointer: ^u64    
+
+        random_number := get_random_number()
+
+        found := false
+        for search_index in 0..<cache_line_count {
+            next_offset = (cast(u64)search_index + random_number) % cache_line_count   
+            next_pointer = cast(^u64)(&all_bytes[next_offset * CACHE_LINE_SIZE])
+
+            if next_pointer^ == 0 {
+                found = true
+                break;    
+            }
+        }
+
+        if found == false {
+            fmt.panicf("unable to create a new link")
+        }
+
+        jump_data: ^u64 = cast(^u64)(&all_bytes[jump_offset * CACHE_LINE_SIZE])
+        mem.copy(jump_data, &next_pointer, size_of(&next_pointer))
+        cache_line_test_data_ptr := mem.ptr_offset(jump_data, 1)
+        cache_line_test_data_ptr^ = cast(u64)outer_loop_index
+
+        jump_offset = next_offset
+    }
+
+    for func in test_functions {
+        tsc0 := read_tsc()
+        func.test_func(cast(u64)LINKED_LIST_LENGTH, data, 1024, data)
+        tsc1 := read_tsc()
+        time_to_traverse_links := compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq)
+        bytes_per_second := cast(f64)total_byte_count / time_to_traverse_links 
+        fmt.println("test_name =", func.test_name, 
+                    ", elapsed =", time_to_traverse_links,
+                    ", bps =", bytes_per_second)
+    }
 
     /* ---------------------------------common_allocation--------------------------------------
     total_byte_count: u64 = 1 * 1024 * 1024 * 1024
