@@ -1,5 +1,6 @@
-*.pdb
-*.rdi
+*pdb*
+*rdi*
+*exe*
 *listing*
 *nasm*
 *debug*

@@ -9,6 +9,7 @@ import "pap_common"
 import "part_three"
 
 CACHE_LINE_SIZE :: 64
+csv_style_prints := true 
 
 Test_Function :: struct {
     test_name: string,
@@ -20,6 +21,63 @@ main :: proc() {
     using pap_common 
 
     cpu_freq, has_tsc := get_tsc_frequency()
+
+    /* -----------------------------chapter23_2x_faster_file_read-------------------------------
+    a)  just once, think about the idea of allocating for the entire file_size ...
+        --  what are we paying for ? :
+            --  we are paying a massive price for page management.
+            --  since our buffer is huge, we are totally missinig the cache. 
+
+    b)  can we do a bit better ? casey proves yes ! how ? we go hunting again ! :
+        --  allocate and touch every page to see what bandwidths we get for various buffer sizes. 
+            --  insights we might get ? : 
+                -- for smaller buffer sizes, we may stay within our cache. 
+                -- for smaller buffer sizes, we will pay less for page faults.
+
+    c)  now, we also want to service an entire file through this buffer that our program can access :   
+        --  writing to a smaller buffer ==> servicing through the caches for the most part. 
+        --  we want to read the 1gb file and write to our smaller buffer.
+
+    d)  any cons to the approach we are taking ? :
+        --  we are making continuous api calls to initiate a read->write.
+
+    e)  so, what we are essentially trying to do is, we are trying to find a sweet spot between :
+        --  minimizing the page fault and cache miss penalties by limiting the size of the buffer
+            mapped in our program and ....
+        --  paying for making continuous api calls to service this huge file through our relatively tiny buffer.
+    ------------------------------------------------------------------------------------------*/
+
+    // allocate_and_touch :
+    BASE_BUFFER_SIZE :: 2 * 1024
+    ONE_GB :: 1 * 1024 * 1024 * 1024 
+    for source_buffer_size := BASE_BUFFER_SIZE; source_buffer_size <= ONE_GB; source_buffer_size *= 2 {
+        if csv_style_prints == false {
+            fmt.println("----------------------", "src_size =", source_buffer_size, "----------------------")
+        }
+
+        for func in file_service_buffer_tests {
+            min_time: f64 = max(f64)
+            for tries in 0..<10 {
+                tsc0 := read_tsc()
+                func.test_func("", 0, cast(u64)source_buffer_size, nil)
+                tsc1 := read_tsc()
+                time_elapsed := compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq)
+                if time_elapsed < min_time {
+                    min_time = time_elapsed    
+                } 
+            }
+
+            if csv_style_prints {
+                fmt.println(cast(f64)source_buffer_size/1024, ",", cast(f64)source_buffer_size/min_time)
+            }
+            else {
+                fmt.println("test_name =", func.test_name, 
+                    ", buffer_size =", cast(f64)source_buffer_size/1024,
+                    ", elapsed =", min_time, 
+                    ", gb/s =", cast(f64)source_buffer_size/min_time)
+            }
+        }
+    }
 
     /* --------------------------chapter19_cache_sets_and_indexing-----------------------------
     2^5 * 2^10 = 32kb
@@ -121,7 +179,6 @@ main :: proc() {
     c) data required to execute these ops should already be prefetched from the previous branch.
     d) a mod_3 branch switch between two execution routines.
     e) load required for the other branch would be prefetched 
-    ------------------------------------------------------------------------------------------*/
 
     total_byte_count: u64 = 1 * 1024 * 1024 * 1024
     byte_padding: u64 = 256
@@ -189,6 +246,7 @@ main :: proc() {
                     ", elapsed =", time_to_traverse_links,
                     ", bps =", bytes_per_second)
     }
+    ------------------------------------------------------------------------------------------*/
 
     /* ---------------------------------common_allocation--------------------------------------
     total_byte_count: u64 = 1 * 1024 * 1024 * 1024
