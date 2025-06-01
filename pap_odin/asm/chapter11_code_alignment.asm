@@ -1,5 +1,5 @@
-; > nasm.exe -f win64 -g code_alignment.asm -o code_alignment.obj
-; > lib.exe code_alignment.obj /out:code_alignment.lib
+; > nasm.exe -f win64 -g chapter11_code_alignment.asm -o chapter11_code_alignment.obj
+; > lib.exe chapter11_code_alignment.obj /out:chapter11_code_alignment.lib
 
 global aligned_at_64_bytes
 global offset_by_1_nop

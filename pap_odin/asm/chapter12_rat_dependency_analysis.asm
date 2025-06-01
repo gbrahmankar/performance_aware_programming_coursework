@@ -20,8 +20,8 @@
 
 ; -----------------------------------------------------------------------------------
 
-; > nasm.exe -f win64 -g rat_dependency_analysis.asm -o rat_dependency_analysis.obj
-; > lib.exe rat_dependency_analysis.obj /out:rat_dependency_analysis.lib
+; > nasm.exe -f win64 -g chapter12_rat_dependency_analysis.asm -o chapter12_rat_dependency_analysis.obj
+; > lib.exe chapter12_rat_dependency_analysis.obj /out:chapter12_rat_dependency_analysis.lib
 
 global rat_add 
 global rat_mov_add

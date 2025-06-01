@@ -4,6 +4,12 @@ import "core:os"
 import "core:sys/windows"
 import "core:time"
 
+// winx64_abi 
+Asm_Interface_Function :: struct {
+    test_name: string,
+    test_func: proc "c" (rcx: u64, rdx: ^u8, r8: u64, r9: ^u8) -> u64    
+}
+
 // os_platform helpers
 get_page_size :: proc() -> (int) {
     return os.get_page_size()

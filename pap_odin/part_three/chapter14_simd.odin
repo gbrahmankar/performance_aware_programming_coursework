@@ -1,6 +1,13 @@
 #+build windows
 package part_three
 
+import "core:fmt"
+import "core:mem"
+import "core:mem/virtual"
+import "core:os"
+
+import "../pap_common"
+
 foreign import c14_simd "../asm/chapter14_simd.lib"
 
 @(default_calling_convention="c")
@@ -15,3 +22,38 @@ load_four_bytes_three_times_per_loop_asm :: load_four_bytes_three_times_per_loop
 load_eight_bytes_three_times_per_loop_asm :: load_eight_bytes_three_times_per_loop
 load_sixteen_bytes_three_times_per_loop_asm :: load_sixteen_bytes_three_times_per_loop
 load_thirty_two_bytes_three_times_per_loop_asm :: load_thirty_two_bytes_three_times_per_loop
+
+chapter14_simd :: proc(cpu_freq: u64, csv_style_prints: bool) {
+    using pap_common 
+
+    total_byte_count: u64 = pap_common.ONE_GB 
+    byte_padding: u64 = 256
+    total_byte_count_with_padding: u64 = total_byte_count + byte_padding 
+
+    byte_sequence_slice, _ := virtual.reserve_and_commit(cast(uint)total_byte_count_with_padding)
+    defer virtual.release(&byte_sequence_slice[0], cast(uint)total_byte_count_with_padding) 
+    for &byte_view, i in byte_sequence_slice {
+        byte_view = cast(u8)i
+    }
+    byte_sequence: ^u8 = cast(^u8)&byte_sequence_slice[0]
+
+    tsc0 := read_tsc()
+    load_four_bytes_three_times_per_loop_asm(total_byte_count, byte_sequence) 
+    tsc1 := read_tsc()
+    fmt.println("load_four_bytes_three_times_per_loop = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+
+    tsc0 = read_tsc()
+    load_eight_bytes_three_times_per_loop_asm(total_byte_count, byte_sequence) 
+    tsc1 = read_tsc()
+    fmt.println("load_eight_bytes_three_times_per_loop = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+
+    tsc0 = read_tsc()
+    load_sixteen_bytes_three_times_per_loop_asm(total_byte_count, byte_sequence) 
+    tsc1 = read_tsc()
+    fmt.println("load_sixteen_bytes_three_times_per_loop = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+
+    tsc0 = read_tsc()
+    load_thirty_two_bytes_three_times_per_loop_asm(total_byte_count, byte_sequence) 
+    tsc1 = read_tsc(    )
+    fmt.println("load_thirty_two_bytes_three_times_per_loop = ", compute_seconds_from_cpu_time(tsc1-tsc0, cpu_freq))
+}

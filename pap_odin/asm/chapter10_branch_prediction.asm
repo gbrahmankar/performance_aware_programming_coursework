@@ -1,5 +1,5 @@
-; > nasm.exe -f win64 -g branch_prediction_pressure.asm -o branch_prediction_pressure.obj
-; > lib.exe branch_prediction_pressure.obj /out:branch_prediction_pressure.lib
+; > nasm.exe -f win64 -g chapter10_branch_prediction.asm -o chapter10_branch_prediction.obj
+; > lib.exe chapter10_branch_prediction.obj /out:chapter10_branch_prediction.lib
 
 global try_byte_data_based_branching
 

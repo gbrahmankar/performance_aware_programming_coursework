@@ -1,5 +1,5 @@
-; > nasm.exe -f win64 -g nop_pressure.asm -o nop_pressure.obj
-; > lib.exe nop_pressure.obj /out:nop_pressure.lib
+; > nasm.exe -f win64 -g chapter9_cpu_front_end_basics.asm -o chapter9_cpu_front_end_basics.obj
+; > lib.exe chapter9_cpu_front_end_basics.obj /out:chapter9_cpu_front_end_basics.lib
 
 global nop_one_three_bytes
 global nop_three_one_byte 

@@ -1,5 +1,5 @@
-; > nasm.exe -f win64 -g exec_ports.asm -o exec_ports.obj
-; > lib.exe exec_ports.obj /out:exec_ports.lib
+; > nasm.exe -f win64 -g chapter13_exec_ports_and_scheduler.asm -o chapter13_exec_ports_and_scheduler.obj
+; > lib.exe chapter13_exec_ports_and_scheduler.obj /out:chapter13_exec_ports_and_scheduler.lib
 
 global one_load_per_loop 
 global two_loads_per_loop 
