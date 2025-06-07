@@ -1,5 +1,5 @@
-*pdb*
-*rdi*
+*.pdb*
+*.rdi*
 *.exe
 *listing*
 *nasm*
@@ -8,5 +8,5 @@
 *vsproj*
 *executable*
 *.o
-*.json*
-*.f64*
+*.json
+*.f64

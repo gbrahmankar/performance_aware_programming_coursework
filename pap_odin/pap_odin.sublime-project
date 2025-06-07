@@ -1,15 +1,6 @@
 {
 	"folders":
 	[
-		{
-			"path": "."
-		},
-		{
-			"path": "C:\\Users\\gaura\\projects\\other\\Odin\\core"
-		},
-		{
-			"path": "C:\\Users\\gaura\\projects\\other\\Odin\\vendor"
-		}
 	],
 	"build_systems":
 	[
@@ -30,5 +21,5 @@
 				"enabled": true,
 			},
 		},
-	}
+	},
 }
