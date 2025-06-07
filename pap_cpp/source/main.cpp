@@ -7,7 +7,7 @@ int main(int argc, char* argv[])
 {
     if (argc < 2)
     {
-        std::cerr << "usage : " << argv[0] << "[part_one/part_two/test]" << '\n';
+        std::cerr << "usage : " << argv[0] << "[part_one/part_two/part_three/test]" << '\n';
         return 1;
     }
 
