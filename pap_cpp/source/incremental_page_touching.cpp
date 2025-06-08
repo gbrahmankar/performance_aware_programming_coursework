@@ -1,5 +1,5 @@
-#include "decompose_x64_pointer.h"
-#include "incremental_page_touching.h"
+#include "include/decompose_x64_pointer.h"
+#include "include/incremental_page_touching.h"
 
 namespace PartThree
 {

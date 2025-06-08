@@ -1,6 +1,6 @@
-#include "haversine_distance_generator.h"
-#include "haversine_distance_parser.h"
-#include "haversine_distance_problem.h"
+#include "include/haversine_distance_generator.h"
+#include "include/haversine_distance_parser.h"
+#include "include/haversine_distance_problem.h"
 
 namespace PartTwo
 {

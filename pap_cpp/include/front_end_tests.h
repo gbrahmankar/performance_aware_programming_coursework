@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../common_utils.h"
-#include "repetition_tester.h"
+#include "include/common_utils.h"
+#include "include/repetition_tester.h"
 
 namespace PartThree
 {

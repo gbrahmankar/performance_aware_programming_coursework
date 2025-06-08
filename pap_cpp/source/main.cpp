@@ -1,7 +1,6 @@
-#include "part_one/8086_decoder_simulator.h"
-#include "part_three/part_three_main.h"
-#include "part_two/haversine_distance_problem.h"
-#include "test/test.h"
+#include "include/8086_decoder_simulator.h"
+#include "include/part_three_main.h"
+#include "include//haversine_distance_problem.h"
 
 int main(int argc, char* argv[])
 {
@@ -40,11 +39,7 @@ int main(int argc, char* argv[])
         }
 
         PartThree::executePartThree(argc, argv);
-    }
-    if (std::string(argv[1]) == "test")
-    {
-        Test::executeTest(argc, argv);
-    }
+    } 
 
     return 0;
 }

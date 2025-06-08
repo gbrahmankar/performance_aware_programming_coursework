@@ -1,9 +1,9 @@
-#include "backwards_page_touching.h"
-#include "decompose_x64_pointer.h"
-#include "front_end_test_main.h"
-#include "incremental_page_touching.h"
-#include "part_three_main.h"
-#include "read_overhead_test_main.h"
+#include "include/backwards_page_touching.h"
+#include "include/decompose_x64_pointer.h"
+#include "include/front_end_test_main.h"
+#include "include/incremental_page_touching.h"
+#include "include/part_three_main.h"
+#include "include/read_overhead_test_main.h"
 
 namespace PartThree
 {

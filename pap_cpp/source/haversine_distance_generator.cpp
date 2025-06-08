@@ -1,6 +1,6 @@
-#include "../common_utils.h"
-#include "haversine_distance_calculator.h"
-#include "haversine_distance_generator.h"
+#include "include/common_utils.h"
+#include "include/haversine_distance_calculator.h"
+#include "include/haversine_distance_generator.h"
 
 namespace PartTwo
 {
