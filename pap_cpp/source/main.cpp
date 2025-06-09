@@ -6,7 +6,7 @@ int main(int argc, char* argv[])
 {
     if (argc < 2)
     {
-        std::cerr << "usage : " << argv[0] << "[part_one/part_two/part_three/test]" << '\n';
+        std::cerr << "usage : " << argv[0] << "[part_one/part_two/part_three]" << '\n';
         return 1;
     }
 
@@ -14,7 +14,7 @@ int main(int argc, char* argv[])
     {
         if (argc < 3)
         {
-            std::cerr << "usage : " << argv[0] << " part_one [binary_encoded_instruction_stream_file]" << '\n';
+            std::cerr << "usage : " << argv[0] << " part_one <binary_encoded_instruction_stream_file>" << '\n';
             return 1;
         }
 
@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
     {
         if (argc < 3)
         {
-            std::cerr << "usage : " << argv[0] << " part_three [read_overhead_tests/incremental_page_touching/decompose_x64_pointer/front_end_tests]" << '\n';
+            std::cerr << "usage : " << argv[0] << " part_three [read_overhead_tests/incremental_page_touching/decompose_x64_pointer]" << '\n';
             return 1;
         }
 

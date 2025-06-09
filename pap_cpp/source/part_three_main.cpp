@@ -1,6 +1,5 @@
 #include "include/backwards_page_touching.h"
 #include "include/decompose_x64_pointer.h"
-#include "include/front_end_test_main.h"
 #include "include/incremental_page_touching.h"
 #include "include/part_three_main.h"
 #include "include/read_overhead_test_main.h"
@@ -14,7 +13,7 @@ void executePartThree(int argc, char* argv[])
     {
         if (argc < 4)
         {
-            std::cerr << "usage : " << argv[0] << " part_three read_overhead [file_to_read]" << '\n';
+            std::cerr << "usage : " << argv[0] << " part_three read_overhead <file_to_read>" << '\n';
             return;
         }
 
@@ -47,16 +46,6 @@ void executePartThree(int argc, char* argv[])
         }
 
         PartThree::executeBackwardsPageTouchTest(argc, argv);
-    }
-    else if (std::string(argv[2]) == "front_end_tests")
-    {
-        if (argc < 4)
-        {
-            std::cerr << "usage : " << argv[0] << " part_three front_end_tests [file_name]" << '\n';
-            return;
-        }
-
-        PartThree::frontEndTestMain(argc, argv);
     }
 }
 
