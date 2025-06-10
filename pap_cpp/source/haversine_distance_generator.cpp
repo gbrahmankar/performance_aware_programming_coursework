@@ -29,14 +29,14 @@ namespace PartTwo
 
     void generateHaversineInputFiles(int argc, char* argv[])
     {
-        std::ofstream outJson("haversine_input.json");
+        std::ofstream outJson("..\\part_two_generated_files\\haversine_input.json");
         if (!outJson)
         {
             std::cerr << "failed to open the haversine_input.json file for writing !" << '\n';
             return;
         }
 
-		std::ofstream haversineAnswers("haversine_answers.f64");
+		std::ofstream haversineAnswers("..\\part_two_generated_files\\haversine_answers.f64");
         if (!haversineAnswers)
         {
             std::cerr << "failed to open the haversine_answers.f64 file for writing !" << '\n';

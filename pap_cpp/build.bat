@@ -26,33 +26,30 @@ if not exist "..\..\other\raddebugger\build\" (
 
 set /p vs_or_rad=Do you wish to open a visual_studo_solution or a raddebugger attached process? (vs/rad) :
 
-rem aaa
 set cl_args=""
-
 set /p part_id="What part do you wish to run ? (1/2/3) :"
 if "%part_id%"=="1" (
     set cl_args=part_one ../part_one_bins/add_sub_cmp_jnz.bin
 ) else if "%part_id%"=="2" (
-    set cl_args=part_two
-
-    set /p gen_par_proc="1 : generate | 2 : parse | 3 : process ? :"
-    if "!gen_par_proc!"=="1" (
-    	set cl_args=!cl_args! generate uniform 2324568 1000000
-    ) else if "!gen_par_proc!"=="2" (
-    	set cl_args=!cl_args! parse
-    ) else if "!gen_par_proc!"=="3" (
-    	set cl_args=!cl_args! process
+    set /p gen_par="1 : generate | 2 : parse ? :"
+    if "!gen_par!"=="1" (
+	if not exist "part_two_generated_files\" (
+		mkdir "part_two_generated_files"
+		if errorlevel 1 echo Failed to create .\part_two_generated_files\ !
+	)
+    	set cl_args=part_two generator uniform 2324568 1000000
+    ) else if "!gen_par!"=="2" (
+    	set cl_args=part_two parser ..\\part_two_generated_files\\haversine_input.json
     ) else (
-        echo "Invalid haversine operation=" !gen_par_proc!
+        echo "Invalid haversine operation=" !gen_par!
         exit /b 1
     )
 ) else if "%part_id%"=="3" (
     set cl_args=part_three
 ) else (
-    echo "Invalid part chosen=" %part_id%
+    echo Invalid part chosen=%part_id%
     exit /b 1
 )
-rem aaa
 
 if /i "%vs_or_rad%"=="vs" (
         echo Building pap_cpp and starting its visual_studio solution ...
