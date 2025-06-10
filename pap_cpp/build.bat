@@ -31,21 +31,35 @@ set /p part_id="What part do you wish to run ? (1/2/3) :"
 if "%part_id%"=="1" (
     set cl_args=part_one ../part_one_bins/add_sub_cmp_jnz.bin
 ) else if "%part_id%"=="2" (
-    set /p gen_par="1 : generate | 2 : parse ? :"
-    if "!gen_par!"=="1" (
+    set /p sub_part="1 : generate | 2 : parse ? :"
+    if "!sub_part!"=="1" (
 	if not exist "part_two_generated_files\" (
 		mkdir "part_two_generated_files"
 		if errorlevel 1 echo Failed to create .\part_two_generated_files\ !
 	)
     	set cl_args=part_two generator uniform 2324568 1000000
-    ) else if "!gen_par!"=="2" (
+    ) else if "!sub_part!"=="2" (
     	set cl_args=part_two parser ..\\part_two_generated_files\\haversine_input.json
     ) else (
-        echo "Invalid haversine operation=" !gen_par!
+        echo "Invalid haversine operation=" !sub_part!
         exit /b 1
     )
 ) else if "%part_id%"=="3" (
-    set cl_args=part_three
+    set /p sub_part="1 : read_overhead_tests | 2 : incremental_page_touching | 3 : backwards_page_touching ? :"
+    if "!sub_part!"=="1" (
+	if not exist "part_two_generated_files\" (
+        	echo Needs file=part_two_generated_files\\haversine_input.json
+		exit /b 1
+	)
+    	set cl_args=part_three read_overhead_tests ..\\part_two_generated_files\\haversine_input.json
+    ) else if "!sub_part!"=="2" (
+    	set cl_args=part_three incremental_page_touching 1024
+    ) else if "!sub_part!"=="3" (
+    	set cl_args=part_three backwards_page_touching
+    ) else (
+        echo Invalid haversine operation=!sub_part!
+        exit /b 1
+    )
 ) else (
     echo Invalid part chosen=%part_id%
     exit /b 1
