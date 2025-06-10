@@ -17,6 +17,10 @@ file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
 
 add_executable(pap_cpp ${HEADERS} ${SOURCES})
 
+set_target_properties(pap_cpp PROPERTIES
+	VS_DEBUGGER_COMMAND_ARGUMENTS ${CL_ARGS} 
+)
+
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${ROOT_PATH}
 )
@@ -25,7 +29,7 @@ source_group(TREE "${ROOT_PATH}/include" PREFIX "include" FILES ${HEADERS})
 source_group(TREE "${ROOT_PATH}/source" PREFIX "source" FILES ${SOURCES})
 
 add_custom_target(run_raddbg
-  COMMAND ${ROOT_PATH}/../other/raddebugger/build/raddbg ${CMAKE_CURRENT_BINARY_DIR}/pap_cpp.sln
+	COMMAND ${ROOT_PATH}/../other/raddebugger/build/raddbg ${CMAKE_CURRENT_BINARY_DIR}/pap_cpp.exe ${CL_ARGS}
   DEPENDS pap_cpp 
 )
 

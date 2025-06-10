@@ -1,8 +1,7 @@
 @echo off
+setlocal enabledelayedexpansion
 
-setlocal
-
-set /p purge_answer=Do you wish to purge the currently built project? (Y/N):
+set /p purge_answer=Do you wish to purge the currently built project? (Y/N) :
 if /i "%purge_answer%"=="Y" (
         echo Purging build and other directories ...
         rmdir /s /q build_vs build_rad
@@ -25,7 +24,36 @@ if not exist "..\..\other\raddebugger\build\" (
         start "" /wait cmd /c "..\..\other\raddebugger\build"
 )
 
-set /p vs_or_rad=Do you wish to open a visual_studo_solution or a raddebugger attached process? (vs/rad):
+set /p vs_or_rad=Do you wish to open a visual_studo_solution or a raddebugger attached process? (vs/rad) :
+
+rem aaa
+set cl_args=""
+
+set /p part_id="What part do you wish to run ? (1/2/3) :"
+if "%part_id%"=="1" (
+    set cl_args=part_one ../part_one_bins/add_sub_cmp_jnz.bin
+) else if "%part_id%"=="2" (
+    set cl_args=part_two
+
+    set /p gen_par_proc="1 : generate | 2 : parse | 3 : process ? :"
+    if "!gen_par_proc!"=="1" (
+    	set cl_args=!cl_args! generate uniform 2324568 1000000
+    ) else if "!gen_par_proc!"=="2" (
+    	set cl_args=!cl_args! parse
+    ) else if "!gen_par_proc!"=="3" (
+    	set cl_args=!cl_args! process
+    ) else (
+        echo "Invalid haversine operation=" !gen_par_proc!
+        exit /b 1
+    )
+) else if "%part_id%"=="3" (
+    set cl_args=part_three
+) else (
+    echo "Invalid part chosen=" %part_id%
+    exit /b 1
+)
+rem aaa
+
 if /i "%vs_or_rad%"=="vs" (
         echo Building pap_cpp and starting its visual_studio solution ...
 
@@ -35,7 +63,7 @@ if /i "%vs_or_rad%"=="vs" (
         )
         cd build_vs
 
-        cmake -G "Visual Studio 17 2022" ..
+        cmake -DCL_ARGS="!cl_args!" -G "Visual Studio 17 2022" ..
         start "" /wait cmd /c "cmake --build . --target run_vs_sln & exit"
 )
 
@@ -48,7 +76,7 @@ if /i "%vs_or_rad%"=="rad" (
         )
         cd build_rad
 
-        cmake -G Ninja ..
+        cmake -DCL_ARGS="!cl_args!" -G Ninja ..
         start "" /wait cmd /c "cmake --build . --target run_raddbg & exit"
 )
 
