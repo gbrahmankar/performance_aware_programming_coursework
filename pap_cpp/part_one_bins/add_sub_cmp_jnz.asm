@@ -1,3 +1,6 @@
+; nasm -f bin add_sub_cmp_jnz.asm -o add_sub_cmp_jnz.bin
+; checkout the last few lines for your fav little loop :D
+
 bits 16
 
 add bx, [bx+si]
@@ -75,31 +78,9 @@ cmp ax, 1000
 cmp al, -30
 cmp al, 9
 
-test_label0:
-jnz test_label1
-jnz test_label0
-test_label1:
-jnz test_label0
-jnz test_label1
-
+; my fav little loop : mov -> dec, cmp, jnz ! :D
+mov cx, 4
 label:
-je label
-jl label
-jle label
-jb label
-jbe label
-jp label
-jo label
-js label
-jne label
-jnl label
-jg label
-jnb label
-ja label
-jnp label
-jno label
-jns label
-loop label
-loopz label
-loopnz label
-jcxz label
+sub cx, 1
+cmp cx, 0
+jnz label

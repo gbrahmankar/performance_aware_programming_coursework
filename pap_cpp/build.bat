@@ -29,7 +29,7 @@ set /p vs_or_rad=Do you wish to open a visual_studo_solution or a raddebugger at
 set cl_args=""
 set /p part_id="What part do you wish to run ? (1/2/3) :"
 if "%part_id%"=="1" (
-    set cl_args=part_one ../part_one_bins/add_sub_cmp_jnz.bin
+    set cl_args=part_one ..\\part_one_bins\\add_sub_cmp_jnz.bin
 ) else if "%part_id%"=="2" (
     set /p sub_part="1 : generate | 2 : parse ? :"
     if "!sub_part!"=="1" (

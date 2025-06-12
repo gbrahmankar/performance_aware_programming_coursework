@@ -1516,7 +1516,10 @@ void executePartOne(int argc, char* argv[])
     }
 
     uint16_t totalProgramCost = 0;
+
+    uint16_t currentLineNumber = 1;
     InstructionMetadata ongoingInstructionMetadata;
+
     std::cout << "bits 16" << '\n';
     while (true) 
     {
@@ -1528,20 +1531,22 @@ void executePartOne(int argc, char* argv[])
 
         decodeFirstInstructionByte(firstByteBitset, file, ongoingInstructionMetadata); 
 
-        if (argc >= 3 && std::string(argv[3]) == "simulate")
+        if (argc >= 4 && std::string(argv[3]) == "simulate")
         {
             simulateInstruction(ongoingInstructionMetadata);
             totalProgramCost += ongoingInstructionMetadata.totalInstructionCost;
 
-            std::cout << getDisassStream(ongoingInstructionMetadata, false).str() 
+            std::cout << currentLineNumber << " : " << getDisassStream(ongoingInstructionMetadata, false).str() 
                 << registers.getAllRegisterFileStream(true).str() 
                 << registers.getFlagsStream().str() << ongoingInstructionMetadata.getInstructionCostStream().str() 
                 << "running_cost=" << totalProgramCost << '\n';
         }
         else
         {
-            std::cout << getDisassStream(ongoingInstructionMetadata, true).str();
+            std::cout << currentLineNumber << " : " << getDisassStream(ongoingInstructionMetadata, true).str();
         }
+
+		currentLineNumber += 1;
     }
 
     std::cout << "Final registers:" << '\n';
