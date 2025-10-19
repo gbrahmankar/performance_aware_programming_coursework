@@ -1,5 +1,5 @@
-; > nasm.exe -f win64 -g chapter9_front_end_tests.asm -o chapter9_front_end_tests.obj
-; > lib.exe chapter9_front_end_tests.obj /out:chapter9_front_end_tests.lib
+; > nasm.exe -f win64 -g chapter09_front_end_tests.asm -o chapter09_front_end_tests.obj
+; > lib.exe chapter09_front_end_tests.obj /out:chapter09_front_end_tests.lib
 
 global mov_all_bytes
 global nop_all_bytes

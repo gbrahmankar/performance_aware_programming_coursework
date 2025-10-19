@@ -8,7 +8,7 @@ import "core:os"
 
 import "../pap_common"
 
-foreign import chapter09_cpu_front_end_basics "../asm/chapter9_cpu_front_end_basics.lib"
+foreign import chapter09_cpu_front_end_basics "../asm/chapter09_cpu_front_end_basics.lib"
 
 @(default_calling_convention="c")
 foreign chapter09_cpu_front_end_basics {

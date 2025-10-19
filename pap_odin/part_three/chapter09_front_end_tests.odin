@@ -8,7 +8,7 @@ import "core:os"
 
 import "../pap_common"
 
-foreign import chapter09_front_end_tests "../asm/chapter9_front_end_tests.lib"
+foreign import chapter09_front_end_tests "../asm/chapter09_front_end_tests.lib"
 
 @(default_calling_convention="c")
 foreign chapter09_front_end_tests {

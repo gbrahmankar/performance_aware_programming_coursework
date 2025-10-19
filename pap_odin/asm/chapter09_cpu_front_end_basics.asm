@@ -1,5 +1,5 @@
-; > nasm.exe -f win64 -g chapter9_cpu_front_end_basics.asm -o chapter9_cpu_front_end_basics.obj
-; > lib.exe chapter9_cpu_front_end_basics.obj /out:chapter9_cpu_front_end_basics.lib
+; > nasm.exe -f win64 -g chapter09_cpu_front_end_basics.asm -o chapter09_cpu_front_end_basics.obj
+; > lib.exe chapter09_cpu_front_end_basics.obj /out:chapter09_cpu_front_end_basics.lib
 
 global nop_one_three_bytes
 global nop_three_one_byte 
