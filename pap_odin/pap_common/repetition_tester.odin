@@ -112,8 +112,13 @@ repitition_tester_is_testing :: proc(tester: ^Repetition_Tester) -> (bool) {
 	}	
 
 	current_wave_metrics: ^Repetition_Metrics = &tester.current_wave_metrics
-	assert(tester.open_block_count == tester.closed_block_count)
-	assert(current_wave_metrics.metrics[Repetition_Metric.Repetition_Metric_ByteCount] == tester.target_processed_byte_count)
+	fmt.assertf(tester.open_block_count == tester.closed_block_count, 
+		"open_block_count=%v != closed_block_count=%v", 
+		tester.open_block_count, tester.closed_block_count)
+	fmt.assertf(current_wave_metrics.metrics[Repetition_Metric.Repetition_Metric_ByteCount] == tester.target_processed_byte_count,
+		"current_wave_byte_count=%v != target_byte_count=%v",
+		current_wave_metrics.metrics[Repetition_Metric.Repetition_Metric_ByteCount], 
+		tester.target_processed_byte_count)
 
 	test_result: ^Repetition_Test_Result = &tester.test_result
     test_result.total_accumulated_metrics.metrics[Repetition_Metric.Repetition_Metric_Test_Count] += 1;

@@ -41,13 +41,9 @@ main :: proc() {
     for repitition_tester_is_testing(&tester) {
         repetition_tester_begin_time(&tester)
 
-        src_bytes, _ := virtual.reserve_and_commit(alloc_bytes)
-        defer virtual.release(&src_bytes[0], alloc_bytes)
-        for &byte_view, i in src_bytes {
-            byte_view = cast(u8)i
-        }
-
+        sleep_for_duration(2) 
         repetition_tester_count_bytes(&tester, cast(u64)alloc_bytes)
+
         repetition_tester_end_time(&tester)
     }
 }
