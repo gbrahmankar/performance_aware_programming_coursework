@@ -17,7 +17,7 @@ main :: proc() {
 
     cpu_freq, has_tsc := get_tsc_frequency()
 
-    chapter09_front_end_tests(cpu_freq, csv_style_prints)
+    // chapter09_front_end_tests(cpu_freq, csv_style_prints)
     // chapter09_cpu_front_end_basics(cpu_freq, csv_style_prints) 
     // chapter10_branch_prediction(cpu_freq, csv_style_prints)  
     // chapter11_code_alignment(cpu_freq, csv_style_prints)   
@@ -31,4 +31,23 @@ main :: proc() {
     // chapter20_non_temporal_stores(cpu_freq, csv_style_prints)
     // chapter21_prefetch(cpu_freq, csv_style_prints) 
     // chapter23_two_times_faster_reads(cpu_freq, csv_style_prints) 
+
+    // throwaway
+    tester := repetition_tester_create(cpu_freq)
+    page_size := 4 * mem.Kilobyte
+    pages: u64 = 10
+    alloc_bytes: uint = cast(uint)pages * cast(uint)page_size
+    repitition_tester_begin_new_test_instance(&tester, cast(u64)alloc_bytes, 2)
+    for repitition_tester_is_testing(&tester) {
+        repetition_tester_begin_time(&tester)
+
+        src_bytes, _ := virtual.reserve_and_commit(alloc_bytes)
+        defer virtual.release(&src_bytes[0], alloc_bytes)
+        for &byte_view, i in src_bytes {
+            byte_view = cast(u8)i
+        }
+
+        repetition_tester_count_bytes(&tester, cast(u64)alloc_bytes)
+        repetition_tester_end_time(&tester)
+    }
 }
