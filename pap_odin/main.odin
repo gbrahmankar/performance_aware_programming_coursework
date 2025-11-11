@@ -32,7 +32,8 @@ main :: proc() {
     // chapter21_prefetch(cpu_freq, csv_style_prints) 
     // chapter23_two_times_faster_reads(cpu_freq, csv_style_prints) 
 
-    // throwaway
+    /*
+    throwaway : rep_tester
     tester := repetition_tester_create(cpu_freq)
     page_size := 4 * mem.Kilobyte
     pages: u64 = 10
@@ -46,4 +47,42 @@ main :: proc() {
 
         repetition_tester_end_time(&tester)
     }
+    */
+
+    /*
+    throwaway : profiler
+    */
+    profiler_begin_profiling() 
+    {
+        scope_0: Profile_Scope
+        profiler_begin_profiling_scope(&scope_0, "scope_0", 0)
+        defer profiler_end_profiling_scope(&scope_0)
+
+        sleep_for_duration(2) 
+
+        {
+            scope_1: Profile_Scope
+            profiler_begin_profiling_scope(&scope_1, "scope_1", 0)
+            defer profiler_end_profiling_scope(&scope_1)
+
+            sleep_for_duration(1) 
+        }
+
+        {
+            scope_2: Profile_Scope
+            profiler_begin_profiling_scope(&scope_2, "scope_2", 0)
+            defer profiler_end_profiling_scope(&scope_2)
+
+            sleep_for_duration(1) 
+        }
+
+        {
+            scope_3: Profile_Scope
+            profiler_begin_profiling_scope(&scope_3, "scope_1", 0)
+            defer profiler_end_profiling_scope(&scope_3)
+
+            sleep_for_duration(1) 
+        }
+    }
+    profiler_end_profiling()
 }
