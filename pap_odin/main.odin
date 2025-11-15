@@ -58,31 +58,23 @@ main :: proc() {
         profiler_begin_profiling_scope(&scope_0, "scope_0", 0)
         defer profiler_end_profiling_scope(&scope_0)
 
-        sleep_for_duration(2) 
+        sleep_for_duration(5) 
 
         {
             scope_1: Profile_Scope
             profiler_begin_profiling_scope(&scope_1, "scope_1", 0)
             defer profiler_end_profiling_scope(&scope_1)
 
-            sleep_for_duration(1) 
-        }
+            sleep_for_duration(3) 
 
-        {
-            scope_2: Profile_Scope
-            profiler_begin_profiling_scope(&scope_2, "scope_2", 0)
-            defer profiler_end_profiling_scope(&scope_2)
+            {
+                scope_0: Profile_Scope
+                profiler_begin_profiling_scope(&scope_0, "scope_0", 0)
+                defer profiler_end_profiling_scope(&scope_0)
 
-            sleep_for_duration(1) 
-        }
-
-        {
-            scope_3: Profile_Scope
-            profiler_begin_profiling_scope(&scope_3, "scope_1", 0)
-            defer profiler_end_profiling_scope(&scope_3)
-
-            sleep_for_duration(1) 
-        }
+                sleep_for_duration(2) 
+            }
+        } 
     }
     profiler_end_profiling()
 }
