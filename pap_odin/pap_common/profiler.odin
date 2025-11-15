@@ -56,12 +56,14 @@ profiler_end_profiling :: proc() {
 
 		for anchor_index in 0..<global_profiler_data.next_free_profile_anchor_index {
 			anchor: ^Profile_Anchor = &global_profiler_data.profile_anchors[anchor_index]
-			fmt.printfln("anchor_label=%v | hit_count=%v | time_elapsed_exclusive=%.3vms | time_elapsed_inclusive=%.3vms | processed_byte_count=%v", 
+			seconds_elapsed_in_anchor_inclusive := compute_seconds_from_cpu_time(anchor.tsc_elapsed_inclusive, tsc_freq)
+			fmt.printfln("anchor_label=%v | hit_count=%v | time_elapsed_exclusive=%.3vms | time_elapsed_inclusive=%.3vms | processed_megabytes=%.4v | bandwidth=%.4vgb/s",
 				anchor.label, 
 				anchor.hit_count,
 				compute_seconds_from_cpu_time(anchor.tsc_elapsed_exclusive, tsc_freq) * 1000,
-				compute_seconds_from_cpu_time(anchor.tsc_elapsed_inclusive, tsc_freq) * 1000,
-				anchor.processed_byte_count)
+				seconds_elapsed_in_anchor_inclusive * 1000,
+				anchor.processed_byte_count / mem.Megabyte,
+				cast(f64)(anchor.processed_byte_count / mem.Gigabyte) / seconds_elapsed_in_anchor_inclusive)
 		}
 	}
 }

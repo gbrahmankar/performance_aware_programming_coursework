@@ -55,21 +55,21 @@ main :: proc() {
     profiler_begin_profiling() 
     {
         scope_0: Profile_Scope
-        profiler_begin_profiling_scope(&scope_0, "scope_0", 0)
+        profiler_begin_profiling_scope(&scope_0, "scope_0", 10 * mem.Gigabyte)
         defer profiler_end_profiling_scope(&scope_0)
 
         sleep_for_duration(5) 
 
         {
             scope_1: Profile_Scope
-            profiler_begin_profiling_scope(&scope_1, "scope_1", 0)
+            profiler_begin_profiling_scope(&scope_1, "scope_1", 7 * mem.Gigabyte)
             defer profiler_end_profiling_scope(&scope_1)
 
             sleep_for_duration(3) 
 
             {
                 scope_0: Profile_Scope
-                profiler_begin_profiling_scope(&scope_0, "scope_0", 0)
+                profiler_begin_profiling_scope(&scope_0, "scope_0", 3 * mem.Gigabyte)
                 defer profiler_end_profiling_scope(&scope_0)
 
                 sleep_for_duration(2) 
