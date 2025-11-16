@@ -51,7 +51,6 @@ main :: proc() {
 
     /*
     throwaway : profiler
-    */
     profiler_begin_profiling() 
     {
         scope_0: Profile_Scope
@@ -77,4 +76,10 @@ main :: proc() {
         } 
     }
     profiler_end_profiling()
+    */
+
+    /*
+    throwaway : haversine_distance_problem_tests
+    */
+    haversine_main()
 }
