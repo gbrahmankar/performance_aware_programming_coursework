@@ -61,7 +61,7 @@ chapter21_prefetch :: proc(cpu_freq: u64, csv_style_prints: bool) {
         next_offset: u64
         next_pointer: ^u64    
 
-        random_number := get_random_number()
+        random_number := get_random_u64()
 
         found := false
         for search_index in 0..<cache_line_count {
