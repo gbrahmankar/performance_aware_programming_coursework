@@ -45,7 +45,7 @@ produce_haversine_distance_problem_files :: proc(pairs_to_produce: u64) {
 	}
 	defer os.close(hav_input_fd)
 
-	hav_ref_sum_fd, hav_ref_sum_err := os.open(haversine_reference_sum_file_relative_path, os.O_CREATE | os.O_RDWR)
+	hav_ref_sum_fd, hav_ref_sum_err := os.open(haversine_reference_sum_file_relative_path, os.O_CREATE | os.O_RDWR | os.O_TRUNC)
 	if hav_ref_sum_err != nil {
 		return	
 	}
@@ -60,8 +60,10 @@ produce_haversine_distance_problem_files :: proc(pairs_to_produce: u64) {
 	max_pairs_to_produce_per_cluster: u64 = 1 + pairs_to_produce/64
 	remaining_pairs_to_produce_for_current_cluster: u64 = 0
 	current_cluster_index: i64 = -1
+	running_average_sum: f64	
+	sum_coeff: f64 = 1 / cast(f64)pairs_to_produce 
 
-	os.write_string(hav_input_fd, "{\"pairs\":[\n")
+	os.write_string(hav_input_fd, "{ \"pairs\" : [\n")
 	for pair_index in 0..<pairs_to_produce {
 		if remaining_pairs_to_produce_for_current_cluster == 0 {
 			remaining_pairs_to_produce_for_current_cluster = max_pairs_to_produce_per_cluster
@@ -87,13 +89,21 @@ produce_haversine_distance_problem_files :: proc(pairs_to_produce: u64) {
         x1: f64 = random_degree(x_center, x_radius, X_MAX);
         y1: f64 = random_degree(y_center, y_radius, Y_MAX);
 
-       	coordinate_string: strings.Builder = strings.builder_make_none()
+       	coordinate_pair_string: strings.Builder = strings.builder_make_none()
 		json_seperator: string = (pair_index == (pairs_to_produce - 1)) ? "\n" : ",\n";
-        fmt.sbprintf(&coordinate_string, 
+        fmt.sbprintf(&coordinate_pair_string, 
         	"	{{ \"x0\" : %v, \"y0\" : %v, \"x1\" : %v, \"y1\" : %v }}%v", 
         	x0, y0, x1, y1, json_seperator)
-        os.write_string(hav_input_fd, strings.to_string(coordinate_string))
-        strings.builder_reset(&coordinate_string)
+        os.write_string(hav_input_fd, strings.to_string(coordinate_pair_string))
+        strings.builder_reset(&coordinate_pair_string)
+
+        pair_distance: f64 = reference_haversine(x0, y0, x1, y1)
+		pair_distance_string: strings.Builder = strings.builder_make_none()
+        fmt.sbprintf(&pair_distance_string, "%v\n", pair_distance)
+        os.write_string(hav_ref_sum_fd, strings.to_string(pair_distance_string))
+        strings.builder_reset(&pair_distance_string)
+
+        running_average_sum += sum_coeff * pair_distance
 
 		/*
 		fmt.printfln("x0=%v, y0=%v, x1=%v, y1=%v",
@@ -107,5 +117,10 @@ produce_haversine_distance_problem_files :: proc(pairs_to_produce: u64) {
 			remaining_pairs_to_produce_for_current_cluster)
 		*/
 	}
-	os.write_string(hav_input_fd, "]}\n")
+	os.write_string(hav_input_fd, "] }\n")
+
+	average_sum_string: strings.Builder = strings.builder_make_none()
+    fmt.sbprintf(&average_sum_string, "%v", running_average_sum)
+    os.write_string(hav_ref_sum_fd, strings.to_string(average_sum_string))
+    strings.builder_reset(&average_sum_string)
 }
