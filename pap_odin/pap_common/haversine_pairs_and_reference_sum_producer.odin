@@ -90,7 +90,7 @@ produce_haversine_distance_problem_files :: proc(pairs_to_produce: u64) {
        	coordinate_string: strings.Builder = strings.builder_make_none()
 		json_seperator: string = (pair_index == (pairs_to_produce - 1)) ? "\n" : ",\n";
         fmt.sbprintf(&coordinate_string, 
-        	"	{{ \"x0\" : %v, \"y0\" : %v, \"x1\" : %v, \"y1\" : %v }} %v", 
+        	"	{{ \"x0\" : %v, \"y0\" : %v, \"x1\" : %v, \"y1\" : %v }}%v", 
         	x0, y0, x1, y1, json_seperator)
         os.write_string(hav_input_fd, strings.to_string(coordinate_string))
         strings.builder_reset(&coordinate_string)
