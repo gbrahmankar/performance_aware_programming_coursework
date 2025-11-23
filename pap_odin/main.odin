@@ -81,5 +81,5 @@ main :: proc() {
     /*
     throwaway : haversine_distance_problem_tests
     */
-    produce_haversine_distance_problem_files()
+    produce_haversine_distance_problem_files(10)
 }
