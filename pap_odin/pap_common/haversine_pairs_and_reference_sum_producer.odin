@@ -3,7 +3,6 @@ package pap_common
 import "core:fmt"
 import "core:math/rand"
 import "core:os"
-import "core:path/filepath"
 import "core:strings"
 
 X_MAX :: 180 // x ranges from -X_MAX to +X_MAX
