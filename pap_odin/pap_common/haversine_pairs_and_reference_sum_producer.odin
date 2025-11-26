@@ -9,13 +9,6 @@ X_MAX :: 180 // x ranges from -X_MAX to +X_MAX
 Y_MAX :: 90 // y ranges from -Y_MAX to +Y_MAX
 MAX_PAIR_PRODUCE_COUNT :: 1 << 34
 
-Coordinate_Pair :: struct {
-	x0: f64,
-	y0: f64,
-	x1: f64,
-	y1: f64	
-}
-
 random_degree :: proc(center, radius, max_allowed: f64) -> (f64) {
     min_val: f64 = center - radius;
     if min_val < -max_allowed {
