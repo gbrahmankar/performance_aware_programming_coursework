@@ -39,6 +39,44 @@ Token :: struct {
 	value: []byte
 }
 
+Scope_Type :: enum {
+	Scope_Type_Brace,
+	Scope_Type_Bracket,
+
+	Scope_Type_Count,
+    Scope_Type_Invalid 
+}
+
+Node_Value_Type :: enum {
+	Node_Value_Type_Number,
+	Node_Value_Type_String,
+	Node_Value_Type_Bool,
+
+	Node_Value_Type_Array,
+	Node_Value_Type_Json,
+
+	Node_Value_Type_Count,
+    Node_Value_Type_Invalid 
+}
+
+////////////////////////////////////////////////
+// gab : whatever you see between any two comma_tokens is represented using a node struct
+Node :: struct {
+	scope_type: Scope_Type,
+	value_type: Node_Value_Type, 
+
+	key: []byte,
+	value: []byte,
+
+	prev_sibling_node: ^Node,
+	next_sibling_node: ^Node,
+
+	parent_node: ^Node, // only first_sibling_in_scope_node will have a parent_node
+	child_node: ^Node,
+
+	first_sibling_in_scope_node: ^Node 
+}
+
 get_next_token :: proc(buffer: []byte, token: ^Token) -> (int) {
 	token.type = .Token_Type_Invalid
 
@@ -125,14 +163,28 @@ process_haversine_pairs_json_file :: proc(file_path: string) {
 	file_bytes, _ := os.read_entire_file(file_path)	
 	defer delete(file_bytes)
 
+	cursor: int
+	current_slice: []byte = file_bytes
+
+	////////////////////////////////////////////////
+	// gab : for the pure joy of json_parsing 
+	cursor = 0
+	current_slice = file_bytes
+
+	json_full_representation := new([MAX_PAIR_PROCESS_COUNT]Node)
+	defer free(json_full_representation)	
+	////////////////////////////////////////////////
+
+	////////////////////////////////////////////////
+	// gab : for solving the haversine_distance_problem 
+	cursor = 0
+	current_slice = file_bytes
+
 	all_pairs := new([MAX_PAIR_PROCESS_COUNT]Coordinate_Pair)
 	defer free(all_pairs)
 
 	current_pair_index: int
 	current_coordinate: string
-
-	cursor: int
-	current_slice: []byte = file_bytes
 
 	token: Token
 	cursor = get_next_token(current_slice, &token)
@@ -188,4 +240,5 @@ process_haversine_pairs_json_file :: proc(file_path: string) {
 		}
 		*/
 	}
+	////////////////////////////////////////////////	
 }
