@@ -268,9 +268,20 @@ produce_internal_json_representation :: proc(file_bytes: []byte) {
 			}
 		}
 	}
+
+	print_internal_json_representation(internal_json_representation[:next_free_node_index])
 }
 
-print_internal_json_representation :: proc(internal_json_representation: []Node) {	
+print_internal_json_representation :: proc(internal_json_representation: []Node) {
+	for node, node_index in internal_json_representation {
+		if len(node.key) > 0 || len(node.value) > 0 {
+			fmt.printfln("{{ %v : %v }}", string(node.key), string(node.value))
+		}
+
+		if node.next_sibling_node == nil && node.scope_type == .Scope_Type_Brace {
+			fmt.println("------------------------------------")	
+		}
+	}
 }
 
 ////////////////////////////////////////////////
