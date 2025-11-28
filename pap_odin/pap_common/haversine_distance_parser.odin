@@ -169,7 +169,7 @@ get_next_token :: proc(buffer: []byte, token: ^Token) -> (int) {
 }
 
 ////////////////////////////////////////////////
-//~ gab : for the pure joy of json_parsing 
+//~ gab : for the pure joy of json_parsing. visualize in rad_debugger !
 produce_internal_json_representation :: proc(file_bytes: []byte) {
 	internal_json_representation := new([MAX_PAIR_PROCESS_COUNT]Node)
 	defer free(internal_json_representation)	
@@ -183,7 +183,7 @@ produce_internal_json_representation :: proc(file_bytes: []byte) {
 	cursor := get_next_token(current_slice, &token)
 
 	active_token_role: Token_Role = .Token_Role_Invalid
-	if token.type == .Token_Type_Open_Bracket {
+	if token.type == .Token_Type_Open_Brace {
 		active_token_role = .Token_Role_Key
 		current_node.depth = 0
 		current_node.index_at_depth = 0
@@ -194,13 +194,13 @@ produce_internal_json_representation :: proc(file_bytes: []byte) {
 		cursor = get_next_token(current_slice, &token)
 
 		#partial switch token.type {
-			case .Token_Type_Open_Bracket : {
+			case .Token_Type_Open_Brace : {
 				next_node: ^Node = &internal_json_representation[next_free_node_index]; next_free_node_index+= 1;
 
 				current_node.value_type = .Node_Value_Type_Json
 				current_node.child_node = next_node
 
-				next_node.scope_type = .Scope_Type_Bracket 
+				next_node.scope_type = .Scope_Type_Brace
 				next_node.parent_node = current_node
 				next_node.prev_sibling_node = nil 
 
@@ -210,17 +210,17 @@ produce_internal_json_representation :: proc(file_bytes: []byte) {
 				current_node.depth = current_node.parent_node.depth + 1
 				current_node.index_at_depth = 0
 			}
-			case .Token_Type_Close_Bracket : {
+			case .Token_Type_Close_Brace : {
 				current_node.next_sibling_node = nil 
 				current_node = current_node.parent_node
 			}
-			case .Token_Type_Open_Brace : {
+			case .Token_Type_Open_Bracket : {
 				next_node: ^Node = &internal_json_representation[next_free_node_index]; next_free_node_index+= 1;
 
 				current_node.value_type = .Node_Value_Type_Array
 				current_node.child_node = next_node
 
-				next_node.scope_type = .Scope_Type_Brace
+				next_node.scope_type = .Scope_Type_Bracket
 				next_node.parent_node = current_node
 				next_node.prev_sibling_node = nil
 
@@ -230,7 +230,7 @@ produce_internal_json_representation :: proc(file_bytes: []byte) {
 				current_node.depth = current_node.parent_node.depth + 1
 				current_node.index_at_depth = 0
 			}
-			case .Token_Type_Close_Brace : {
+			case .Token_Type_Close_Bracket : {
 				current_node.next_sibling_node = nil
 				current_node = current_node.parent_node
 			}
@@ -245,9 +245,9 @@ produce_internal_json_representation :: proc(file_bytes: []byte) {
 
 				current_node = next_node
 
-				if current_node.scope_type == .Scope_Type_Bracket {
+				if current_node.scope_type == .Scope_Type_Brace {
 					active_token_role = .Token_Role_Key
-				} else if current_node.scope_type == .Scope_Type_Brace {
+				} else if current_node.scope_type == .Scope_Type_Bracket {
 					active_token_role = .Token_Role_Value
 				}
 
@@ -268,11 +268,10 @@ produce_internal_json_representation :: proc(file_bytes: []byte) {
 			}
 		}
 	}
-
-	print_internal_json_representation(internal_json_representation[:])
 }
 
-print_internal_json_representation :: proc(internal_json_representation: []Node) {}
+print_internal_json_representation :: proc(internal_json_representation: []Node) {	
+}
 
 ////////////////////////////////////////////////
 //~ gab : for producing haversine_answers per pair and an average sum
