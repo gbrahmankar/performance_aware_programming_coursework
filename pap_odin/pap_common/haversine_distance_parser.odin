@@ -59,8 +59,16 @@ Node_Value_Type :: enum {
     Node_Value_Type_Invalid 
 }
 
+Token_Role :: enum {
+    Token_Role_Key,
+    Token_Role_Value,
+
+	Token_Role_Count,
+    Token_Role_Invalid 
+}
+
 ////////////////////////////////////////////////
-// gab : whatever you see between any two comma_tokens is represented using a node struct
+//~ gab : whatever you see between any two comma_tokens is represented using a node struct
 Node :: struct {
 	scope_type: Scope_Type,
 	value_type: Node_Value_Type, 
@@ -71,10 +79,11 @@ Node :: struct {
 	prev_sibling_node: ^Node,
 	next_sibling_node: ^Node,
 
-	parent_node: ^Node, // only first_sibling_in_scope_node will have a parent_node
+	parent_node: ^Node,
 	child_node: ^Node,
 
-	first_sibling_in_scope_node: ^Node 
+	depth: u16, // what is the current depth level of this node's scope ? 
+	index_at_depth: u16 // what is the index of this node in the current scope ?
 }
 
 get_next_token :: proc(buffer: []byte, token: ^Token) -> (int) {
@@ -159,35 +168,125 @@ get_next_token :: proc(buffer: []byte, token: ^Token) -> (int) {
     return cursor
 }
 
-process_haversine_pairs_json_file :: proc(file_path: string) {
-	file_bytes, _ := os.read_entire_file(file_path)	
-	defer delete(file_bytes)
+////////////////////////////////////////////////
+//~ gab : for the pure joy of json_parsing 
+produce_internal_json_representation :: proc(file_bytes: []byte) {
+	internal_json_representation := new([MAX_PAIR_PROCESS_COUNT]Node)
+	defer free(internal_json_representation)	
 
-	cursor: int
+	current_node: ^Node = &internal_json_representation[0]
+	next_free_node_index: u32 = 1
+
 	current_slice: []byte = file_bytes
 
-	////////////////////////////////////////////////
-	// gab : for the pure joy of json_parsing 
-	cursor = 0
-	current_slice = file_bytes
+	token: Token
+	cursor := get_next_token(current_slice, &token)
 
-	json_full_representation := new([MAX_PAIR_PROCESS_COUNT]Node)
-	defer free(json_full_representation)	
-	////////////////////////////////////////////////
+	active_token_role: Token_Role = .Token_Role_Invalid
+	if token.type == .Token_Type_Open_Bracket {
+		active_token_role = .Token_Role_Key
+		current_node.depth = 0
+		current_node.index_at_depth = 0
+	}
 
-	////////////////////////////////////////////////
-	// gab : for solving the haversine_distance_problem 
-	cursor = 0
-	current_slice = file_bytes
+	for token.type != .Token_Type_Invalid {
+		current_slice = current_slice[cursor:]
+		cursor = get_next_token(current_slice, &token)
 
+		#partial switch token.type {
+			case .Token_Type_Open_Bracket : {
+				next_node: ^Node = &internal_json_representation[next_free_node_index]; next_free_node_index+= 1;
+
+				current_node.value_type = .Node_Value_Type_Json
+				current_node.child_node = next_node
+
+				next_node.scope_type = .Scope_Type_Bracket 
+				next_node.parent_node = current_node
+				next_node.prev_sibling_node = nil 
+
+				current_node = next_node
+
+				active_token_role = .Token_Role_Key
+				current_node.depth = current_node.parent_node.depth + 1
+				current_node.index_at_depth = 0
+			}
+			case .Token_Type_Close_Bracket : {
+				current_node.next_sibling_node = nil 
+				current_node = current_node.parent_node
+			}
+			case .Token_Type_Open_Brace : {
+				next_node: ^Node = &internal_json_representation[next_free_node_index]; next_free_node_index+= 1;
+
+				current_node.value_type = .Node_Value_Type_Array
+				current_node.child_node = next_node
+
+				next_node.scope_type = .Scope_Type_Brace
+				next_node.parent_node = current_node
+				next_node.prev_sibling_node = nil
+
+				current_node = next_node
+
+				active_token_role = .Token_Role_Value
+				current_node.depth = current_node.parent_node.depth + 1
+				current_node.index_at_depth = 0
+			}
+			case .Token_Type_Close_Brace : {
+				current_node.next_sibling_node = nil
+				current_node = current_node.parent_node
+			}
+			case .Token_Type_Comma : {
+				next_node: ^Node = &internal_json_representation[next_free_node_index]; next_free_node_index+= 1;
+
+				current_node.next_sibling_node = next_node 
+
+				next_node.prev_sibling_node = current_node
+				next_node.scope_type = current_node.scope_type 
+				next_node.parent_node = current_node.parent_node
+
+				current_node = next_node
+
+				if current_node.scope_type == .Scope_Type_Bracket {
+					active_token_role = .Token_Role_Key
+				} else if current_node.scope_type == .Scope_Type_Brace {
+					active_token_role = .Token_Role_Value
+				}
+
+				current_node.depth = current_node.prev_sibling_node.depth
+				current_node.index_at_depth = current_node.prev_sibling_node.index_at_depth + 1
+			}
+			case .Token_Type_Colon : {
+				active_token_role = .Token_Role_Value
+			}
+			case .Token_Type_Bool : fallthrough
+			case .Token_Type_String : fallthrough
+			case .Token_Type_Number : {
+				if active_token_role == .Token_Role_Key {
+					current_node.key = token.value
+				} else if active_token_role == .Token_Role_Value {
+					current_node.value = token.value
+				}
+			}
+		}
+	}
+
+	print_internal_json_representation(internal_json_representation[:])
+}
+
+print_internal_json_representation :: proc(internal_json_representation: []Node) {}
+
+////////////////////////////////////////////////
+//~ gab : for producing haversine_answers per pair and an average sum
+produce_haversine_answers_and_average_sum :: proc(file_bytes: []byte) {
 	all_pairs := new([MAX_PAIR_PROCESS_COUNT]Coordinate_Pair)
 	defer free(all_pairs)
+
+	current_slice: []byte = file_bytes
 
 	current_pair_index: int
 	current_coordinate: string
 
 	token: Token
-	cursor = get_next_token(current_slice, &token)
+	cursor := get_next_token(current_slice, &token)
 	for token.type != .Token_Type_Invalid {
 		current_slice = current_slice[cursor:]
 		cursor = get_next_token(current_slice, &token)
@@ -210,35 +309,40 @@ process_haversine_pairs_json_file :: proc(file_path: string) {
 		}
 
 		if token.type == .Token_Type_Number {
-			// fmt.println("current_pair_index =", current_pair_index)
+			fmt.println("current_pair_index =", current_pair_index)
 			switch current_coordinate {
 				case "x0" : {
 					all_pairs[current_pair_index].x0, _ = strconv.parse_f64(string(token.value))
-					// fmt.println("x0 =", all_pairs[current_pair_index].x0)
+					fmt.println("x0 =", all_pairs[current_pair_index].x0)
 				}	
 				case "y0" : {
 					all_pairs[current_pair_index].y0, _ = strconv.parse_f64(transmute(string)token.value)
-					// fmt.println("y0 =", all_pairs[current_pair_index].y0)
+					fmt.println("y0 =", all_pairs[current_pair_index].y0)
 				}	
 				case "x1" : {
 					all_pairs[current_pair_index].x1, _ = strconv.parse_f64(transmute(string)token.value)
-					// fmt.println("x1 =", all_pairs[current_pair_index].x1)
+					fmt.println("x1 =", all_pairs[current_pair_index].x1)
 				}	
 				case "y1" : {
 					all_pairs[current_pair_index].y1, _ = strconv.parse_f64(transmute(string)token.value)
-					// fmt.println("y1 =", all_pairs[current_pair_index].y1)
+					fmt.println("y1 =", all_pairs[current_pair_index].y1)
 					current_pair_index += 1
 				}	
 			}
 		}
-
-		/*
+		
 		if token.type == .Token_Type_Number || token.type == .Token_Type_String {
 			fmt.println(transmute(string)token.value)
 		} else {
 			fmt.println(token.type)
 		}
-		*/
 	}
-	////////////////////////////////////////////////	
+}
+
+process_haversine_pairs_json_file :: proc(file_path: string) {
+	file_bytes, _ := os.read_entire_file(file_path)	
+	defer delete(file_bytes)
+
+	// produce_haversine_answers_and_average_sum(file_bytes)
+	produce_internal_json_representation(file_bytes)
 }
