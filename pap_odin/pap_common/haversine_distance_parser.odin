@@ -256,9 +256,23 @@ produce_internal_json_representation :: proc(file_bytes: []byte) -> ([]Node, u32
 			case .Token_Type_Colon : {
 				active_token_role = .Token_Role_Value
 			}
-			case .Token_Type_Bool : fallthrough
-			case .Token_Type_String : fallthrough
+			case .Token_Type_Bool : {
+				current_node.value_type = .Node_Value_Type_Bool
+
+				current_node.value = token.value
+			}
+			case .Token_Type_String : {
+				current_node.value_type = .Node_Value_Type_String
+
+				if active_token_role == .Token_Role_Key {
+					current_node.key = token.value
+				} else if active_token_role == .Token_Role_Value {
+					current_node.value = token.value
+				}
+			}
 			case .Token_Type_Number : {
+				current_node.value_type = .Node_Value_Type_Number
+
 				if active_token_role == .Token_Role_Key {
 					current_node.key = token.value
 				} else if active_token_role == .Token_Role_Value {
@@ -285,67 +299,43 @@ print_internal_json_representation :: proc(internal_json_representation: []Node)
 
 ////////////////////////////////////////////////
 //~ gab : for producing haversine_answers per pair and an average sum
-produce_haversine_answers_and_average_sum :: proc(file_bytes: []byte) {
+produce_haversine_answers_and_average_sum :: proc(internal_json_representation: []Node) -> ([]Coordinate_Pair, u32) {
 	all_pairs := new([MAX_PAIR_PROCESS_COUNT]Coordinate_Pair)
 	defer free(all_pairs)
 
-	current_slice: []byte = file_bytes
-
-	current_pair_index: int
+	current_pair_index: u32
 	current_coordinate: string
 
-	token: Token
-	cursor := get_next_token(current_slice, &token)
-	for token.type != .Token_Type_Invalid {
-		current_slice = current_slice[cursor:]
-		cursor = get_next_token(current_slice, &token)
-
-		if token.type == .Token_Type_String {
-			switch transmute(string)token.value {
+	for node, node_index in internal_json_representation {
+		if len(node.key) > 0 {
+			switch string(node.key) {
 				case "x0" : {
-					current_coordinate = "x0" 
+					all_pairs[current_pair_index].x0, _ = strconv.parse_f64(string(node.value))
 				}	
 				case "y0" : {
-					current_coordinate = "y0" 
+					all_pairs[current_pair_index].y0, _ = strconv.parse_f64(string(node.value))
 				}	
 				case "x1" : {
-					current_coordinate = "x1" 
+					all_pairs[current_pair_index].x1, _ = strconv.parse_f64(string(node.value))
 				}	
 				case "y1" : {
-					current_coordinate = "y1" 
-				}	
-			}
-		}
+					all_pairs[current_pair_index].y1, _ = strconv.parse_f64(string(node.value))
 
-		if token.type == .Token_Type_Number {
-			fmt.println("current_pair_index =", current_pair_index)
-			switch current_coordinate {
-				case "x0" : {
-					all_pairs[current_pair_index].x0, _ = strconv.parse_f64(string(token.value))
-					fmt.println("x0 =", all_pairs[current_pair_index].x0)
-				}	
-				case "y0" : {
-					all_pairs[current_pair_index].y0, _ = strconv.parse_f64(transmute(string)token.value)
-					fmt.println("y0 =", all_pairs[current_pair_index].y0)
-				}	
-				case "x1" : {
-					all_pairs[current_pair_index].x1, _ = strconv.parse_f64(transmute(string)token.value)
-					fmt.println("x1 =", all_pairs[current_pair_index].x1)
-				}	
-				case "y1" : {
-					all_pairs[current_pair_index].y1, _ = strconv.parse_f64(transmute(string)token.value)
-					fmt.println("y1 =", all_pairs[current_pair_index].y1)
+					/*
+					fmt.printfln("{{ x0=%v, y0=%v, x1=%v, y1=%v }}", 
+						all_pairs[current_pair_index].x0,
+						all_pairs[current_pair_index].y0,
+						all_pairs[current_pair_index].x1,
+						all_pairs[current_pair_index].y1)
+					*/
+
 					current_pair_index += 1
 				}	
 			}
 		}
-		
-		if token.type == .Token_Type_Number || token.type == .Token_Type_String {
-			fmt.println(transmute(string)token.value)
-		} else {
-			fmt.println(token.type)
-		}
 	}
+
+	return all_pairs[:], current_pair_index
 }
 
 process_haversine_pairs_json_file :: proc(file_path: string) {
@@ -356,5 +346,6 @@ process_haversine_pairs_json_file :: proc(file_path: string) {
 	internal_json_representation, number_of_nodes_in_the_representation := produce_internal_json_representation(file_bytes)
 	defer delete(internal_json_representation)	
 
-	print_internal_json_representation(internal_json_representation[:number_of_nodes_in_the_representation+1])
+	all_pairs, number_of_pairs := produce_haversine_answers_and_average_sum(internal_json_representation[:number_of_nodes_in_the_representation])
+	// print_internal_json_representation(internal_json_representation[:number_of_nodes_in_the_representation])
 }
