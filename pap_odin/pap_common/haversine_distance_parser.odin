@@ -170,13 +170,13 @@ get_next_token :: proc(buffer: []byte, token: ^Token) -> (int) {
 
 ////////////////////////////////////////////////
 //~ gab : for the pure joy of json_parsing. visualize in rad_debugger !
-produce_internal_json_representation :: proc(file_bytes: []byte) -> ([]Node, u32) {
+produce_internal_json_representation :: proc(pairs_file_bytes: []byte) -> ([]Node, u32) {
 	internal_json_representation := new([MAX_PAIR_PROCESS_COUNT]Node)
 
 	current_node: ^Node = &internal_json_representation[0]
 	next_free_node_index: u32 = 1
 
-	current_slice: []byte = file_bytes
+	current_slice: []byte = pairs_file_bytes
 
 	token: Token
 	cursor := get_next_token(current_slice, &token)
@@ -299,11 +299,11 @@ print_internal_json_representation :: proc(internal_json_representation: []Node)
 
 ////////////////////////////////////////////////
 //~ gab : for producing haversine_answers per pair and an average sum
-produce_haversine_answers_and_average_sum :: proc(internal_json_representation: []Node) -> ([]Coordinate_Pair, u32) {
+produce_haversine_answers_and_average_sum :: proc(internal_json_representation: []Node) -> ([]Coordinate_Pair, u32, []f64, f64) {
 	running_sum: f64
 
-	all_pairs := new([MAX_PAIR_PROCESS_COUNT]Coordinate_Pair)
-	defer free(all_pairs)
+	coordinate_pairs := new([MAX_PAIR_PROCESS_COUNT]Coordinate_Pair)
+	distances_between_pairs := new([MAX_PAIR_PROCESS_COUNT]f64)
 
 	current_pair_index: u32
 	current_coordinate: string
@@ -312,27 +312,29 @@ produce_haversine_answers_and_average_sum :: proc(internal_json_representation: 
 		if len(node.key) > 0 {
 			switch string(node.key) {
 				case "x0" : {
-					all_pairs[current_pair_index].x0, _ = strconv.parse_f64(string(node.value))
+					coordinate_pairs[current_pair_index].x0, _ = strconv.parse_f64(string(node.value))
 				}	
 				case "y0" : {
-					all_pairs[current_pair_index].y0, _ = strconv.parse_f64(string(node.value))
+					coordinate_pairs[current_pair_index].y0, _ = strconv.parse_f64(string(node.value))
 				}	
 				case "x1" : {
-					all_pairs[current_pair_index].x1, _ = strconv.parse_f64(string(node.value))
+					coordinate_pairs[current_pair_index].x1, _ = strconv.parse_f64(string(node.value))
 				}	
 				case "y1" : {
-					all_pairs[current_pair_index].y1, _ = strconv.parse_f64(string(node.value))
+					coordinate_pairs[current_pair_index].y1, _ = strconv.parse_f64(string(node.value))
 
-        			pair_distance: f64 = reference_haversine(all_pairs[current_pair_index].x0, 
-        				all_pairs[current_pair_index].y0, 
-        				all_pairs[current_pair_index].x1, 
-        				all_pairs[current_pair_index].y1)
+        			pair_distance: f64 = reference_haversine(coordinate_pairs[current_pair_index].x0, 
+        				coordinate_pairs[current_pair_index].y0, 
+        				coordinate_pairs[current_pair_index].x1, 
+        				coordinate_pairs[current_pair_index].y1)
+
+        			distances_between_pairs[current_pair_index] = pair_distance
 
 					fmt.printfln("{{ x0=%v, y0=%v, x1=%v, y1=%v : d=%v }}", 
-						all_pairs[current_pair_index].x0,
-						all_pairs[current_pair_index].y0,
-						all_pairs[current_pair_index].x1,
-						all_pairs[current_pair_index].y1,
+						coordinate_pairs[current_pair_index].x0,
+						coordinate_pairs[current_pair_index].y0,
+						coordinate_pairs[current_pair_index].x1,
+						coordinate_pairs[current_pair_index].y1,
 						pair_distance)
 
 					running_sum += pair_distance
@@ -344,19 +346,49 @@ produce_haversine_answers_and_average_sum :: proc(internal_json_representation: 
 	}
 
 	average_sum: f64 = running_sum / cast(f64)current_pair_index
-	fmt.printfln("avg_sum=%v", average_sum)
+	fmt.printfln("\navg_sum=%v", average_sum)
 
-	return all_pairs[:], current_pair_index
+	return coordinate_pairs[:], current_pair_index, distances_between_pairs[:], average_sum
 }
 
-process_haversine_pairs_json_file :: proc(file_path: string) {
-	file_bytes, _ := os.read_entire_file(file_path)	
-	defer delete(file_bytes)
+tally_produced_distances_and_avg_sum_against_reference :: proc(distances_between_pairs: []f64, average_sum: f64, reference_file_path: string) {	
+	ref_file_bytes, _ := os.read_entire_file(reference_file_path)	
+	defer delete(ref_file_bytes)
 
-	// produce_haversine_answers_and_average_sum(file_bytes)
-	internal_json_representation, number_of_nodes_in_the_representation := produce_internal_json_representation(file_bytes)
+	pass: bool = true
+
+	ref_file_content_as_string := string(ref_file_bytes)
+	ref_distances, _ := strings.split_lines(ref_file_content_as_string)
+	for distance_index in 0..<len(distances_between_pairs) {
+		ref_distance_f64, _ := strconv.parse_f64(ref_distances[distance_index])
+		if cast(int)distances_between_pairs[distance_index] != cast(int)ref_distance_f64 {
+			pass = false
+		}
+	}
+
+	ref_average_sum_f64, _ := strconv.parse_f64(ref_distances[len(distances_between_pairs)])
+	if cast(int)average_sum != cast(int)ref_average_sum_f64 {
+		pass = false
+	}
+
+	if pass == false {
+		fmt.println("failed_distance_and_sum_checks!")	
+	} else {
+		fmt.println("passed_distance_and_sum_checks!")	
+	}
+}
+
+process_haversine_pairs_json_file :: proc(pairs_file_path: string, ref_file_path: string) {
+	pairs_file_bytes, _ := os.read_entire_file(pairs_file_path)	
+	defer delete(pairs_file_bytes)
+
+	internal_json_representation, number_of_nodes_in_the_representation := produce_internal_json_representation(pairs_file_bytes)
 	defer delete(internal_json_representation)	
 
-	all_pairs, number_of_pairs := produce_haversine_answers_and_average_sum(internal_json_representation[:number_of_nodes_in_the_representation])
+	coordinate_pairs, number_of_pairs, distances_between_pairs, average_sum := produce_haversine_answers_and_average_sum(internal_json_representation[:number_of_nodes_in_the_representation])
+	defer delete(coordinate_pairs)
+	defer delete(distances_between_pairs)
+
+	tally_produced_distances_and_avg_sum_against_reference(distances_between_pairs[:number_of_pairs], average_sum, ref_file_path)
 	// print_internal_json_representation(internal_json_representation[:number_of_nodes_in_the_representation])
 }

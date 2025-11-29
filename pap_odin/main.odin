@@ -85,5 +85,6 @@ main :: proc() {
     // produce_haversine_distance_problem_files(10)
 
     haversine_input_file_relative_path := "haversine_json_files\\haversine_input.json";
-    process_haversine_pairs_json_file(haversine_input_file_relative_path)
+    haversine_ref_file_relative_path := "haversine_json_files\\haversine_reference_sum.json";
+    process_haversine_pairs_json_file(haversine_input_file_relative_path, haversine_ref_file_relative_path)
 }
