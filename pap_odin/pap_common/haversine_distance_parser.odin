@@ -170,9 +170,8 @@ get_next_token :: proc(buffer: []byte, token: ^Token) -> (int) {
 
 ////////////////////////////////////////////////
 //~ gab : for the pure joy of json_parsing. visualize in rad_debugger !
-produce_internal_json_representation :: proc(file_bytes: []byte) {
+produce_internal_json_representation :: proc(file_bytes: []byte) -> ([]Node, u32) {
 	internal_json_representation := new([MAX_PAIR_PROCESS_COUNT]Node)
-	defer free(internal_json_representation)	
 
 	current_node: ^Node = &internal_json_representation[0]
 	next_free_node_index: u32 = 1
@@ -269,7 +268,7 @@ produce_internal_json_representation :: proc(file_bytes: []byte) {
 		}
 	}
 
-	print_internal_json_representation(internal_json_representation[:next_free_node_index])
+	return internal_json_representation[:], next_free_node_index
 }
 
 print_internal_json_representation :: proc(internal_json_representation: []Node) {
@@ -354,5 +353,8 @@ process_haversine_pairs_json_file :: proc(file_path: string) {
 	defer delete(file_bytes)
 
 	// produce_haversine_answers_and_average_sum(file_bytes)
-	produce_internal_json_representation(file_bytes)
+	internal_json_representation, number_of_nodes_in_the_representation := produce_internal_json_representation(file_bytes)
+	defer delete(internal_json_representation)	
+
+	print_internal_json_representation(internal_json_representation[:number_of_nodes_in_the_representation+1])
 }
