@@ -300,6 +300,8 @@ print_internal_json_representation :: proc(internal_json_representation: []Node)
 ////////////////////////////////////////////////
 //~ gab : for producing haversine_answers per pair and an average sum
 produce_haversine_answers_and_average_sum :: proc(internal_json_representation: []Node) -> ([]Coordinate_Pair, u32) {
+	running_sum: f64
+
 	all_pairs := new([MAX_PAIR_PROCESS_COUNT]Coordinate_Pair)
 	defer free(all_pairs)
 
@@ -321,19 +323,28 @@ produce_haversine_answers_and_average_sum :: proc(internal_json_representation: 
 				case "y1" : {
 					all_pairs[current_pair_index].y1, _ = strconv.parse_f64(string(node.value))
 
-					/*
-					fmt.printfln("{{ x0=%v, y0=%v, x1=%v, y1=%v }}", 
+        			pair_distance: f64 = reference_haversine(all_pairs[current_pair_index].x0, 
+        				all_pairs[current_pair_index].y0, 
+        				all_pairs[current_pair_index].x1, 
+        				all_pairs[current_pair_index].y1)
+
+					fmt.printfln("{{ x0=%v, y0=%v, x1=%v, y1=%v : d=%v }}", 
 						all_pairs[current_pair_index].x0,
 						all_pairs[current_pair_index].y0,
 						all_pairs[current_pair_index].x1,
-						all_pairs[current_pair_index].y1)
-					*/
+						all_pairs[current_pair_index].y1,
+						pair_distance)
+
+					running_sum += pair_distance
 
 					current_pair_index += 1
 				}	
 			}
 		}
 	}
+
+	average_sum: f64 = running_sum / cast(f64)current_pair_index
+	fmt.printfln("avg_sum=%v", average_sum)
 
 	return all_pairs[:], current_pair_index
 }
