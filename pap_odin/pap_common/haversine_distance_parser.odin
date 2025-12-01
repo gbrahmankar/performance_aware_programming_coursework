@@ -86,6 +86,13 @@ Node :: struct {
 	index_at_depth: u16 // what is the index of this node in the current scope ?
 }
 
+approx_equal :: proc(lhs, rhs: f64) -> (bool) {	
+	epsilon: f64 = 0.0000001
+
+	diff: f64 = lhs - rhs
+	return (diff > -epsilon) && (diff < epsilon)
+}
+
 get_next_token :: proc(buffer: []byte, token: ^Token) -> (int) {
 	token.type = .Token_Type_Invalid
 
@@ -347,13 +354,13 @@ tally_produced_distances_and_avg_sum_against_reference :: proc(distances_between
 	ref_distances, _ := strings.split_lines(ref_file_content_as_string)
 	for distance_index in 0..<len(distances_between_pairs) {
 		ref_distance_f64, _ := strconv.parse_f64(ref_distances[distance_index])
-		if cast(int)distances_between_pairs[distance_index] != cast(int)ref_distance_f64 {
+		if !approx_equal(distances_between_pairs[distance_index], ref_distance_f64) {
 			pass = false
 		}
 	}
 
 	ref_average_sum_f64, _ := strconv.parse_f64(ref_distances[len(distances_between_pairs)])
-	if cast(int)average_sum != cast(int)ref_average_sum_f64 {
+	if !approx_equal(average_sum, ref_average_sum_f64) {
 		pass = false
 	}
 
