@@ -169,7 +169,7 @@ get_next_token :: proc(buffer: []byte, token: ^Token) -> (int) {
 }
 
 ////////////////////////////////////////////////
-//~ gab : for the pure joy of json_parsing. visualize in rad_debugger !
+//~ gab : visualize this in rad_debugger !
 produce_internal_json_representation :: proc(pairs_file_bytes: []byte) -> ([]Node, u32) {
 	internal_json_representation := new([MAX_PAIR_PROCESS_COUNT]Node)
 
@@ -285,21 +285,7 @@ produce_internal_json_representation :: proc(pairs_file_bytes: []byte) -> ([]Nod
 	return internal_json_representation[:], next_free_node_index
 }
 
-print_internal_json_representation :: proc(internal_json_representation: []Node) {
-	for node, node_index in internal_json_representation {
-		if len(node.key) > 0 || len(node.value) > 0 {
-			fmt.printfln("{{ %v : %v }}", string(node.key), string(node.value))
-		}
-
-		if node.next_sibling_node == nil && node.scope_type == .Scope_Type_Brace {
-			fmt.println("------------------------------------")	
-		}
-	}
-}
-
-////////////////////////////////////////////////
-//~ gab : for producing haversine_answers per pair and an average sum
-produce_haversine_answers_and_average_sum :: proc(internal_json_representation: []Node) -> ([]Coordinate_Pair, u32, []f64, f64) {
+produce_coordinate_pairs_haversine_answers_and_average_sum :: proc(internal_json_representation: []Node) -> ([]Coordinate_Pair, u32, []f64, f64) {
 	running_sum: f64
 
 	coordinate_pairs := new([MAX_PAIR_PROCESS_COUNT]Coordinate_Pair)
@@ -372,23 +358,18 @@ tally_produced_distances_and_avg_sum_against_reference :: proc(distances_between
 	}
 
 	if pass == false {
-		fmt.println("failed_distance_and_sum_checks!")	
+		fmt.println("failed_distance_and_sum_checks !")
 	} else {
-		fmt.println("passed_distance_and_sum_checks!")	
+		fmt.println("passed_distance_and_sum_checks !")	
 	}
 }
 
-process_haversine_pairs_json_file :: proc(pairs_file_path: string, ref_file_path: string) {
+process_haversine_pairs_json_file :: proc(pairs_file_path: string) -> ([]Coordinate_Pair, u32, []f64, f64) {
 	pairs_file_bytes, _ := os.read_entire_file(pairs_file_path)	
 	defer delete(pairs_file_bytes)
 
 	internal_json_representation, number_of_nodes_in_the_representation := produce_internal_json_representation(pairs_file_bytes)
 	defer delete(internal_json_representation)	
 
-	coordinate_pairs, number_of_pairs, distances_between_pairs, average_sum := produce_haversine_answers_and_average_sum(internal_json_representation[:number_of_nodes_in_the_representation])
-	defer delete(coordinate_pairs)
-	defer delete(distances_between_pairs)
-
-	tally_produced_distances_and_avg_sum_against_reference(distances_between_pairs[:number_of_pairs], average_sum, ref_file_path)
-	// print_internal_json_representation(internal_json_representation[:number_of_nodes_in_the_representation])
+	return produce_coordinate_pairs_haversine_answers_and_average_sum(internal_json_representation[:number_of_nodes_in_the_representation])
 }

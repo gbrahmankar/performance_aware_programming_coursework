@@ -86,5 +86,10 @@ main :: proc() {
 
     haversine_input_file_relative_path := "haversine_json_files\\haversine_input.json";
     haversine_ref_file_relative_path := "haversine_json_files\\haversine_reference_sum.json";
-    process_haversine_pairs_json_file(haversine_input_file_relative_path, haversine_ref_file_relative_path)
+    coordinate_pairs, number_of_pairs, distances_between_pairs, average_sum := process_haversine_pairs_json_file(haversine_input_file_relative_path)
+    defer delete(coordinate_pairs)
+    defer delete(distances_between_pairs)
+
+    tally_produced_distances_and_avg_sum_against_reference(distances_between_pairs[:number_of_pairs], 
+        average_sum, haversine_ref_file_relative_path)
 }
