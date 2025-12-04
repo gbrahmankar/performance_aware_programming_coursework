@@ -7,7 +7,7 @@ import "core:strings"
 
 X_MAX :: 180 // x ranges from -X_MAX to +X_MAX
 Y_MAX :: 90 // y ranges from -Y_MAX to +Y_MAX
-MAX_PAIR_PRODUCE_COUNT :: 1 << 34
+MAX_PAIR_PRODUCE_COUNT :: 1 << 27
 
 random_degree :: proc(center, radius, max_allowed: f64) -> (f64) {
     min_val: f64 = center - radius;
@@ -20,7 +20,14 @@ random_degree :: proc(center, radius, max_allowed: f64) -> (f64) {
         max_val = max_allowed
     }
 
-    return rand.float64_range(min_val, max_val)
+    rand_degree: f64 = rand.float64_range(min_val, max_val)
+    if rand_degree < 0 && rand_degree > -0.0001 {
+    	rand_degree -= rand.float64_range(0.1, 0.2)
+    } else if rand_degree > 0 && rand_degree < 0.0001 {
+    	rand_degree += rand.float64_range(0.1, 0.2)
+    }
+
+    return rand_degree
 }
 
 produce_haversine_distance_problem_files :: proc(pairs_to_produce: u64) {

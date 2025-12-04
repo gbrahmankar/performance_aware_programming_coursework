@@ -178,7 +178,7 @@ get_next_token :: proc(buffer: []byte, token: ^Token) -> (int) {
 ////////////////////////////////////////////////
 //~ gab : visualize this in rad_debugger !
 produce_internal_json_representation :: proc(pairs_file_bytes: []byte) -> ([]Node, u32) {
-	internal_json_representation := new([MAX_PAIR_PROCESS_COUNT]Node)
+	internal_json_representation := make([]Node, MAX_PAIR_PROCESS_COUNT)
 
 	current_node: ^Node = &internal_json_representation[0]
 	next_free_node_index: u32 = 1
@@ -295,8 +295,8 @@ produce_internal_json_representation :: proc(pairs_file_bytes: []byte) -> ([]Nod
 produce_coordinate_pairs_haversine_answers_and_average_sum :: proc(internal_json_representation: []Node) -> ([]Coordinate_Pair, u32, []f64, f64) {
 	running_sum: f64
 
-	coordinate_pairs := new([MAX_PAIR_PROCESS_COUNT]Coordinate_Pair)
-	distances_between_pairs := new([MAX_PAIR_PROCESS_COUNT]f64)
+	coordinate_pairs := make([]Coordinate_Pair, MAX_PAIR_PROCESS_COUNT)
+	distances_between_pairs := make([]f64, MAX_PAIR_PROCESS_COUNT)
 
 	current_pair_index: u32
 	current_coordinate: string
@@ -323,12 +323,12 @@ produce_coordinate_pairs_haversine_answers_and_average_sum :: proc(internal_json
 
         			distances_between_pairs[current_pair_index] = pair_distance
 
-					fmt.printfln("{{ x0=%v, y0=%v, x1=%v, y1=%v : d=%v }}", 
+					/*fmt.printfln("{{ x0=%v, y0=%v, x1=%v, y1=%v : d=%v }}", 
 						coordinate_pairs[current_pair_index].x0,
 						coordinate_pairs[current_pair_index].y0,
 						coordinate_pairs[current_pair_index].x1,
 						coordinate_pairs[current_pair_index].y1,
-						pair_distance)
+						pair_distance)*/
 
 					running_sum += pair_distance
 
@@ -339,7 +339,7 @@ produce_coordinate_pairs_haversine_answers_and_average_sum :: proc(internal_json
 	}
 
 	average_sum: f64 = running_sum / cast(f64)current_pair_index
-	fmt.printfln("\navg_sum=%v", average_sum)
+	fmt.printfln("\navg_sum=%v, pairs=%v", average_sum, current_pair_index)
 
 	return coordinate_pairs[:], current_pair_index, distances_between_pairs[:], average_sum
 }
@@ -349,6 +349,7 @@ tally_produced_distances_and_avg_sum_against_reference :: proc(distances_between
 	defer delete(ref_file_bytes)
 
 	pass: bool = true
+	error_count: u32
 
 	ref_file_content_as_string := string(ref_file_bytes)
 	ref_distances, _ := strings.split_lines(ref_file_content_as_string)
@@ -356,16 +357,18 @@ tally_produced_distances_and_avg_sum_against_reference :: proc(distances_between
 		ref_distance_f64, _ := strconv.parse_f64(ref_distances[distance_index])
 		if !approx_equal(distances_between_pairs[distance_index], ref_distance_f64) {
 			pass = false
+			error_count += 1
 		}
 	}
 
 	ref_average_sum_f64, _ := strconv.parse_f64(ref_distances[len(distances_between_pairs)])
 	if !approx_equal(average_sum, ref_average_sum_f64) {
 		pass = false
+		error_count += 1
 	}
 
 	if pass == false {
-		fmt.println("failed_distance_and_sum_checks !")
+		fmt.printfln("failed_distance_and_sum_checks ! error_count=%v", error_count)
 	} else {
 		fmt.println("passed_distance_and_sum_checks !")	
 	}
