@@ -82,7 +82,7 @@ main :: proc() {
     throwaway : haversine_distance_problem_tests
     */
 
-    // produce_haversine_distance_problem_files(500000)
+    produce_haversine_distance_problem_files(500000)
 
     haversine_input_file_relative_path := "haversine_json_files\\haversine_input.json";
     haversine_ref_file_relative_path := "haversine_json_files\\haversine_reference_sum.json";

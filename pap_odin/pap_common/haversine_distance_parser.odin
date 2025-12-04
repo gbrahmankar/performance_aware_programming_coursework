@@ -87,7 +87,7 @@ Node :: struct {
 }
 
 approx_equal :: proc(lhs, rhs: f64) -> (bool) {	
-	epsilon: f64 = 0.0000001
+	epsilon: f64 = 0.00000001
 
 	diff: f64 = lhs - rhs
 	return (diff > -epsilon) && (diff < epsilon)

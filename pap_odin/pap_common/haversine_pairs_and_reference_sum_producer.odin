@@ -20,14 +20,7 @@ random_degree :: proc(center, radius, max_allowed: f64) -> (f64) {
         max_val = max_allowed
     }
 
-    rand_degree: f64 = rand.float64_range(min_val, max_val)
-    if rand_degree < 0 && rand_degree > -0.0001 {
-    	rand_degree -= rand.float64_range(0.1, 0.2)
-    } else if rand_degree > 0 && rand_degree < 0.0001 {
-    	rand_degree += rand.float64_range(0.1, 0.2)
-    }
-
-    return rand_degree
+    return rand.float64_range(min_val, max_val)
 }
 
 produce_haversine_distance_problem_files :: proc(pairs_to_produce: u64) {
@@ -91,7 +84,7 @@ produce_haversine_distance_problem_files :: proc(pairs_to_produce: u64) {
        	coordinate_pair_string: strings.Builder = strings.builder_make_none()
 		json_seperator: string = (pair_index == (pairs_to_produce - 1)) ? "\n" : ",\n";
         fmt.sbprintf(&coordinate_pair_string, 
-        	"	{{ \"x0\" : %v, \"y0\" : %v, \"x1\" : %v, \"y1\" : %v }}%v", 
+        	"	{{ \"x0\" : %.15f, \"y0\" : %.15f, \"x1\" : %.15f, \"y1\" : %.15f }}%v", 
         	x0, y0, x1, y1, json_seperator)
         os.write_string(hav_input_fd, strings.to_string(coordinate_pair_string))
         strings.builder_reset(&coordinate_pair_string)
