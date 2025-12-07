@@ -93,5 +93,10 @@ main :: proc() {
     tally_produced_distances_and_avg_sum_against_reference(distances_between_pairs[:number_of_pairs], average_sum)
     */
 
+    /*
+    throwaway : part_four : determining_input_ranges 
+
     haversine_math_ops_update_input_domains()
+    */
+    haversine_math_ops_update_output_ranges()
 }
