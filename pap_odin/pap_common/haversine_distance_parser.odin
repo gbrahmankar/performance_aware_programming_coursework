@@ -2,7 +2,6 @@ package pap_common
 
 import "core:fmt"
 import "core:os"
-import "core:slice"
 import "core:strconv"
 import "core:strings"
 import "core:unicode"
@@ -339,13 +338,12 @@ produce_coordinate_pairs_haversine_answers_and_average_sum :: proc(internal_json
 	}
 
 	average_sum: f64 = running_sum / cast(f64)current_pair_index
-	fmt.printfln("\navg_sum=%v, pairs=%v", average_sum, current_pair_index)
 
 	return coordinate_pairs[:], current_pair_index, distances_between_pairs[:], average_sum
 }
 
-tally_produced_distances_and_avg_sum_against_reference :: proc(distances_between_pairs: []f64, average_sum: f64, reference_file_path: string) {	
-	ref_file_bytes, _ := os.read_entire_file(reference_file_path)	
+tally_produced_distances_and_avg_sum_against_reference :: proc(distances_between_pairs: []f64, average_sum: f64) {	
+	ref_file_bytes, _ := os.read_entire_file(HAVERSINE_DISTANCE_REFERENCE_FILE_PATH)	
 	defer delete(ref_file_bytes)
 
 	pass: bool = true
@@ -374,8 +372,8 @@ tally_produced_distances_and_avg_sum_against_reference :: proc(distances_between
 	}
 }
 
-process_haversine_pairs_json_file :: proc(pairs_file_path: string) -> ([]Coordinate_Pair, u32, []f64, f64) {
-	pairs_file_bytes, _ := os.read_entire_file(pairs_file_path)	
+process_haversine_pairs_json_file :: proc() -> ([]Coordinate_Pair, u32, []f64, f64) {
+	pairs_file_bytes, _ := os.read_entire_file(COORDINATE_PAIRS_INPUT_FILE_PATH)	
 	defer delete(pairs_file_bytes)
 
 	internal_json_representation, number_of_nodes_in_the_representation := produce_internal_json_representation(pairs_file_bytes)

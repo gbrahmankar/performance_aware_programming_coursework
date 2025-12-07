@@ -5,6 +5,9 @@ import "core:math/rand"
 import "core:os"
 import "core:strings"
 
+COORDINATE_PAIRS_INPUT_FILE_PATH :: "haversine_json_files\\haversine_input.json";
+HAVERSINE_DISTANCE_REFERENCE_FILE_PATH :: "haversine_json_files\\haversine_reference_sum.json";
+
 X_MAX :: 180 // x ranges from -X_MAX to +X_MAX
 Y_MAX :: 90 // y ranges from -Y_MAX to +Y_MAX
 MAX_PAIR_PRODUCE_COUNT :: 1 << 27
@@ -28,16 +31,13 @@ produce_haversine_distance_problem_files :: proc(pairs_to_produce: u64) {
 		"pairs_to_produce=%v > MAX_PAIR_PRODUCE_COUNT=%v", 
 		pairs_to_produce, MAX_PAIR_PRODUCE_COUNT)
 
-  	haversine_input_file_relative_path := "haversine_json_files\\haversine_input.json";
-  	haversine_reference_sum_file_relative_path := "haversine_json_files\\haversine_reference_sum.json";
-
-	hav_input_fd, hav_input_err := os.open(haversine_input_file_relative_path, os.O_CREATE | os.O_RDWR | os.O_TRUNC)
+	hav_input_fd, hav_input_err := os.open(COORDINATE_PAIRS_INPUT_FILE_PATH, os.O_CREATE | os.O_RDWR | os.O_TRUNC)
 	if hav_input_err != nil {
 		return	
 	}
 	defer os.close(hav_input_fd)
 
-	hav_ref_sum_fd, hav_ref_sum_err := os.open(haversine_reference_sum_file_relative_path, os.O_CREATE | os.O_RDWR | os.O_TRUNC)
+	hav_ref_sum_fd, hav_ref_sum_err := os.open(HAVERSINE_DISTANCE_REFERENCE_FILE_PATH, os.O_CREATE | os.O_RDWR | os.O_TRUNC)
 	if hav_ref_sum_err != nil {
 		return	
 	}

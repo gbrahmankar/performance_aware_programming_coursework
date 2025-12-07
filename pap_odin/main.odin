@@ -8,12 +8,15 @@ import "core:time"
 
 import "pap_common"
 import "part_three"
+import "part_four"
 
 csv_style_prints := false 
 
 main :: proc() {
-    using part_three
     using pap_common 
+
+    using part_three
+    using part_four
 
     cpu_freq, has_tsc := get_tsc_frequency()
 
@@ -80,16 +83,15 @@ main :: proc() {
 
     /*
     throwaway : haversine_distance_problem_tests
-    */
 
     produce_haversine_distance_problem_files(500000)
 
-    haversine_input_file_relative_path := "haversine_json_files\\haversine_input.json";
-    haversine_ref_file_relative_path := "haversine_json_files\\haversine_reference_sum.json";
-    coordinate_pairs, number_of_pairs, distances_between_pairs, average_sum := process_haversine_pairs_json_file(haversine_input_file_relative_path)
+    coordinate_pairs, number_of_pairs, distances_between_pairs, average_sum := process_haversine_pairs_json_file()
     defer delete(coordinate_pairs)
     defer delete(distances_between_pairs)
 
-    tally_produced_distances_and_avg_sum_against_reference(distances_between_pairs[:number_of_pairs], 
-        average_sum, haversine_ref_file_relative_path)
+    tally_produced_distances_and_avg_sum_against_reference(distances_between_pairs[:number_of_pairs], average_sum)
+    */
+
+    haversine_math_ops_update_input_domains()
 }
