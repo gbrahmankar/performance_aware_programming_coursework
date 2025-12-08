@@ -5,6 +5,8 @@ import "core:math"
 
 import "../pap_common"
 
+Math_Op_Proc_Ptr :: proc "contextless" (value: f64) -> (f64)
+
 PI64 :: 3.14159265358979323846264338327950288419716939937510582097494459230781640628
 
 Math_Op_Reference_Answer :: struct {
@@ -12,7 +14,7 @@ Math_Op_Reference_Answer :: struct {
     output: f64
 }
 
-global_reference_table_sine: []Math_Op_Reference_Answer = {
+global_reference_table_sin: []Math_Op_Reference_Answer = {
     {-3.141592653589793238,  0},
     { 3.141592653589793238,  0},
     {                    0,  0},
@@ -34,7 +36,7 @@ global_reference_table_sine: []Math_Op_Reference_Answer = {
     {-1.105406126779538090, -0.893646522982279028728058617603741066082503194431138593753976426322044},
 }
 
-global_reference_table_cosine: []Math_Op_Reference_Answer = {
+global_reference_table_cos: []Math_Op_Reference_Answer = {
     {-1.570796326794896619, 0},
     { 1.570796326794896619, 0},
     {                    0, 1},
@@ -56,7 +58,7 @@ global_reference_table_cosine: []Math_Op_Reference_Answer = {
     {-1.561169615584349746, 0.009626562520955350208912506462712435006323009077835337480272238678485},
 }
 
-global_reference_table_arc_sine: []Math_Op_Reference_Answer = {
+global_reference_table_asin: []Math_Op_Reference_Answer = {
     {                   0, 0},
     {                   1, 1.57079632679489661923132169163975144209858469968755291048747229615390820},
     {0.307293958335019157, 0.31234808998780550368494688635355987269549952968782884596351104311416574},
@@ -98,5 +100,33 @@ global_reference_table_sqrt: []Math_Op_Reference_Answer = {
     {0.051231188245869981, 0.22634307642574353990563961017436878164407501492708325367084901372998301},
 }
 
+// haversine_math_ops_*
+haversine_math_ops_test_math_lib_function_against_hardcoded_reference :: proc(label: string, 
+	to_test_proc_ptr: proc "contextless" (value: f64) -> f64, 
+	reference_answers: []Math_Op_Reference_Answer) {
+	fmt.printfln("%s :\n", label)
+	for reference in reference_answers {
+		fmt.printfln("  f(%+.24f) = %+.24f [reference]\n", reference.input, reference.output)
+		to_test_output: f64 = to_test_proc_ptr(reference.input)
+		fmt.printfln("                                 = %+.24f (%+.24f) [%s]\n", 
+			to_test_output, 
+			reference.output - to_test_output,
+			label)
+	}
+	fmt.println("")
+}
+
 haversine_math_ops_update_output_ranges :: proc() {
+	haversine_math_ops_test_math_lib_function_against_hardcoded_reference("math.sin", 
+		math.sin_f64, 
+		global_reference_table_sin[:])
+	haversine_math_ops_test_math_lib_function_against_hardcoded_reference("math.cos", 
+		math.cos_f64, 
+		global_reference_table_cos[:])
+	haversine_math_ops_test_math_lib_function_against_hardcoded_reference("math.asin", 
+		math.asin_f64, 
+		global_reference_table_asin[:])
+	haversine_math_ops_test_math_lib_function_against_hardcoded_reference("math.sqrt", 
+		math.sqrt_f64, 
+		global_reference_table_sqrt[:])
 }
