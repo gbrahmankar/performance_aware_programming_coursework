@@ -5,14 +5,38 @@ import "core:math"
 
 import "../pap_common"
 
-Math_Op_Proc_Ptr :: proc "contextless" (value: f64) -> (f64)
+Math_Op_Test_Result :: struct {
+    total_diff: f64,
+    max_diff: f64,
+    diff_count: u32,
+    
+    input_value_at_max_diff: f64,
+    output_value_at_max_diff: f64,
+    expected_value_at_max_diff: f64,
+    
+    label: string
+}
 
-PI64 :: 3.14159265358979323846264338327950288419716939937510582097494459230781640628
+Math_Op_Tester :: struct {
+    results: [256]Math_Op_Test_Result,
+    error_result: Math_Op_Test_Result,
+    
+    result_count: u32,
+    progress_result_count: u32,
+
+    testing: bool,
+    step_index: u32,
+    result_offset: u32,
+    
+    input_value: f64
+}
 
 Math_Op_Reference_Answer :: struct {
     input: f64,
     output: f64
 }
+
+PI64 :: 3.14159265358979323846264338327950288419716939937510582097494459230781640628
 
 global_reference_table_sin: []Math_Op_Reference_Answer = {
     {-3.141592653589793238,  0},
@@ -100,6 +124,11 @@ global_reference_table_sqrt: []Math_Op_Reference_Answer = {
     {0.051231188245869981, 0.22634307642574353990563961017436878164407501492708325367084901372998301},
 }
 
+get_avg_diff :: proc(from: Math_Op_Test_Result) -> f64 {
+    result: f64 = (from.diff_count > 0) ? (from.total_diff / cast(f64)from.diff_count) : 0;
+    return result;
+}
+
 // haversine_math_ops_*
 haversine_math_ops_test_math_lib_function_against_hardcoded_reference :: proc(label: string, 
 	to_test_proc_ptr: proc "contextless" (value: f64) -> f64, 
@@ -114,6 +143,12 @@ haversine_math_ops_test_math_lib_function_against_hardcoded_reference :: proc(la
 			label)
 	}
 	fmt.println("")
+}
+
+haversine_math_ops_precision_test :: proc(tester: ^Math_Op_Tester, min_input_value: f64, max_input_value: f64, step_count: u32 = 100000000) {
+}
+
+haversine_math_ops_update_test_result :: proc(tester: ^Math_Op_Tester, expected: f64, output: f64, label: string) {
 }
 
 haversine_math_ops_update_output_ranges :: proc() {
