@@ -120,20 +120,24 @@ global_reference_table_sqrt: []Math_Op_Reference_Answer = {
     {0.051231188245869981, 0.22634307642574353990563961017436878164407501492708325367084901372998301},
 }
 
-get_avg_diff :: proc(from: Math_Op_Test_Result) -> f64 {
-    result: f64 = (from.diff_count > 0) ? (from.total_diff / cast(f64)from.diff_count) : 0;
-    return result;
+get_avg_diff :: proc(from: ^Math_Op_Test_Result) -> f64 {
+    result: f64 = (from.diff_count > 0) ? (from.total_diff / cast(f64)from.diff_count) : 0
+    return result
+}
+
+print_decimal_bars :: proc() {
+    fmt.println("            ________________                      ________________")
 }
 
 // haversine_math_ops_*
 haversine_math_ops_test_math_lib_function_against_hardcoded_reference :: proc(label: string, 
 	to_test_proc_ptr: proc "contextless" (value: f64) -> f64, 
 	reference_answers: []Math_Op_Reference_Answer) {
-	fmt.printfln("%s :\n", label)
+	fmt.printfln("%s :", label)
 	for reference in reference_answers {
-		fmt.printfln("  f(%+.24f) = %+.24f [reference]\n", reference.input, reference.output)
+		fmt.printfln("  f(%+.24f) = %+.24f [reference]", reference.input, reference.output)
 		to_test_output: f64 = to_test_proc_ptr(reference.input)
-		fmt.printfln("                                 = %+.24f (%+.24f) [%s]\n", 
+		fmt.printfln("                                 = %+.24f (%+.24f) [%s]",
 			to_test_output, 
 			reference.output - to_test_output,
 			label)
@@ -141,43 +145,51 @@ haversine_math_ops_test_math_lib_function_against_hardcoded_reference :: proc(la
 	fmt.println("")
 }
 
-haversine_math_ops_precision_test :: proc(tester: ^Math_Op_Tester, min_input_value: f64, 
+// note(gaurav) : a test is nothing more than an interpolated input value
+haversine_math_ops_try_produce_next_precision_test :: proc(tester: ^Math_Op_Tester,
+    min_input_value: f64,
     max_input_value: f64, 
     step_count: u32 = 100000000) -> bool {
+
     if tester.is_testing {
-        tester.step_index += 1 
+        tester.step_index += 1
     } else {
         tester.is_testing = true
         tester.step_index = 0
     }
 
     if tester.step_index < step_count {
-        t_step: f64 = cast(f64)tester.step_index / cast(f64)(step_count - 1);
-        tester.input_value = (1.0 - t_step) * min_input_value + t_step * max_input_value;
+        t_step: f64 = cast(f64)tester.step_index / cast(f64)(step_count - 1)
+        tester.input_value = (1.0 - t_step) * min_input_value + t_step * max_input_value
     } else {
         tester.number_of_results_produced += 1
+
         if(tester.number_of_results_produced > len(tester.result_list))
         {
             fmt.printfln("tester.number_of_results_produced exceeds the result_list len=%v !", 
                 tester.number_of_results_produced)
-            tester.number_of_results_produced = len(tester.result_list);
+            tester.number_of_results_produced = len(tester.result_list)
         }
-        
-        tester.is_testing = false;
+
+        haversine_math_ops_print_result_of_latest_precision_test(tester)
+
+        tester.is_testing = false
     }
     
-    return tester.is_testing;
+    return tester.is_testing
 }
 
-haversine_math_ops_produce_test_result :: proc(tester: ^Math_Op_Tester, 
+// note(gaurav) : a result is testing expected against output using the input value produced
+haversine_math_ops_produce_result_of_latest_precision_test :: proc(tester: ^Math_Op_Tester,
     expected: f64, 
     output: f64, 
     label: string) {
-    result_index: u32 = tester.number_of_results_produced - 1
-    result: Math_Op_Test_Result
-    if result_index < len(tester.result_list) {
-        result = tester.result_list[result_index] 
+
+    if tester.number_of_results_produced >= len(tester.result_list) {
+        return
     }
+
+    result: ^Math_Op_Test_Result = &tester.result_list[tester.number_of_results_produced]
     
     if(tester.step_index == 0)
     {
@@ -190,11 +202,42 @@ haversine_math_ops_produce_test_result :: proc(tester: ^Math_Op_Tester,
     
     if(diff > result.max_diff)
     {
-        result.max_diff = diff;
+        result.max_diff = diff
         result.input_value_at_max_diff = tester.input_value
         result.output_value_at_max_diff = output
         result.expected_value_at_max_diff = expected
     }
+}
+
+haversine_math_ops_print_result_of_latest_precision_test :: proc(tester: ^Math_Op_Tester) {
+    result_index: u32 = tester.number_of_results_produced - 1
+    if result_index + 1 > len(tester.result_list) {
+        return
+    }
+
+    print_decimal_bars()
+    result: ^Math_Op_Test_Result = &tester.result_list[result_index]
+    fmt.printfln("max_diff=%+.24f (avg_diff=%+.24f) at ip_value=%+.24f [%s]",
+        result.max_diff,
+        get_avg_diff(result),
+        result.input_value_at_max_diff,
+        result.label)
+}
+
+sin_approximation :: proc(input_value: f64) -> f64 {
+    return input_value
+}
+
+cos_approximation :: proc(input_value: f64) -> f64 {
+    return input_value
+}
+
+asin_approximation :: proc(input_value: f64) -> f64 {
+    return input_value
+}
+
+sqrt_approximation :: proc(input_value: f64) -> f64 {
+    return input_value
 }
 
 haversine_math_ops_update_output_ranges :: proc() {
@@ -210,4 +253,35 @@ haversine_math_ops_update_output_ranges :: proc() {
 	haversine_math_ops_test_math_lib_function_against_hardcoded_reference("math.sqrt", 
 		math.sqrt_f64, 
 		global_reference_table_sqrt[:])
+
+    tester: Math_Op_Tester
+    for haversine_math_ops_try_produce_next_precision_test(&tester, -PI64, PI64) {
+        haversine_math_ops_produce_result_of_latest_precision_test(&tester,
+            math.sin_f64(tester.input_value),
+            sin_approximation(tester.input_value),
+            "sin_approximation")
+    }
+
+    for haversine_math_ops_try_produce_next_precision_test(&tester, -PI64/2, PI64/2) {
+        haversine_math_ops_produce_result_of_latest_precision_test(&tester,
+            math.cos_f64(tester.input_value),
+            cos_approximation(tester.input_value),
+            "cos_approximation")
+    }
+
+    for haversine_math_ops_try_produce_next_precision_test(&tester, 0, 1) {
+        haversine_math_ops_produce_result_of_latest_precision_test(&tester,
+            math.asin_f64(tester.input_value),
+            asin_approximation(tester.input_value),
+            "asin_approximation")
+    }
+
+    for haversine_math_ops_try_produce_next_precision_test(&tester, 0, 1) {
+        haversine_math_ops_produce_result_of_latest_precision_test(&tester,
+            math.sqrt_f64(tester.input_value),
+            sqrt_approximation(tester.input_value),
+            "sqrt_approximation")
+    }
+
+    fmt.println("")
 }
