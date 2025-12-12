@@ -18,15 +18,11 @@ Math_Op_Test_Result :: struct {
 }
 
 Math_Op_Tester :: struct {
-    results: [256]Math_Op_Test_Result,
-    error_result: Math_Op_Test_Result,
-    
-    result_count: u32,
-    progress_result_count: u32,
+    result_list: [16]Math_Op_Test_Result,
+    number_of_results_produced: u32,
 
-    testing: bool,
+    is_testing: bool,
     step_index: u32,
-    result_offset: u32,
     
     input_value: f64
 }
@@ -145,10 +141,60 @@ haversine_math_ops_test_math_lib_function_against_hardcoded_reference :: proc(la
 	fmt.println("")
 }
 
-haversine_math_ops_precision_test :: proc(tester: ^Math_Op_Tester, min_input_value: f64, max_input_value: f64, step_count: u32 = 100000000) {
+haversine_math_ops_precision_test :: proc(tester: ^Math_Op_Tester, min_input_value: f64, 
+    max_input_value: f64, 
+    step_count: u32 = 100000000) -> bool {
+    if tester.is_testing {
+        tester.step_index += 1 
+    } else {
+        tester.is_testing = true
+        tester.step_index = 0
+    }
+
+    if tester.step_index < step_count {
+        t_step: f64 = cast(f64)tester.step_index / cast(f64)(step_count - 1);
+        tester.input_value = (1.0 - t_step) * min_input_value + t_step * max_input_value;
+    } else {
+        tester.number_of_results_produced += 1
+        if(tester.number_of_results_produced > len(tester.result_list))
+        {
+            fmt.printfln("tester.number_of_results_produced exceeds the result_list len=%v !", 
+                tester.number_of_results_produced)
+            tester.number_of_results_produced = len(tester.result_list);
+        }
+        
+        tester.is_testing = false;
+    }
+    
+    return tester.is_testing;
 }
 
-haversine_math_ops_update_test_result :: proc(tester: ^Math_Op_Tester, expected: f64, output: f64, label: string) {
+haversine_math_ops_produce_test_result :: proc(tester: ^Math_Op_Tester, 
+    expected: f64, 
+    output: f64, 
+    label: string) {
+    result_index: u32 = tester.number_of_results_produced - 1
+    result: Math_Op_Test_Result
+    if result_index < len(tester.result_list) {
+        result = tester.result_list[result_index] 
+    }
+    
+    if(tester.step_index == 0)
+    {
+        result.label = label 
+    }
+    
+    diff: f64 = math.abs(expected - output)
+    result.total_diff += diff
+    result.diff_count += 1
+    
+    if(diff > result.max_diff)
+    {
+        result.max_diff = diff;
+        result.input_value_at_max_diff = tester.input_value
+        result.output_value_at_max_diff = output
+        result.expected_value_at_max_diff = expected
+    }
 }
 
 haversine_math_ops_update_output_ranges :: proc() {

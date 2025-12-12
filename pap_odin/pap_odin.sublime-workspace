@@ -35,6 +35,39 @@
 	},
 	"buffers":
 	[
+		{
+			"file": "main.odin",
+			"settings":
+			{
+				"buffer_size": 3153,
+				"line_ending": "Windows"
+			},
+			"undo_stack":
+			[
+			]
+		},
+		{
+			"file": "part_four/chapter03_determining_output_ranges.odin",
+			"settings":
+			{
+				"buffer_size": 9586,
+				"line_ending": "Windows"
+			},
+			"undo_stack":
+			[
+			]
+		},
+		{
+			"file": "part_four/chapter03_determining_input_domains.odin",
+			"settings":
+			{
+				"buffer_size": 5140,
+				"line_ending": "Windows"
+			},
+			"undo_stack":
+			[
+			]
+		}
 	],
 	"build_system": "",
 	"build_system_choices":
@@ -107,8 +140,14 @@
 		"side_bar_visible": false,
 		"status_bar_visible": false
 	},
+	"expanded_folders":
+	[
+		"/C/Users/gbrahmankar/projects/performance_aware_programming_coursework/pap_odin",
+		"/C/Users/gbrahmankar/projects/performance_aware_programming_coursework/pap_odin/part_four"
+	],
 	"file_history":
 	[
+		"/C/Users/gbrahmankar/projects/performance_aware_programming_coursework/pap_odin/pap_odin.sublime-workspace",
 		"/C/Users/gaura/AppData/Roaming/Sublime Text/Packages/User/CMakeNinjaVulkan.sublime-build",
 		"/C/Users/gaura/projects/pixie_dust/build/build.ninja",
 		"/C/Users/gaura/projects/pixie_dust/CMakeNinjaVulkan.sublime-build",
@@ -196,7 +235,7 @@
 	],
 	"find":
 	{
-		"height": 27.2
+		"height": 31.0
 	},
 	"find_in_files":
 	{
@@ -360,12 +399,163 @@
 		{
 			"sheets":
 			[
+				{
+					"buffer": 0,
+					"file": "main.odin",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3153,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								78,
+								78
+							]
+						],
+						"settings":
+						{
+							"auto_complete_triggers":
+							[
+								{
+									"characters": "<",
+									"selector": "text.html, text.xml"
+								},
+								{
+									"rhs_empty": true,
+									"selector": "punctuation.accessor"
+								},
+								{
+									"characters": ".>#\"/:",
+									"selector": "meta.tag, source - comment - string.quoted.double.block - string.quoted.single.block - string.unquoted.heredoc",
+									"server": "odin"
+								}
+							],
+							"lsp_active": true,
+							"lsp_uri": "file:///C:/Users/gbrahmankar/projects/performance_aware_programming_coursework/pap_odin/main.odin",
+							"show_definitions": false,
+							"syntax": "Packages/Odin/Odin.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"stack_multiselect": false,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "part_four/chapter03_determining_output_ranges.odin",
+					"selected": true,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 9586,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								310,
+								310
+							]
+						],
+						"settings":
+						{
+							"auto_complete_triggers":
+							[
+								{
+									"characters": "<",
+									"selector": "text.html, text.xml"
+								},
+								{
+									"rhs_empty": true,
+									"selector": "punctuation.accessor"
+								},
+								{
+									"characters": ".>#\"/:",
+									"selector": "meta.tag, source - comment - string.quoted.double.block - string.quoted.single.block - string.unquoted.heredoc",
+									"server": "odin"
+								}
+							],
+							"lsp_active": true,
+							"lsp_uri": "file:///C:/Users/gbrahmankar/projects/performance_aware_programming_coursework/pap_odin/part_four/chapter03_determining_output_ranges.odin",
+							"show_definitions": false,
+							"syntax": "Packages/Odin/Odin.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"stack_multiselect": false,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "part_four/chapter03_determining_input_domains.odin",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 5140,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								257,
+								257
+							]
+						],
+						"settings":
+						{
+							"auto_complete_triggers":
+							[
+								{
+									"characters": "<",
+									"selector": "text.html, text.xml"
+								},
+								{
+									"rhs_empty": true,
+									"selector": "punctuation.accessor"
+								},
+								{
+									"characters": ".>#\"/:",
+									"selector": "meta.tag, source - comment - string.quoted.double.block - string.quoted.single.block - string.unquoted.heredoc",
+									"server": "odin"
+								}
+							],
+							"lsp_active": true,
+							"lsp_uri": "file:///C:/Users/gbrahmankar/projects/performance_aware_programming_coursework/pap_odin/part_four/chapter03_determining_input_domains.odin",
+							"show_definitions": false,
+							"syntax": "Packages/Odin/Odin.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"stack_multiselect": false,
+					"type": "text"
+				}
 			]
 		}
 	],
 	"incremental_find":
 	{
-		"height": 27.2
+		"height": 31.0
 	},
 	"input":
 	{
@@ -396,7 +586,10 @@
 	"menu_visible": true,
 	"output.LSP Log Panel":
 	{
-		"height": 0.0
+		"height": 0.0,
+		"history":
+		[
+		]
 	},
 	"output.SublimeLinter":
 	{
@@ -404,15 +597,24 @@
 	},
 	"output.diagnostics":
 	{
-		"height": 0.0
+		"height": 0.0,
+		"history":
+		[
+		]
 	},
 	"output.exec":
 	{
-		"height": 946.0
+		"height": 946.0,
+		"history":
+		[
+		]
 	},
 	"output.find_results":
 	{
-		"height": 0.0
+		"height": 0.0,
+		"history":
+		[
+		]
 	},
 	"output.mdpopups":
 	{
@@ -422,11 +624,11 @@
 	{
 		"height": 0.0
 	},
-	"pinned_build_system": "Packages/User/CMakeNinjaVulkan.sublime-build",
+	"pinned_build_system": "pap_odin",
 	"project": "pap_odin.sublime-project",
 	"replace":
 	{
-		"height": 51.2
+		"height": 58.0
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -492,7 +694,7 @@
 	"show_minimap": true,
 	"show_open_files": false,
 	"show_tabs": true,
-	"side_bar_visible": true,
+	"side_bar_visible": false,
 	"side_bar_width": 363.0,
 	"status_bar_visible": true,
 	"template_settings":

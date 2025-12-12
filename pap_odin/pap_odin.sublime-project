@@ -1,6 +1,15 @@
 {
 	"folders":
 	[
+		{
+			"path": ".",
+		},
+		{
+			"path": "C:\\Users\\gbrahmankar\\projects\\other\\Odin\\core",
+		},
+		{
+			"path": "C:\\Users\\gbrahmankar\\projects\\other\\Odin\\vendor"
+		},
 	],
 	"build_systems":
 	[
