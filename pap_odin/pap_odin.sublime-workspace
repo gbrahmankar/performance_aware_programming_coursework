@@ -4,6 +4,22 @@
 		"selected_items":
 		[
 			[
+				"Mat",
+				"Math_Op_Test_Result"
+			],
+			[
+				"M",
+				"Math_Op_Test_Result"
+			],
+			[
+				"to_tes",
+				"to_test_proc_ptr(value: f64) -> (_: f64)"
+			],
+			[
+				"Math_Op_",
+				"Math_Op_Proc_Ptr(value: f64) -> (_: f64)"
+			],
+			[
 				"open",
 				"open_allocate_and_read_test"
 			],
@@ -35,39 +51,6 @@
 	},
 	"buffers":
 	[
-		{
-			"file": "main.odin",
-			"settings":
-			{
-				"buffer_size": 3153,
-				"line_ending": "Windows"
-			},
-			"undo_stack":
-			[
-			]
-		},
-		{
-			"file": "part_four/chapter03_determining_output_ranges.odin",
-			"settings":
-			{
-				"buffer_size": 9586,
-				"line_ending": "Windows"
-			},
-			"undo_stack":
-			[
-			]
-		},
-		{
-			"file": "part_four/chapter03_determining_input_domains.odin",
-			"settings":
-			{
-				"buffer_size": 5140,
-				"line_ending": "Windows"
-			},
-			"undo_stack":
-			[
-			]
-		}
 	],
 	"build_system": "",
 	"build_system_choices":
@@ -80,6 +63,18 @@
 		"last_filter": "",
 		"selected_items":
 		[
+			[
+				"prefere",
+				"Preferences: Settings"
+			],
+			[
+				"lsp enable",
+				"LSP: Enable Language Server in Project"
+			],
+			[
+				"lsp disable",
+				"LSP: Disable Language Server in Project"
+			],
 			[
 				"install ",
 				"Package Control: Install Package"
@@ -99,10 +94,6 @@
 			[
 				"package",
 				"Package Control: List Packages"
-			],
-			[
-				"lsp enable",
-				"LSP: Enable Language Server in Project"
 			],
 			[
 				"install package",
@@ -140,21 +131,28 @@
 		"side_bar_visible": false,
 		"status_bar_visible": false
 	},
-	"expanded_folders":
-	[
-		"/C/Users/gbrahmankar/projects/performance_aware_programming_coursework/pap_odin",
-		"/C/Users/gbrahmankar/projects/performance_aware_programming_coursework/pap_odin/part_four"
-	],
 	"file_history":
 	[
-		"/C/Users/gbrahmankar/projects/performance_aware_programming_coursework/pap_odin/pap_odin.sublime-workspace",
+		"/C/Users/gaura/projects/other/throwaway/op_ranges.cpp",
+		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/main.odin",
+		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/part_four/chapter03_determining_input_domains.odin",
+		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/part_four/chapter03_determining_output_ranges.odin",
+		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/pap_common/haversine_distance_calculator.odin",
+		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/part_four/chapter03_determining_input_ranges.odin",
+		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/pap_common/haversine_distance_parser.odin",
+		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/pap_common/haversine_pairs_and_reference_sum_producer.odin",
+		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/part_three/chapter09_cpu_front_end_basics.odin",
+		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/part_three/chapter09_front_end_tests.odin",
+		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/haversine_json_files/haversine_reference_sum.json",
+		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/haversine_json_files/haversine_input.json",
+		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/pap_common/os_platform.odin",
+		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/pap_odin.sublime-project",
 		"/C/Users/gaura/AppData/Roaming/Sublime Text/Packages/User/CMakeNinjaVulkan.sublime-build",
 		"/C/Users/gaura/projects/pixie_dust/build/build.ninja",
 		"/C/Users/gaura/projects/pixie_dust/CMakeNinjaVulkan.sublime-build",
 		"/C/Users/gaura/projects/pixie_dust/CMakeLists.txt",
 		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/pap_common/pap_utils.odin",
 		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/part_three/chapter23_two_times_file_reads.odin",
-		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/main.odin",
 		"/C/Users/gaura/projects/pixie_dust/pixie_dust/vendor/tiny_object_loader/tiny_object_loader.h",
 		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/part_three/chapter9_cpu_front_end_basics.odin",
 		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/part_three/chapter11_code_alignment.odin",
@@ -175,13 +173,11 @@
 		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/asm/chapter9_cpu_front_end_basics.asm",
 		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/part_three/chapter19_cache_set_indexing.odin",
 		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/part_three/chapter20_non_temporal_stores.odin",
-		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/pap_common/os_platform.odin",
 		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/haversine_json_files/test.json",
 		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/haversine_json_files/test.json.txt",
 		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/random_examples",
 		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/asm/chapter21_prefetch.asm",
 		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/part_three/branch_prediction_pressure.odin",
-		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/pap_odin.sublime-project",
 		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/asm/chapter20_non_temporal_stores.asm",
 		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/asm/chapter18_unaligned_load_penalties.asm",
 		"/C/Users/gaura/projects/performance_aware_programming_coursework/pap_odin/asm/chapter19_cache_set_indexing.asm",
@@ -235,7 +231,7 @@
 	],
 	"find":
 	{
-		"height": 31.0
+		"height": 27.2
 	},
 	"find_in_files":
 	{
@@ -247,9 +243,21 @@
 	},
 	"find_state":
 	{
-		"case_sensitive": true,
+		"case_sensitive": false,
 		"find_history":
 		[
+			"^proc",
+			"e-05",
+			"21.14",
+			"21,14",
+			"110.",
+			"110.65",
+			"110.6563",
+			"110",
+			"21.140693",
+			"3.6819",
+			"175.18",
+			"f64",
 			"chapter23_two_times_faster_reads",
 			"ONE_GB",
 			"chapter23_two_times_faster_reads",
@@ -365,19 +373,7 @@
 			"block_load_repeat_count",
 			"total_byte_count",
 			"total_byte_count_with_padding",
-			"total_byte_count",
-			"all_bytes",
-			"total_byte_count",
-			"load_penalty_test_asm",
-			"unaligned_load_penalties",
-			"load_penalty_test_asm",
-			"load_penalty_test",
-			"unaligned_load_penalties",
-			"non_pow_of_two_cache_bw_tests",
-			"non_pow_of_two_cache_bw_test",
-			"non_pow_of_two_cache_bw_test_asm",
-			"cache_size_test_asm",
-			"byte_service_area_mask"
+			"total_byte_count"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -391,7 +387,7 @@
 		"show_context": true,
 		"use_buffer2": true,
 		"use_gitignore": true,
-		"whole_word": true,
+		"whole_word": false,
 		"wrap": true
 	},
 	"groups":
@@ -399,163 +395,12 @@
 		{
 			"sheets":
 			[
-				{
-					"buffer": 0,
-					"file": "main.odin",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 3153,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								78,
-								78
-							]
-						],
-						"settings":
-						{
-							"auto_complete_triggers":
-							[
-								{
-									"characters": "<",
-									"selector": "text.html, text.xml"
-								},
-								{
-									"rhs_empty": true,
-									"selector": "punctuation.accessor"
-								},
-								{
-									"characters": ".>#\"/:",
-									"selector": "meta.tag, source - comment - string.quoted.double.block - string.quoted.single.block - string.unquoted.heredoc",
-									"server": "odin"
-								}
-							],
-							"lsp_active": true,
-							"lsp_uri": "file:///C:/Users/gbrahmankar/projects/performance_aware_programming_coursework/pap_odin/main.odin",
-							"show_definitions": false,
-							"syntax": "Packages/Odin/Odin.sublime-syntax",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 2,
-					"stack_multiselect": false,
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "part_four/chapter03_determining_output_ranges.odin",
-					"selected": true,
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 9586,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								310,
-								310
-							]
-						],
-						"settings":
-						{
-							"auto_complete_triggers":
-							[
-								{
-									"characters": "<",
-									"selector": "text.html, text.xml"
-								},
-								{
-									"rhs_empty": true,
-									"selector": "punctuation.accessor"
-								},
-								{
-									"characters": ".>#\"/:",
-									"selector": "meta.tag, source - comment - string.quoted.double.block - string.quoted.single.block - string.unquoted.heredoc",
-									"server": "odin"
-								}
-							],
-							"lsp_active": true,
-							"lsp_uri": "file:///C:/Users/gbrahmankar/projects/performance_aware_programming_coursework/pap_odin/part_four/chapter03_determining_output_ranges.odin",
-							"show_definitions": false,
-							"syntax": "Packages/Odin/Odin.sublime-syntax",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 0,
-					"stack_multiselect": false,
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"file": "part_four/chapter03_determining_input_domains.odin",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 5140,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								257,
-								257
-							]
-						],
-						"settings":
-						{
-							"auto_complete_triggers":
-							[
-								{
-									"characters": "<",
-									"selector": "text.html, text.xml"
-								},
-								{
-									"rhs_empty": true,
-									"selector": "punctuation.accessor"
-								},
-								{
-									"characters": ".>#\"/:",
-									"selector": "meta.tag, source - comment - string.quoted.double.block - string.quoted.single.block - string.unquoted.heredoc",
-									"server": "odin"
-								}
-							],
-							"lsp_active": true,
-							"lsp_uri": "file:///C:/Users/gbrahmankar/projects/performance_aware_programming_coursework/pap_odin/part_four/chapter03_determining_input_domains.odin",
-							"show_definitions": false,
-							"syntax": "Packages/Odin/Odin.sublime-syntax",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": false
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 1,
-					"stack_multiselect": false,
-					"type": "text"
-				}
 			]
 		}
 	],
 	"incremental_find":
 	{
-		"height": 31.0
+		"height": 27.2
 	},
 	"input":
 	{
@@ -593,7 +438,10 @@
 	},
 	"output.SublimeLinter":
 	{
-		"height": 0.0
+		"height": 0.0,
+		"history":
+		[
+		]
 	},
 	"output.diagnostics":
 	{
@@ -611,14 +459,17 @@
 	},
 	"output.find_results":
 	{
-		"height": 0.0,
+		"height": 135.199996948,
 		"history":
 		[
 		]
 	},
 	"output.mdpopups":
 	{
-		"height": 0.0
+		"height": 0.0,
+		"history":
+		[
+		]
 	},
 	"output.mdpopups-dummy":
 	{
@@ -628,7 +479,7 @@
 	"project": "pap_odin.sublime-project",
 	"replace":
 	{
-		"height": 58.0
+		"height": 51.2
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -637,6 +488,22 @@
 		"last_filter": "",
 		"selected_items":
 		[
+			[
+				"calculat",
+				"pap_odin\\pap_common\\haversine_distance_calculator.odin"
+			],
+			[
+				"parser haver",
+				"pap_odin\\pap_common\\haversine_distance_parser.odin"
+			],
+			[
+				"produce",
+				"pap_odin\\pap_common\\haversine_pairs_and_reference_sum_producer.odin"
+			],
+			[
+				"haversine",
+				"pap_odin\\pap_common\\haversine_pairs_and_reference_sum_producer.odin"
+			],
 			[
 				"simd",
 				"pap_odin\\part_three\\chapter14_simd.odin"
@@ -679,16 +546,21 @@
 	},
 	"select_symbol":
 	{
-		"height": 0.0,
-		"last_filter": "",
+		"height": 179.2,
+		"last_filter": "sleep for se",
 		"selected_items":
 		[
+			[
+				"sleep for se",
+				"sleep_for_duration"
+			]
 		],
-		"width": 0.0
+		"width": 584.0
 	},
 	"selected_group": 0,
 	"settings":
 	{
+		"_vintageous_reset_during_init": true,
 		"lsp_show_inlay_hints": false
 	},
 	"show_minimap": true,
