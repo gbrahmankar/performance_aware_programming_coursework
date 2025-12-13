@@ -97,6 +97,8 @@ main :: proc() {
     throwaway : part_four : determining_input_ranges 
 
     haversine_math_ops_update_input_domains()
-    */
     haversine_math_ops_update_output_ranges()
+    */
+
+    run_square_root_precision_tests()
 }
