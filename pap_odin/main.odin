@@ -100,5 +100,5 @@ main :: proc() {
     haversine_math_ops_update_output_ranges()
     */
 
-    chapter05_sin_approximation()
+    chapter06_range_reduced_math_op_approximation()
 }

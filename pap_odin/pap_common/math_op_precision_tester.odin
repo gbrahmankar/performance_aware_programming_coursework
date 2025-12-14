@@ -35,7 +35,7 @@ math_op_precision_tester_get_avg_diff :: proc(from: ^Math_Op_Test_Result) -> f64
 }
 
 math_op_precision_tester_print_decimal_bars :: proc() {
-    fmt.println("            ________________                      ________________")
+    fmt.println("                ________________                      ________________")
 }
 
 // note(gaurav) : a test is nothing more than an interpolated input value
