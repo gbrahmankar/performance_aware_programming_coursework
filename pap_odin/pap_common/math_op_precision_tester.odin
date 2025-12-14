@@ -19,6 +19,8 @@ Math_Op_Tester :: struct {
     result_list: [16]Math_Op_Test_Result,
     number_of_results_produced: u32,
     active_result_index_for_currently_active_test: u32,
+    last_printted_result_index: i32,
+    printed_any_results_yet: bool,
 
     is_testing: bool,
     step_index: u32,
@@ -103,14 +105,24 @@ math_op_precision_tester_test_using_latest_precision_test :: proc(tester: ^Math_
 }
 
 math_op_precision_tester_print_precision_test_results :: proc(tester: ^Math_Op_Tester) {
-    for result_index in 0..<tester.number_of_results_produced {
+    if tester.printed_any_results_yet == false {
+        tester.last_printted_result_index = -1
+        tester.printed_any_results_yet = true
+    }
+
+    for result_index in cast(u32)(tester.last_printted_result_index+1)..<tester.number_of_results_produced {
         math_op_precision_tester_print_decimal_bars()
 
         result: ^Math_Op_Test_Result = &tester.result_list[result_index]
-        fmt.printfln("max_diff=%+.24f (avg_diff=%+.24f) at ip_value=%+.24f [%s]",
+        fmt.printfln("[%v] max_diff=%+.24f (avg_diff=%+.24f) at ip_value=%+.24f [%s]",
+            result_index,
             result.max_diff,
             math_op_precision_tester_get_avg_diff(result),
             result.input_value_at_max_diff,
             result.label)
+
+        tester.last_printted_result_index = cast(i32)result_index
     }
+
+    fmt.println("")
 }

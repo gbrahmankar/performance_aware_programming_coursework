@@ -10,8 +10,6 @@ Math_Op_Reference_Answer :: struct {
     output: f64
 }
 
-PI64 :: 3.14159265358979323846264338327950288419716939937510582097494459230781640628
-
 global_reference_table_sin: []Math_Op_Reference_Answer = {
     {-3.141592653589793238,  0},
     { 3.141592653589793238,  0},
@@ -99,6 +97,7 @@ global_reference_table_sqrt: []Math_Op_Reference_Answer = {
 }
 
 // haversine_math_ops_*
+@(private="file")
 haversine_math_ops_test_math_lib_function_against_hardcoded_reference :: proc(label: string, 
 	to_test_proc_ptr: proc "contextless" (value: f64) -> f64, 
 	reference_answers: []Math_Op_Reference_Answer) {
@@ -113,22 +112,28 @@ haversine_math_ops_test_math_lib_function_against_hardcoded_reference :: proc(la
 	}
 	fmt.println("")
 }
+
+@(private="file")
 sin_approximation :: proc(input_value: f64) -> f64 {
     return input_value
 }
 
+@(private="file")
 cos_approximation :: proc(input_value: f64) -> f64 {
     return input_value
 }
 
+@(private="file")
 asin_approximation :: proc(input_value: f64) -> f64 {
     return input_value
 }
 
+@(private="file")
 sqrt_approximation :: proc(input_value: f64) -> f64 {
     return input_value
 }
 
+@(private="file")
 haversine_math_ops_update_output_ranges :: proc() {
     using pap_common
 

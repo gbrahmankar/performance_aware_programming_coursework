@@ -100,5 +100,5 @@ main :: proc() {
     haversine_math_ops_update_output_ranges()
     */
 
-    run_square_root_precision_tests()
+    chapter05_sin_approximation()
 }
