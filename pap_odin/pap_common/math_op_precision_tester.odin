@@ -35,7 +35,7 @@ math_op_precision_tester_get_avg_diff :: proc(from: ^Math_Op_Test_Result) -> f64
 }
 
 math_op_precision_tester_print_decimal_bars :: proc() {
-    fmt.println("                ________________                      ________________")
+    fmt.println("            ________________                      ________________")
 }
 
 // note(gaurav) : a test is nothing more than an interpolated input value
@@ -114,12 +114,12 @@ math_op_precision_tester_print_precision_test_results :: proc(tester: ^Math_Op_T
         math_op_precision_tester_print_decimal_bars()
 
         result: ^Math_Op_Test_Result = &tester.result_list[result_index]
-        fmt.printfln("[%v] max_diff=%+.24f (avg_diff=%+.24f) at ip_value=%+.24f [%s]",
-            result_index,
+        fmt.printfln("max_diff=%+.24f (avg_diff=%+.24f) at ip_value=%+.24f [%s][%v]",
             result.max_diff,
             math_op_precision_tester_get_avg_diff(result),
             result.input_value_at_max_diff,
-            result.label)
+            result.label,
+            result_index)
 
         tester.last_printted_result_index = cast(i32)result_index
     }
