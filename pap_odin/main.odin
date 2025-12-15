@@ -100,5 +100,5 @@ main :: proc() {
     haversine_math_ops_update_output_ranges()
     */
 
-    chapter06_range_reduced_math_op_approximation()
+    chapter07_approximation_using_taylor_series()
 }

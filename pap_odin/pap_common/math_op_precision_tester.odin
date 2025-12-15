@@ -16,7 +16,7 @@ Math_Op_Test_Result :: struct {
 }
 
 Math_Op_Tester :: struct {
-    result_list: [16]Math_Op_Test_Result,
+    result_list: [256]Math_Op_Test_Result,
     number_of_results_produced: u32,
     active_result_index_for_currently_active_test: u32,
     last_printted_result_index: i32,
