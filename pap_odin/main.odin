@@ -100,5 +100,5 @@ main :: proc() {
     haversine_math_ops_update_output_ranges()
     */
 
-    chapter08_approximation_horners()
+    chapter09_fma_taylor_horner_sine()
 }
