@@ -100,5 +100,5 @@ main :: proc() {
     haversine_math_ops_update_output_ranges()
     */
 
-    chapter09_fma_taylor_horner_sine()
+    chapter10_dimitri_spanos_coefficient_arrays()
 }

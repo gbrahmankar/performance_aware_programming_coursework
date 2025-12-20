@@ -42,7 +42,7 @@ math_op_precision_tester_print_decimal_bars :: proc() {
 math_op_precision_tester_try_setup_next_precision_test :: proc(tester: ^Math_Op_Tester,
     min_input_value: f64,
     max_input_value: f64,
-    step_count: u32 = 100000000) -> bool {
+    step_count: u32 = 10000000) -> bool {
 
     if tester.is_testing {
         tester.step_index += 1
@@ -114,12 +114,11 @@ math_op_precision_tester_print_precision_test_results :: proc(tester: ^Math_Op_T
         math_op_precision_tester_print_decimal_bars()
 
         result: ^Math_Op_Test_Result = &tester.result_list[result_index]
-        fmt.printfln("max_diff=%+.24f (avg_diff=%+.24f) at ip_value=%+.24f [%s][%v]",
+        fmt.printfln("max_diff=%+.24f (avg_diff=%+.24f) at ip_value=%+.24f [%s]",
             result.max_diff,
             math_op_precision_tester_get_avg_diff(result),
             result.input_value_at_max_diff,
-            result.label,
-            result_index)
+            result.label)
 
         tester.last_printted_result_index = cast(i32)result_index
     }
