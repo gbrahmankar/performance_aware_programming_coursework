@@ -100,5 +100,5 @@ main :: proc() {
     haversine_math_ops_update_output_ranges()
     */
 
-    chapter10_dimitri_spanos_coefficient_arrays()
+    chapter12_all_math_op_replacement_approximations()
 }
