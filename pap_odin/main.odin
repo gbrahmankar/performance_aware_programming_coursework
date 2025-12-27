@@ -14,7 +14,6 @@ csv_style_prints := false
 
 main :: proc() {
     using pap_common 
-
     using part_three
     using part_four
 
@@ -98,7 +97,6 @@ main :: proc() {
 
     haversine_math_ops_update_input_domains()
     haversine_math_ops_update_output_ranges()
+    fmt.println(sine_approximation(1.2))
     */
-
-    chapter12_all_math_op_replacement_approximations()
 }
