@@ -59,7 +59,7 @@ cosine_approximation :: proc(x: f64) -> f64 {
     return result
 }
 
-// note(gaurav) : sqrt(...) is free because cpu has dedicated instruction for it. no need to approximate.
+// note(gaurav) : sqrt(...) is free because cpu has a dedicated instruction for it. no need to approximate.
 sqrt_approximation :: proc(input_value: f64) -> f64 {
     return simd.sqrt(input_value)
 }
