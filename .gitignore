@@ -12,3 +12,4 @@
 *.f64
 *build_vs
 *build_rad
+*main.odin
