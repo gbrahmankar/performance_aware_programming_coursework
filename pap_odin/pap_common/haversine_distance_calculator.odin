@@ -12,8 +12,7 @@ radians_from_degrees :: proc(degrees: f64) -> (f64) {
     return 0.01745329251994329577 * degrees;
 }
 
-@(private="file")
-reference_haversine_using_mathlib :: proc(x0: f64, y0: f64, x1: f64, y1: f64) -> (f64) {
+reference_haversine :: proc(x0: f64, y0: f64, x1: f64, y1: f64) -> (f64) {
     lat1: f64 = y0
     lat2: f64 = y1
     lon1: f64 = x0
@@ -32,7 +31,7 @@ reference_haversine_using_mathlib :: proc(x0: f64, y0: f64, x1: f64, y1: f64) ->
 }
 
 // using our own approximations -- tested in part_five_chapter01
-reference_haversine :: proc(x0: f64, y0: f64, x1: f64, y1: f64) -> (f64) {
+our_own__haversine :: proc(x0: f64, y0: f64, x1: f64, y1: f64) -> (f64) {
     lat1: f64 = y0
     lat2: f64 = y1
     lon1: f64 = x0
