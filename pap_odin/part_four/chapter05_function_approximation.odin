@@ -1,3 +1,5 @@
+#+feature using-stmt
+
 package part_four
 
 import "core:fmt"

@@ -1,4 +1,6 @@
+#+feature using-stmt
 #+build windows
+
 package part_three
 
 import "core:crypto"

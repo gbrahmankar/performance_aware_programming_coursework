@@ -1,3 +1,5 @@
+#+feature using-stmt
+
 package pap_odin
 
 import "core:fmt"

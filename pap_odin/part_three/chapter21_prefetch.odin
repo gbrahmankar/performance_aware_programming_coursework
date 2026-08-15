@@ -1,4 +1,6 @@
+#+feature using-stmt
 #+build windows
+
 package part_three
 
 import "core:fmt"
@@ -79,7 +81,7 @@ chapter21_prefetch :: proc(cpu_freq: u64, csv_style_prints: bool) {
         }
 
         jump_data: ^u64 = cast(^u64)(&byte_sequence_slice[jump_offset * pap_common.CACHE_LINE_SIZE])
-        mem.copy(jump_data, &next_pointer, size_of(&next_pointer))
+        mem.copy(jump_data, &next_pointer, size_of(rawptr))
         cache_line_test_data_ptr := mem.ptr_offset(jump_data, 1)
         cache_line_test_data_ptr^ = cast(u64)outer_loop_index
 
