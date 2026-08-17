@@ -11,7 +11,7 @@ chapter01_our_very_own_haversine :: proc() {
 
     tester : Math_Op_Tester
 
-    coordinate_pairs, number_of_pairs, distances_between_pairs, average_sum := process_haversine_pairs_json_file()
+    coordinate_pairs, number_of_pairs, distances_between_pairs, reference_average_sum := process_haversine_pairs_json_file()
     defer delete(coordinate_pairs)
     defer delete(distances_between_pairs)
 
@@ -24,4 +24,14 @@ chapter01_our_very_own_haversine :: proc() {
             fmt.tprintf("our_own_haversine"))
     }
     math_op_precision_tester_print_precision_test_results(&tester)
+
+    our_own_haversine_average_sum : f64 = 0.0
+    for pair in coordinate_pairs {
+        our_own_haversine_average_sum += our_own__haversine(pair.x0, pair.y0, pair.x1, pair.y1)/cast(f64)number_of_pairs
+    }
+
+    fmt.printfln("reference_average_sum=%v", reference_average_sum)
+    fmt.printfln("our_own_haversine_average_sum=%v, ref_avg_sum - our_own_haversine_avg_sum=%+.24f",
+        our_own_haversine_average_sum,
+        reference_average_sum - our_own_haversine_average_sum)
 }
