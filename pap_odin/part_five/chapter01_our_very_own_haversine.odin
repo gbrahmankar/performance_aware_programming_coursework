@@ -20,14 +20,14 @@ chapter01_our_very_own_haversine :: proc() {
         pair := coordinate_pairs[tester.step_index]
         math_op_precision_tester_test_using_latest_precision_test(&tester,
             reference_haversine(pair.x0, pair.y0, pair.x1, pair.y1),
-            our_own__haversine(pair.x0, pair.y0, pair.x1, pair.y1),
+            our_own_haversine(pair.x0, pair.y0, pair.x1, pair.y1),
             fmt.tprintf("our_own_haversine"))
     }
     math_op_precision_tester_print_precision_test_results(&tester)
 
     our_own_haversine_average_sum : f64 = 0.0
     for pair in coordinate_pairs {
-        our_own_haversine_average_sum += our_own__haversine(pair.x0, pair.y0, pair.x1, pair.y1)/cast(f64)number_of_pairs
+        our_own_haversine_average_sum += our_own_haversine(pair.x0, pair.y0, pair.x1, pair.y1)/cast(f64)number_of_pairs
     }
 
     fmt.printfln("reference_average_sum=%v", reference_average_sum)

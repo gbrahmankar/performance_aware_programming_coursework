@@ -31,7 +31,7 @@ reference_haversine :: proc(x0: f64, y0: f64, x1: f64, y1: f64) -> (f64) {
 }
 
 // using our own approximations -- tested in part_five_chapter01
-our_own__haversine :: proc(x0: f64, y0: f64, x1: f64, y1: f64) -> (f64) {
+our_own_haversine :: proc(x0: f64, y0: f64, x1: f64, y1: f64) -> (f64) {
     lat1: f64 = y0
     lat2: f64 = y1
     lon1: f64 = x0
