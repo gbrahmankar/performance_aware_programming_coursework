@@ -11,5 +11,5 @@ main :: proc() {
     using pap_common
     using part_five
 
-    chapter01_our_very_own_haversine()
+    chapter02_removing_waste()
 }
