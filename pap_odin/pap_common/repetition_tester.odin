@@ -206,7 +206,7 @@ repetition_tester_print_repetition_metric :: proc(tester: ^Repetition_Tester, la
 }
 
 repetition_tester_print_test_result :: proc(tester: ^Repetition_Tester) {
-	fmt.printfln("\n\n---test_results_start---")
+	fmt.printfln("\n\n------test_results_start------")
 
 	test_result: ^Repetition_Test_Result = &tester.test_result
 
@@ -224,5 +224,5 @@ repetition_tester_print_test_result :: proc(tester: ^Repetition_Tester) {
 		fmt.printfln("---average_results_end---")
     }
 
-	fmt.printfln("\n---test_results_end---")
+	fmt.printfln("\n------test_results_end------")
 }
