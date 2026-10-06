@@ -4,12 +4,17 @@ import "base:intrinsics"
 import "core:math"
 import "core:simd"
 
+// math_ops constants
+PI64 :: 3.14159265358979323846264338327950288419716939937510582097494459230781640628
+RADC :: 0.01745329251994329577
+HALF_RADC :: 0.01745329251994329577 / 2
+
 square :: proc(number: f64) -> (f64) {
     return number * number
 }
 
 radians_from_degrees :: proc(degrees: f64) -> (f64) {
-    return 0.01745329251994329577 * degrees;
+    return RADC * degrees;
 }
 
 sine_core_mftwp :: proc(x: f64) -> f64 {

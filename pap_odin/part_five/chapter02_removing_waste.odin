@@ -13,6 +13,7 @@ Process_Haversine_Function :: struct {
     test_func: proc(coordinate_pairs : []pap_common.Coordinate_Pair) -> (f64)
 }
 
+// step1 :: stock computation to compare against !
 @(private="file")
 chapter02_distance_between_points_evaluation_00 :: proc(coordinate_pairs : []pap_common.Coordinate_Pair) -> (f64) {
     using pap_common
@@ -43,6 +44,7 @@ chapter02_distance_between_points_evaluation_00 :: proc(coordinate_pairs : []pap
     return average_sum
 }
 
+// step1 :: inline function calls to identify the waste
 @(private="file")
 chapter02_distance_between_points_evaluation_01 :: proc(coordinate_pairs : []pap_common.Coordinate_Pair) -> (f64) {
     using pap_common
@@ -75,6 +77,7 @@ chapter02_distance_between_points_evaluation_01 :: proc(coordinate_pairs : []pap
     return average_sum
 }
 
+// step2 :: combine ax + b computations in fmas
 @(private="file")
 chapter02_distance_between_points_evaluation_02 :: proc(coordinate_pairs : []pap_common.Coordinate_Pair) -> (f64) {
     using pap_common
@@ -87,14 +90,16 @@ chapter02_distance_between_points_evaluation_02 :: proc(coordinate_pairs : []pap
         lon1: f64 = pair.x0
         lon2: f64 = pair.x1
 
-        radians_lat_delta: f64 = 0.01745329251994329577 * (lat2 - lat1)
-        radians_lon_delta: f64 = 0.01745329251994329577 * (lon2 - lon1)
-        radians_lat1 := 0.01745329251994329577 * (lat1)
-        radians_lat2 := 0.01745329251994329577 * (lat2)
+        radians_lat_delta_halved: f64 = HALF_RADC * (lat2 - lat1)
+        radians_lon_delta_halved: f64 = HALF_RADC * (lon2 - lon1)
+        radians_lat1_half_pi_shifted := simd.fma(RADC, lat1, PI64/2.0)
+        radians_lat2_half_pi_shifted := simd.fma(RADC, lat2, PI64/2.0)
 
-        a: f64 = simd.fma(square(sine_approximation(radians_lon_delta/2)),
-            sine_approximation(radians_lat1 + PI64/2.0) * sine_approximation(radians_lat2 + PI64/2.0),
-            square(sine_approximation(radians_lat_delta/2.0)))
+        s0 := sine_approximation(radians_lon_delta_halved)
+        s1 := sine_approximation(radians_lat1_half_pi_shifted)
+        s2 := sine_approximation(radians_lat2_half_pi_shifted)
+        s3 := sine_approximation(radians_lat_delta_halved)
+        a: f64 = simd.fma(s3, s3, s0 * s0 * s1 * s2)
 
         needs_transform: bool = (sqrt_approximation(a) > 0.7071067811865475244)
         x: f64 = needs_transform ? sqrt_approximation(1.0 - sqrt_approximation(a)*sqrt_approximation(a)) : sqrt_approximation(a)
