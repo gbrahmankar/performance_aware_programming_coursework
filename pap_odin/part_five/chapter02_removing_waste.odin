@@ -64,8 +64,11 @@ chapter02_distance_between_points_evaluation_01 :: proc(coordinate_pairs : []pap
         sine_approximation(radians_lat1 + PI64/2.0) * sine_approximation(radians_lat2 + PI64/2.0) *
         square(sine_approximation(radians_lon_delta/2))
 
-        c: f64 = 2.0 * asine_approximation(math.sqrt(a))
-        result: f64 = EARTH_RADIUS * c
+        needs_transform: bool = (math.sqrt(a) > 0.7071067811865475244)
+        x: f64 = needs_transform ? sqrt_approximation(1.0 - math.sqrt(a)*math.sqrt(a)) : math.sqrt(a)
+        result: f64 = needs_transform ? (1.57079632679489661923 - asine_core_mftwp(x)) : asine_core_mftwp(x)
+
+        result = 2.0 * EARTH_RADIUS * result
         average_sum += result * number_of_pair_reciprocal
     }
 
@@ -93,8 +96,11 @@ chapter02_distance_between_points_evaluation_02 :: proc(coordinate_pairs : []pap
         sine_approximation(radians_lat1 + PI64/2.0) * sine_approximation(radians_lat2 + PI64/2.0) *
         square(sine_approximation(radians_lon_delta/2))
 
-        c: f64 = 2.0 * asine_approximation(math.sqrt(a))
-        result: f64 = EARTH_RADIUS * c
+        needs_transform: bool = (math.sqrt(a) > 0.7071067811865475244)
+        x: f64 = needs_transform ? sqrt_approximation(1.0 - math.sqrt(a)*math.sqrt(a)) : math.sqrt(a)
+        result: f64 = needs_transform ? (1.57079632679489661923 - asine_core_mftwp(x)) : asine_core_mftwp(x)
+
+        result = 2.0 * EARTH_RADIUS * result
         average_sum += result * number_of_pair_reciprocal
     }
 
