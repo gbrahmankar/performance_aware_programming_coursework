@@ -33,7 +33,7 @@ chapter02_distance_between_points_evaluation_00 :: proc(coordinate_pairs : []pap
         a: f64 = square(sine_approximation(radians_lat_delta/2.0)) +
         cosine_approximation(radians_lat1) * cosine_approximation(radians_lat2) *
         square(sine_approximation(radians_lon_delta/2))
-        c: f64 = 2.0 * asine_approximation(math.sqrt(a))
+        c: f64 = 2.0 * asine_approximation(sqrt_approximation(a))
 
         result: f64 = EARTH_RADIUS * c
 
@@ -64,8 +64,8 @@ chapter02_distance_between_points_evaluation_01 :: proc(coordinate_pairs : []pap
         sine_approximation(radians_lat1 + PI64/2.0) * sine_approximation(radians_lat2 + PI64/2.0) *
         square(sine_approximation(radians_lon_delta/2))
 
-        needs_transform: bool = (math.sqrt(a) > 0.7071067811865475244)
-        x: f64 = needs_transform ? sqrt_approximation(1.0 - math.sqrt(a)*math.sqrt(a)) : math.sqrt(a)
+        needs_transform: bool = (sqrt_approximation(a) > 0.7071067811865475244)
+        x: f64 = needs_transform ? sqrt_approximation(1.0 - sqrt_approximation(a)*sqrt_approximation(a)) : sqrt_approximation(a)
         result: f64 = needs_transform ? (1.57079632679489661923 - asine_core_mftwp(x)) : asine_core_mftwp(x)
 
         result = 2.0 * EARTH_RADIUS * result
@@ -80,7 +80,7 @@ chapter02_distance_between_points_evaluation_02 :: proc(coordinate_pairs : []pap
     using pap_common
 
     average_sum: f64
-    number_of_pair_reciprocal: f64 = 1/cast(f64)len(coordinate_pairs)
+    number_of_pair_reciprocal: f64 = 2.0 * EARTH_RADIUS / cast(f64)len(coordinate_pairs)
     for pair in coordinate_pairs {
         lat1: f64 = pair.y0
         lat2: f64 = pair.y1
@@ -92,16 +92,15 @@ chapter02_distance_between_points_evaluation_02 :: proc(coordinate_pairs : []pap
         radians_lat1 := 0.01745329251994329577 * (lat1)
         radians_lat2 := 0.01745329251994329577 * (lat2)
 
-        a: f64 = square(sine_approximation(radians_lat_delta/2.0)) +
-        sine_approximation(radians_lat1 + PI64/2.0) * sine_approximation(radians_lat2 + PI64/2.0) *
-        square(sine_approximation(radians_lon_delta/2))
+        a: f64 = simd.fma(square(sine_approximation(radians_lon_delta/2)),
+            sine_approximation(radians_lat1 + PI64/2.0) * sine_approximation(radians_lat2 + PI64/2.0),
+            square(sine_approximation(radians_lat_delta/2.0)))
 
-        needs_transform: bool = (math.sqrt(a) > 0.7071067811865475244)
-        x: f64 = needs_transform ? sqrt_approximation(1.0 - math.sqrt(a)*math.sqrt(a)) : math.sqrt(a)
+        needs_transform: bool = (sqrt_approximation(a) > 0.7071067811865475244)
+        x: f64 = needs_transform ? sqrt_approximation(1.0 - sqrt_approximation(a)*sqrt_approximation(a)) : sqrt_approximation(a)
         result: f64 = needs_transform ? (1.57079632679489661923 - asine_core_mftwp(x)) : asine_core_mftwp(x)
 
-        result = 2.0 * EARTH_RADIUS * result
-        average_sum += result * number_of_pair_reciprocal
+        average_sum = simd.fma(result, number_of_pair_reciprocal, average_sum)
     }
 
     return average_sum
