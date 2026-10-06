@@ -4,6 +4,7 @@ package part_five
 
 import "core:fmt"
 import "core:math"
+import "core:simd"
 
 import "../pap_common"
 
