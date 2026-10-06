@@ -111,13 +111,48 @@ chapter02_distance_between_points_evaluation_02 :: proc(coordinate_pairs : []pap
     return average_sum
 }
 
+// step3 :: remove a square_root(...) !!!
+@(private="file")
+chapter02_distance_between_points_evaluation_03 :: proc(coordinate_pairs : []pap_common.Coordinate_Pair) -> (f64) {
+    using pap_common
+
+    average_sum: f64
+    number_of_pair_reciprocal: f64 = 2.0 * EARTH_RADIUS / cast(f64)len(coordinate_pairs)
+    for pair in coordinate_pairs {
+        lat1: f64 = pair.y0
+        lat2: f64 = pair.y1
+        lon1: f64 = pair.x0
+        lon2: f64 = pair.x1
+
+        radians_lat_delta_halved: f64 = HALF_RADC * (lat2 - lat1)
+        radians_lon_delta_halved: f64 = HALF_RADC * (lon2 - lon1)
+        radians_lat1_half_pi_shifted := simd.fma(RADC, lat1, PI64/2.0)
+        radians_lat2_half_pi_shifted := simd.fma(RADC, lat2, PI64/2.0)
+
+        s0 := sine_approximation(radians_lon_delta_halved)
+        s1 := sine_approximation(radians_lat1_half_pi_shifted)
+        s2 := sine_approximation(radians_lat2_half_pi_shifted)
+        s3 := sine_approximation(radians_lat_delta_halved)
+        a: f64 = simd.fma(s3, s3, s0 * s0 * s1 * s2)
+
+        needs_transform: bool = (a > 0.5)
+        x: f64 = needs_transform ? sqrt_approximation(1.0 - a) : sqrt_approximation(a)
+        result: f64 = needs_transform ? (1.57079632679489661923 - asine_core_mftwp(x)) : asine_core_mftwp(x)
+
+        average_sum = simd.fma(result, number_of_pair_reciprocal, average_sum)
+    }
+
+    return average_sum
+}
+
 @(private="file")
 chapter02_distance_between_points_tester :: proc(coordinate_pairs : []pap_common.Coordinate_Pair, reference_average_sum: f64) {
     using pap_common
 
     test_functions: []Process_Haversine_Function = {
-        { "chapter02_distance_between_points_evaluation_00", chapter02_distance_between_points_evaluation_00 },
+        // { "chapter02_distance_between_points_evaluation_00", chapter02_distance_between_points_evaluation_00 },
         { "chapter02_distance_between_points_evaluation_02", chapter02_distance_between_points_evaluation_02 },
+        { "chapter02_distance_between_points_evaluation_03", chapter02_distance_between_points_evaluation_02 },
     }
 
     cpu_freq, _ := get_tsc_frequency()
